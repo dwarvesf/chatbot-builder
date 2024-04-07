@@ -1,0 +1,62 @@
+version: '3.7'
+
+services:
+  pg:
+    container_name: chat-builder-db
+    image: postgis/postgis:16-3.4
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    networks:
+      - chat-builder
+    environment:
+      TZ: UTC
+      POSTGRES_USER: chatbuilder
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - 5433:5432
+  redis:
+    container_name: chat-builder-redis
+    image: redis/redis-stack
+    restart: always
+    networks:
+      - chat-builder
+    ports:
+      - 6379:6379
+      - 8001:8001
+  
+  api:
+    container_name: chat-builder
+    image: dispatch_api
+    restart: always
+    ports:
+      - 3001:3001
+    networks:
+      - chat-builder
+
+  migration-tool-local:
+    container_name: chat-builder-migration
+    image: dispatch_migration_tool
+    entrypoint: ""
+    env_file:
+      - ../.env
+    volumes:
+      - ../pkg/dispatch_migration/migrations:/usr/src/app/migrations
+    network_mode: "host"
+
+  migration-tool-qa:
+    container_name: chat-builder-migration
+    image: dispatch_migration_tool
+    entrypoint: ""
+    volumes:
+      - ../pkg/dispatch_migration/migrations:/usr/src/app/migrations
+    env_file:
+      - ./qa/.env
+    network_mode: "host"
+
+networks:
+  chat-builder:
+    name: chat-builder

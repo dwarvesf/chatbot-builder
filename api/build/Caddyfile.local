@@ -1,0 +1,3 @@
+api.chat-builder.local {
+	reverse_proxy localhost:3001
+}
