@@ -4,6 +4,7 @@ import {
   type DefaultSession,
   type NextAuthOptions,
 } from "next-auth";
+import Credentials from "next-auth/providers/credentials";
 import DiscordProvider from "next-auth/providers/discord";
 
 import { env } from "~/env";
@@ -36,6 +37,14 @@ declare module "next-auth" {
  */
 export const authOptions: NextAuthOptions = {
   callbacks: {
+    jwt: async ({ token, user }) => {
+      if (user) {
+        token.id = user.id;
+        token.email = user.email;
+      }
+
+      return token;
+    },
     session: ({ session, token }) => ({
       ...session,
       user: {
@@ -43,6 +52,12 @@ export const authOptions: NextAuthOptions = {
         id: token.sub,
       },
     }),
+  },
+  secret: env.NEXTAUTH_SECRET,
+  pages: {
+    signIn: "/login",
+    newUser: "/register",
+    error: "/login",
   },
   providers: [
     // DiscordProvider({
@@ -58,6 +73,24 @@ export const authOptions: NextAuthOptions = {
      *
      * @see https://next-auth.js.org/providers/github
      */
+    Credentials({
+      name: "credentials",
+      credentials: {
+        email: {
+          label: "Email",
+          type: "email",
+          placeholder: "jsmith@gmail.com",
+        },
+        password: { label: "Password", type: "password" },
+      },
+      authorize: async (_credentials) => {
+        return {
+          id: "1",
+          email: "admin@gmail.com",
+          username: "admin",
+        };
+      },
+    }),
   ],
 };
 
