@@ -1,4 +1,5 @@
 import { Worker, isMainThread, setEnvironmentData, getEnvironmentData } from 'node:worker_threads'
+import { string } from 'zod'
 
 if (isMainThread) {
     if (process.env.DB_URL === undefined) {
@@ -12,18 +13,12 @@ if (isMainThread) {
     }
 } else {
     for (const url of retrieveURLs()) {
-        const { status, headers, promiseBody } = await fetchWeb(url)
+        const body = await fetchAndProcessWeb(url)
 
-        if (status != 200) {
-            console.log("failed to fetch url %s", url)
-        } else {
-            const body = await promiseBody
-            console.log(headers, body)
-            // TODO: filter body, relevant tags
+        // TODO: filter body, relevant tags
 
-            // TODO: embedding and save web data to vectorDB
-            saveWebData(body)
-        }
+        // TODO: embedding and save web data to vectorDB
+        saveWebData(body)
     }
 }
 
@@ -31,24 +26,113 @@ function retrieveURLs() {
     console.log(getEnvironmentData("DB_URL"))
 
     // TODO: from DB, load user web urls not crawled
-    return ["https://www.iban.com/exchange-rates"]
+    // return ["https://memo.d.foundation/"]
+    // return ["https://www.iban.com/exchange-rates"]
+    return ["https://www.iban.com/exchange-rates", "https://memo.d.foundation/"]
 }
 
 /**
- * @param { string } webData // TODO: change this
+ * @param { string[] } webData // TODO: change this
  */
 function saveWebData(webData) {
     console.log(getEnvironmentData("VECTOR_DB_URL"))
 }
 
+import { load } from 'cheerio';
+
 /**
  * @param { string } url
  */
-async function fetchWeb(url) {
+async function fetchAndProcessWeb(url) {
     const response = await fetch(url)
-    return {
-        status: response.status,
-        headers: response.headers,
-        promiseBody: response.text(),
+    if (response.status != 200) {
+        throw new Error("Unable to fetch web, status: " + response.status);
+    }
+
+    let document = await response.text()
+
+    // clean script tags
+    document = document.replaceAll(/<script([ a-z](=\".{0,}\")?)*?>(\s*.*\s*)*?<\/script>/g, "")
+    document = cleanTextFormat(document)
+
+    // clean white spaces
+    while (document.match(/\s\s/g)) {
+        document = document.replaceAll(/\s\s/g, " ")
+    }
+
+    // clean tabs, new lines
+    document = document.replaceAll(/\t|\n/g, " ").replaceAll(/\n\n/g, " ")
+
+    const body = load(document)("body");
+
+    /**
+     * @type {string[]}
+    */
+    let contents = []
+    body.each((_, el) => {
+        contents = contents.concat(fishContent(el))
+    })
+
+    return contents
+}
+
+/**
+ * @param {string} string
+ */
+function cleanTextFormat(string) {
+    for (const format of ["b", "strong", "i", "em", "mark", "small", "del", "ins", "sub", "sup"]) {
+        string = string.replaceAll(new RegExp("<" + format + ">|<\/" + format + ">", 'g'), " ")
+    }
+    return string.replaceAll(new RegExp("<br>|<br/>|&nbsp;", 'g'), " ")
+}
+
+import { Element, Text } from "domhandler"
+
+/**
+ * @param { Element } el
+ * @returns {string[]}
+ */
+function fishContent(el) {
+    if (el.children.length == 0) {
+        return [getTextContent(load(el), el.tagName, el.attribs).trim()]
+    }
+
+    /**
+     * @type {string[]}
+     */
+    let contents = []
+    for (const child of el.children) {
+        if (child instanceof Element) {
+            contents = contents.concat(fishContent(child))
+        } else if (child instanceof Text) {
+            contents.push(child.nodeValue)
+        }
+    }
+
+    if (el.tagName.match(/(ul)|(tr)/g)) {
+        return [contents.filter(s => s.trim() != "").map(s => s.trim()).join(", ")]
+    }
+
+
+    return contents.filter(s => s.trim() != "").map(s => s.trim())
+}
+
+/**
+ * @param {{ text: () => string; }} element
+ * @param {string} tag
+ * @param {{ [x: string]: string; }} attributes
+ * 
+ * @returns {string}
+ */
+function getTextContent(element, tag, attributes) {
+    switch (tag) {
+        case "a":
+            return element.text() + "[" + attributes["href"] + "]"
+        case "span":
+        case "p":
+            return element.text()
+
+        default:
+            return "";
     }
 }
