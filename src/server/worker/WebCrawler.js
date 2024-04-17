@@ -1,5 +1,4 @@
 import { Worker, isMainThread, setEnvironmentData, getEnvironmentData } from 'node:worker_threads'
-import { string } from 'zod'
 
 if (isMainThread) {
     if (process.env.DB_URL === undefined) {
@@ -12,30 +11,44 @@ if (isMainThread) {
         new Worker("./src/server/worker/WebCrawler.js")
     }
 } else {
-    for (const url of retrieveURLs()) {
-        const body = await fetchAndProcessWeb(url)
+    var dbClient = new pg.Client(getEnvironmentData("DB_URL").toString());
+    var vectorDBClient = new pg.Client(getEnvironmentData("VECTOR_DB_URL").toString());
 
-        // TODO: filter body, relevant tags
+    dbClient.connect()
+    vectorDBClient.connect()
 
-        // TODO: embedding and save web data to vectorDB
-        saveWebData(body)
+    for (const url of await retrieveURLs(dbClient)) {
+        const contents = await fetchAndProcessWeb(url)
+
+        // TODO: embedding contents
+        const embeddedContents = ['[11, 12, 13]']
+
+        await saveWebData(vectorDBClient, embeddedContents)
     }
+
+    dbClient.end()
+    vectorDBClient.end()
 }
 
-function retrieveURLs() {
-    console.log(getEnvironmentData("DB_URL"))
+import pg from "pg"
+
+/**
+ * @param {pg.Client} client
+ */
+async function retrieveURLs(client) {
+    const query = await client.query("SELECT url FROM urls")
 
     // TODO: from DB, load user web urls not crawled
-    // return ["https://memo.d.foundation/"]
-    // return ["https://www.iban.com/exchange-rates"]
+
     return ["https://www.iban.com/exchange-rates", "https://memo.d.foundation/"]
 }
 
 /**
- * @param { string[] } webData // TODO: change this
+ * @param {pg.Client} client
+ * @param {string[]} embeddedContents
  */
-function saveWebData(webData) {
-    console.log(getEnvironmentData("VECTOR_DB_URL"))
+async function saveWebData(client, embeddedContents) {
+    await client.query("INSERT INTO items (embedding) VALUES ($1)", embeddedContents)
 }
 
 import { load } from 'cheerio';
