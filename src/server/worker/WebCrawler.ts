@@ -1,5 +1,5 @@
-import { Worker, getEnvironmentData, isMainThread, setEnvironmentData } from 'node:worker_threads'
-import mockEmbedding from './mock-embedding.json' assert { type: "json" }
+import { Worker, getEnvironmentData, isMainThread, setEnvironmentData } from 'node:worker_threads';
+import mockEmbedding from './mock-embedding.json' assert { type: "json" };
 
 if (isMainThread) {
     if (process.env.DATABASE_URL === undefined) {
@@ -9,7 +9,7 @@ if (isMainThread) {
     } else {
         setEnvironmentData("DATABASE_URL", process.env.DATABASE_URL?.toString())
         setEnvironmentData("OPENAI_API_KEY", process.env.OPENAI_API_KEY?.toString())
-        new Worker("./src/server/worker/WebCrawler.js")
+        new Worker("./src/server/worker/WebCrawler.ts")
     }
 } else {
     var dbClient = new pg.Client(getEnvironmentData("DATABASE_URL").toString());
@@ -22,19 +22,20 @@ if (isMainThread) {
 
         try {
             const contents = await fetchAndProcessWeb(url)
+            for (const content of contents) {
+                // TODO: uncomment for live test
+                // const embeddingPromises = getEmbeddingsFromContent(openAICred, content)
+                // for (const ep of embeddingPromises) {
+                //     const response = await ep
+                //     const { data } = await response.json()
+                //     await saveWebData(dbClient, content, data.embedding)
+                // }
 
-            // TODO: uncomment for live test
-            // const embeddingPromises = getEmbeddingsFromContent(openAICred, contents)
-            // for (const ep of embeddingPromises) {
-            //     const response = await ep
-            //     const { data } = await response.json()
-            //     await saveWebData(vectorDBClient, contents, data.embedding)
-            // }
-
-            // TODO: Mock only remove when go live
-            const { data } = mockEmbedding
-            for (const i of data) {
-                await saveWebData(dbClient, contents, i.embedding)
+                // TODO: Mock only remove when go live
+                const { data } = mockEmbedding
+                for (const i of data) {
+                    await saveWebData(dbClient, content, i.embedding)
+                }
             }
         } catch (err) {
             console.log(err)
@@ -47,7 +48,7 @@ if (isMainThread) {
     await dbClient.end()
 }
 
-import pg from "pg"
+import pg from "pg";
 
 /**
  * updates bot source status after crawled attempt
@@ -55,7 +56,7 @@ import pg from "pg"
  * @param {string} id
  * @param {number} status
  */
-async function updateBotSourceStatus(client, id, status) {
+async function updateBotSourceStatus(client: pg.Client, id: string, status: number) {
     await client.query("UPDATE bot_sources SET status_id = $2 WHERE id = $1", [id, status])
 }
 
@@ -63,8 +64,8 @@ async function updateBotSourceStatus(client, id, status) {
  * retrieves `NOT_CRAWLED` bot source's id url from DB
  * @param {pg.Client} client
  */
-async function retrieveURLs(client) {
-    const query = await client.query("SELECT id, url FROM bot_sources WHERE status_id = $1", ["NOT_CRAWLED"]) // TODO: change status id to `NOT_CRAWLED`'s id
+async function retrieveURLs(client: pg.Client) {
+    const query = await client.query("SELECT id, url FROM bot_sources WHERE status_id = $1", [1]) // TODO: change status id to `NOT_CRAWLED`'s id
 
     const result = []
     for (const r of query.rows) {
@@ -82,7 +83,7 @@ async function retrieveURLs(client) {
  * @param {string} openAICred
  * @param {string[]} contents
  */
-function getEmbeddingsFromContent(openAICred, contents) {
+function getEmbeddingsFromContent(openAICred: string, contents: string) {
     const embeddings = []
 
     for (const c of contents) {
@@ -105,20 +106,20 @@ function getEmbeddingsFromContent(openAICred, contents) {
 /**
  * saves the contents and the vector representation into vectorDB
  * @param {pg.Client} client
- * @param {string[]} contents
+ * @param {string} content
  * @param {number[]} embeddedContents
  */
-async function saveWebData(client, contents, embeddedContents) {
-    await client.query("INSERT INTO source_vectors (content, embedding) VALUES ($1, $2)", [contents, "[" + embeddedContents.toString() + "]"])
+async function saveWebData(client: pg.Client, content: string, embeddedContents: number[]) {
+    await client.query("INSERT INTO source_vectors (content, embedding) VALUES ($1, $2)", [content, "[" + embeddedContents.toString() + "]"])
 }
 
-import { load } from 'cheerio'
+import { CheerioAPI, load } from 'cheerio';
 
 /**
  * fetches html data from the provide url and process html data into relevant contents
  * @param { string } url
  */
-async function fetchAndProcessWeb(url) {
+async function fetchAndProcessWeb(url: string) {
     const response = await fetch(url)
     if (response.status != 200) {
         throw new Error("Unable to fetch web, status: " + response.status);
@@ -140,10 +141,7 @@ async function fetchAndProcessWeb(url) {
 
     const body = load(document)("body");
 
-    /**
-     * @type {string[]}
-    */
-    let contents = []
+    let contents: string[] = []
     body.each((_, el) => {
         contents = contents.concat(fishContent(el))
     })
@@ -155,7 +153,7 @@ async function fetchAndProcessWeb(url) {
  * cleans text format tags so when `fishContent`, the text content of the whole paragraph is in the same element(exp: <p>My <b>paragraph</b></p> is output as {'My', 'paragraph'} without text format cleaning)
  * @param {string} string
  */
-function cleanTextFormat(string) {
+function cleanTextFormat(string: string) {
 
     for (const format of ["b", "strong", "i", "em", "mark", "small", "del", "ins", "sub", "sup"]) {
         string = string.replaceAll(new RegExp("<" + format + ">|<\/" + format + ">", 'g'), " ")
@@ -163,7 +161,7 @@ function cleanTextFormat(string) {
     return string.replaceAll(new RegExp("<br>|<br/>|&nbsp;", 'g'), " ")
 }
 
-import { Element, Text } from "domhandler"
+import { Element, Text } from "domhandler";
 
 /**
  * recursively goes through children of the element.
@@ -173,15 +171,12 @@ import { Element, Text } from "domhandler"
  * @param { Element } el
  * @returns {string[]}
  */
-function fishContent(el) {
+function fishContent(el: Element) {
     if (el.children.length == 0) {
         return [getTextContent(load(el), el.tagName, el.attribs).trim()]
     }
 
-    /**
-     * @type {string[]}
-     */
-    let contents = []
+    let contents: string[] = []
     for (const child of el.children) {
         if (child instanceof Element) {
             contents = contents.concat(fishContent(child))
@@ -198,15 +193,7 @@ function fishContent(el) {
     return contents.filter(s => s.trim() != "").map(s => s.trim())
 }
 
-/**
- * gets text content from common text related tags
- * @param {{ text: () => string; }} element
- * @param {string} tag
- * @param {{ [x: string]: string; }} attributes
- * 
- * @returns {string}
- */
-function getTextContent(element, tag, attributes) {
+function getTextContent(element: CheerioAPI, tag: string, attributes: { [x: string]: string }) {
     switch (tag) {
         case "a":
             // <a> tag also includes href in case the bot want to provide the reference link to the user

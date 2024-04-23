@@ -8,7 +8,7 @@
     "dev": "next dev",
     "lint": "next lint",
     "start": "next start",
-    "startWebCrawler:dev": "node --env-file=.env ./src/server/worker/WebCrawler.js"
+    "startWebCrawler:dev": "node --loader ts-node/esm --env-file=.env src/server/worker/WebCrawler.ts"
   },
   "dependencies": {
     "@dwarvesf/react-hooks": "^0.8.2",
@@ -51,6 +51,7 @@
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.5.11",
     "tailwindcss": "^3.4.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5.4.2"
   },
   "ct3aMetadata": {
