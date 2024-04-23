@@ -10,6 +10,8 @@
     "start": "next start"
   },
   "dependencies": {
+    "@dwarvesf/react-hooks": "^0.8.2",
+    "@dwarvesf/react-utils": "^0.4.2",
     "@hookform/resolvers": "^3.3.4",
     "@mochi-ui/core": "^0.13.6",
     "@mochi-ui/theme": "^0.18.0",
