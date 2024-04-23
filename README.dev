@@ -3,6 +3,12 @@
 make install
 ```
 
+### Local development
+Start the db
+```
+make local-up
+```
+
 ### How to migrate database
  - Edit the schema file in `src/migration/schema.ts`
  - Apply the migration by running `make db-migrate`
