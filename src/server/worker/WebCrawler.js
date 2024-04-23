@@ -1,26 +1,21 @@
-import { Worker, isMainThread, setEnvironmentData, getEnvironmentData } from 'node:worker_threads'
+import { Worker, getEnvironmentData, isMainThread, setEnvironmentData } from 'node:worker_threads'
 import mockEmbedding from './mock-embedding.json' assert { type: "json" }
 
 if (isMainThread) {
-    if (process.env.DB_URL === undefined) {
-        console.error("No DB_URL config")
-    } else if (process.env.VECTOR_DB_URL === undefined) {
-        console.error("No VECTOR_DB_URL config")
+    if (process.env.DATABASE_URL === undefined) {
+        console.error("No DATABASE_URL config")
     } else if (process.env.OPENAI_API_KEY === undefined) {
         console.error("No OPENAI_API_KEY config")
     } else {
-        setEnvironmentData("DB_URL", process.env.DB_URL?.toString())
-        setEnvironmentData("VECTOR_DB_URL", process.env.VECTOR_DB_URL?.toString())
+        setEnvironmentData("DATABASE_URL", process.env.DATABASE_URL?.toString())
         setEnvironmentData("OPENAI_API_KEY", process.env.OPENAI_API_KEY?.toString())
         new Worker("./src/server/worker/WebCrawler.js")
     }
 } else {
-    var dbClient = new pg.Client(getEnvironmentData("DB_URL").toString());
-    var vectorDBClient = new pg.Client(getEnvironmentData("VECTOR_DB_URL").toString());
+    var dbClient = new pg.Client(getEnvironmentData("DATABASE_URL").toString());
     var openAICred = getEnvironmentData("OPENAI_API_KEY").toString()
 
     await dbClient.connect()
-    await vectorDBClient.connect()
 
     for (const { id, url } of await retrieveURLs(dbClient)) {
         let botSourceStatus = 2 // "CRAWLED"
@@ -39,7 +34,7 @@ if (isMainThread) {
             // TODO: Mock only remove when go live
             const { data } = mockEmbedding
             for (const i of data) {
-                await saveWebData(vectorDBClient, contents, i.embedding)
+                await saveWebData(dbClient, contents, i.embedding)
             }
         } catch (err) {
             console.log(err)
@@ -50,7 +45,6 @@ if (isMainThread) {
     }
 
     await dbClient.end()
-    await vectorDBClient.end()
 }
 
 import pg from "pg"
@@ -118,7 +112,7 @@ async function saveWebData(client, contents, embeddedContents) {
     await client.query("INSERT INTO source_vectors (content, embedding) VALUES ($1, $2)", [contents, "[" + embeddedContents.toString() + "]"])
 }
 
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
 /**
  * fetches html data from the provide url and process html data into relevant contents
