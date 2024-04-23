@@ -97,6 +97,7 @@ function getEmbeddingsFromContent(openAICred, contents) {
             body: JSON.stringify({
                 input: c,
                 model: "text-embedding-3-small",
+                dimensions: 1024,
             }),
             headers: {
                 "Content-type": "application/json",
