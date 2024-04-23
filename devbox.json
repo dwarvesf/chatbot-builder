@@ -1,0 +1,33 @@
+{
+  "$schema":  "https://raw.githubusercontent.com/jetify-com/devbox/0.10.5/.schema/devbox.schema.json",
+  "packages": {
+    "nodejs": "21.7.3",
+    "path:flakes/postgres#postgresql": ""
+  },
+  "shell": {
+    "init_hook": [
+      "npm set prefix ~/.npm-global",
+      "npm install -g pnpm@v9.0.5",
+      "export PATH=~/.npm-global/bin:$PATH",
+      "pnpm install"
+    ],
+    "scripts": {
+      "init:postgres": [
+        "initdb -U postgres",
+        "echo \"shared_preload_libraries = 'pg_stat_statements, timescaledb'\" >> ./.devbox/virtenv/postgresql/data/postgresql.conf"
+      ],
+      "init:postgres-ext": [
+        "psql -U postgres -d postgres -c 'CREATE EXTENSION IF NOT EXISTS vector;'",
+        "psql -U postgres -d postgres -c 'CREATE EXTENSION IF NOT EXISTS timescaledb;'",
+        "psql -U postgres -d postgres -c 'CREATE EXTENSION IF NOT EXISTS pg_trgm;'",
+        "psql -U postgres -d postgres -c 'CREATE SCHEMA partman; CREATE EXTENSION pg_partman SCHEMA partman;'"
+      ],
+      "start:webcrawler": [
+        "pnpm run startWebCrawler:dev"
+      ]
+    }
+  },
+  "include": [
+    "plugin:postgresql"
+  ]
+}
