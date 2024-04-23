@@ -1,15 +1,13 @@
 {
-  "$schema":  "https://raw.githubusercontent.com/jetify-com/devbox/0.10.5/.schema/devbox.schema.json",
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.10.5/.schema/devbox.schema.json",
   "packages": {
-    "nodejs": "21.7.3",
+    "nodejs":                          "21.7.3",
+    "bun":                             "1.1.4",
     "path:flakes/postgres#postgresql": ""
   },
   "shell": {
     "init_hook": [
-      "npm set prefix ~/.npm-global",
-      "npm install -g pnpm@v9.0.5",
-      "export PATH=~/.npm-global/bin:$PATH",
-      "pnpm install"
+      "bun install"
     ],
     "scripts": {
       "init:postgres": [
@@ -23,7 +21,7 @@
         "psql -U postgres -d postgres -c 'CREATE SCHEMA partman; CREATE EXTENSION pg_partman SCHEMA partman;'"
       ],
       "start:webcrawler": [
-        "pnpm run startWebCrawler:dev"
+        "bun run startWebCrawler:dev"
       ]
     }
   },
