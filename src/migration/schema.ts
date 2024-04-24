@@ -10,6 +10,7 @@ import {
   uuid,
   varchar
 } from "drizzle-orm/pg-core";
+import { vector } from "~/utils/vector";
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
@@ -319,3 +320,20 @@ export const invoices = createTable(
     userIdIdx: index("invoice_user_id_idx").on(invoice.userId),
   })
 );
+
+export const sourceVectors = createTable(
+  "source_vectors",
+  {
+    id: uuid("id").notNull().primaryKey(),
+    embeddings: vector("vector", { dimensions: 1024 }).notNull(),
+  }
+)
+
+export const dataSources = createTable(
+  "data_sources",
+  {
+    id : uuid('id').notNull().primaryKey(),
+    content: text('content'),
+    vectors: uuid("vectors").references(() => sourceVectors.id),
+  }
+)
