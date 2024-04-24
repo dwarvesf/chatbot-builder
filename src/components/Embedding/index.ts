@@ -1,9 +1,11 @@
+import { env } from '~/env';
 import mockEmbedding from './mock-embedding.json' assert { type: "json" };
 
 /**
  * calls to openAI's embedding for the vector representation of the contents
  */
-export async function getEmbeddingsFromContents(openAICred: string, contents: string[]) {
+export default async function getEmbeddingsFromContents(contents: string[]) {
+    const openAICred = env.OPENAI_API_KEY
     // TODO: uncomment for live test
     // const response = await fetch("https://api.openai.com/v1/embeddings", {
     //     method: "POST",

@@ -2,7 +2,7 @@
 import { CheerioAPI, load } from 'cheerio';
 import { Element, Text } from "domhandler";
 
-export async function crawURL(url: string) : Promise<string[]>{ 
+export default async function crawURL(url: string) : Promise<string[]>{ 
     const response = await fetch(url)
     if (response.status != 200) {
         throw new Error("Unable to fetch web, status: " + response.status);

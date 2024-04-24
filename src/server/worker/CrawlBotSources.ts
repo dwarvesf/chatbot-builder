@@ -1,14 +1,12 @@
+import { randomUUID } from "crypto";
 import { eq } from "drizzle-orm";
 import { PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import * as schema from "../../../migration/schema";
-
-import { env } from '~/env';
-
-import { getEmbeddingsFromContents } from "~/server/components/Embedding";
-import { crawURL } from "~/server/components/WebCrawler";
+import embeddingContents from "~/components/Embedding";
+import webCrawler from "~/components/WebCrawler";
+import * as schema from "~/migration/schema";
 import { db } from "~/server/db/";
 
-export async function crawlBotSource() {
+export default async function crawlBotSources() {
     const contents: string[] = []
     for (const { id, url } of await retrieveURLs(db)) {
         if (url == undefined) {
@@ -18,9 +16,9 @@ export async function crawlBotSource() {
         let botSourceStatus = 2 // "CRAWLED"
 
         try {
-            contents.push(...await crawURL(url))
+            contents.push(...await webCrawler(url))
 
-            for (const { content, embedding } of await getEmbeddingsFromContents(env.OPENAI_API_KEY, contents)) {
+            for (const { content, embedding } of await embeddingContents(contents)) {
                 await saveWebData(db, content, embedding)
             }
         } catch (err) {
@@ -50,8 +48,22 @@ async function retrieveURLs(client: PostgresJsDatabase<typeof schema>) {
  * saves the contents and the vector representation into vectorDB
  */
 async function saveWebData(client: PostgresJsDatabase<typeof schema>, content: string, embeddedContents: number[]) {
-    // TODO: uncomment
-    // await client.query("INSERT INTO source_vectors (content, embedding) VALUES ($1, $2)", [content, "[" + embeddedContents.toString() + "]"])
+    const sourceVectorId = randomUUID()
+
+    try {
+        await client.insert(schema.sourceVectors).values({
+            id: sourceVectorId,
+            embeddings: embeddedContents,
+        })
+
+        await client.insert(schema.dataSources).values({
+            id: randomUUID(),
+            content: content,
+            vectors: sourceVectorId,
+        })
+    } catch (err) {
+        console.log(err)
+    }
 }
 
 /**
