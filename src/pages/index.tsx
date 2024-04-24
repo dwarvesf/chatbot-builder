@@ -8,6 +8,7 @@ import { api } from "~/utils/api";
 const Home: NextPage = () => {
   const { data: session } = useSession();
   const hello = api.post.hello.useQuery({ text: "from tRPC" });
+  const webcrawler = api.post.testCrawler.useQuery();
 
   return (
     <>
@@ -43,6 +44,7 @@ const Home: NextPage = () => {
             </div>
           )}
           <p>{hello.data ? hello.data.greeting : "Loading tRPC query..."}</p>
+          <p>{webcrawler.data ? webcrawler.status : "crawling data"}</p>
         </div>
       </Layout>
     </>

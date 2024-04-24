@@ -6,6 +6,8 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 
+import { crawlBotSource } from "~/server/components/BotSource";
+
 let post = {
   id: 1,
   name: "Hello World",
@@ -37,4 +39,9 @@ export const postRouter = createTRPCRouter({
   getSecretMessage: protectedProcedure.query(() => {
     return "you can now see this secret message!";
   }),
+
+  testCrawler: protectedProcedure
+    .query(() => {
+      return crawlBotSource()
+    }),
 });
