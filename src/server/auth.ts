@@ -3,10 +3,11 @@ import { type GetServerSidePropsContext } from "next";
 import {
   getServerSession,
   type DefaultSession,
-  type NextAuthOptions,
+  type NextAuthOptions
 } from "next-auth";
 import { type Adapter } from "next-auth/adapters";
 import Credentials from "next-auth/providers/credentials";
+import GoogleProvider, { GoogleProfile } from "next-auth/providers/google";
 
 import { env } from "~/env";
 import { createTable } from "~/migration/schema";
@@ -40,21 +41,15 @@ declare module "next-auth" {
  */
 export const authOptions: NextAuthOptions = {
   callbacks: {
-    jwt: async ({ token, user }) => {
-      if (user) {
-        token.id = user.id;
-        token.email = user.email;
+    session: ({ session, user }) => {
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: user?.id,
+        },
       }
-
-      return token;
     },
-    session: ({ session, token }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: token.sub,
-      },
-    }),
   },
   secret: env.NEXTAUTH_SECRET,
   pages: {
@@ -64,6 +59,23 @@ export const authOptions: NextAuthOptions = {
   },
   adapter: DrizzleAdapter(db, createTable) as Adapter,
   providers: [
+    GoogleProvider({
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
+      profile(profile: GoogleProfile) {
+        return {
+          id: profile?.sub,
+          sub: profile?.sub,
+          email: profile.email,
+          emailVerified: profile.email_verified ? new Date() : null,
+          name: profile.name,
+          firstName: profile.given_name,
+          lastName: profile.family_name,
+          image: profile.picture,
+        };
+      },
+    }),
+
     // DiscordProvider({
     //   clientId: env.DISCORD_CLIENT_ID,
     //   clientSecret: env.DISCORD_CLIENT_SECRET,
