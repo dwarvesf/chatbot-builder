@@ -4,12 +4,14 @@ import {
   index,
   integer,
   pgTableCreator,
+  primaryKey,
   serial,
   text,
   timestamp,
   uuid,
   varchar
 } from "drizzle-orm/pg-core";
+import { AdapterAccount } from "next-auth/adapters";
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
@@ -20,7 +22,7 @@ import {
 export const createTable = pgTableCreator((name) => `${name}`);
 
 export const logTypes = createTable(
-  "log_types",
+  "log_type",
   {
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 256 }),
@@ -29,7 +31,7 @@ export const logTypes = createTable(
 );
 
 export const subscriptionPlans = createTable(
-  "subscription_plans",
+  "subscription_plan",
   {
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 255 }),
@@ -42,25 +44,59 @@ export const subscriptionPlans = createTable(
   () => ({})
 );
 
-export const users = createTable("users", {
+export const users = createTable("user", {
   id: uuid("id").notNull().primaryKey(),
-  subscriptionPlanId: integer("subscription_plan_id").notNull().references(() => subscriptionPlans.id),
+  subscriptionPlanId: integer("subscription_plan_id").references(() => subscriptionPlans.id),
+  name: text("name"),
   firstName: text("first_name"),
   lastName: text("last_name"),
   email: text("email").notNull(),
-  createdAt: timestamp("created_at").notNull(),
+  emailVerified: timestamp("emailVerified"),
+  image: text("image"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
   createdBy: uuid("created_by"),
   updatedAt: timestamp("updated_at"),
   updatedBy: uuid("updated_by"),
 });
 
-export const sessions = createTable(
-  "sessions",
+export const accounts = createTable(
+  "account",
   {
-    sessionToken: varchar("token", { length: 255 })
+    userId: uuid("userId")
+      .notNull()
+      .references(() => users.id),
+    type: varchar("type", { length: 255 })
+      .$type<AdapterAccount["type"]>()
+      .notNull(),
+    provider: varchar("provider", { length: 255 }).notNull(),
+    providerAccountId: varchar("providerAccountId", { length: 255 }).notNull(),
+    refresh_token: text("refresh_token"),
+    access_token: text("access_token"),
+    expires_at: integer("expires_at"),
+    token_type: varchar("token_type", { length: 255 }),
+    scope: varchar("scope", { length: 255 }),
+    id_token: text("id_token"),
+    session_state: varchar("session_state", { length: 255 }),
+  },
+  (account) => ({
+    compoundKey: primaryKey({
+      columns: [account.provider, account.providerAccountId],
+    }),
+    userIdIdx: index("account_userId_idx").on(account.userId),
+  })
+);
+
+export const accountsRelations = relations(accounts, ({ one }) => ({
+  user: one(users, { fields: [accounts.userId], references: [users.id] }),
+}));
+
+export const sessions = createTable(
+  "session",
+  {
+    sessionToken: varchar("sessionToken", { length: 255 })
       .notNull()
       .primaryKey(),
-    userId: uuid("user_id")
+    userId: uuid("userId")
       .notNull()
       .references(() => users.id),
     expires: timestamp("expires", { mode: "date" }).notNull(),
@@ -75,7 +111,7 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
 }));
 
 export const attachments = createTable(
-  "attachments",
+  "attachment",
   {
     id: uuid("id").notNull().primaryKey(),
     userId: uuid("user_id").notNull().references(() => users.id),
@@ -92,24 +128,8 @@ export const attachments = createTable(
   })
 );
 
-export const federatedCredentials = createTable(
-  "federated_credentials",
-  {
-    id: uuid("id").notNull().primaryKey(),
-    userId: uuid("user_id").notNull().references(() => users.id),
-    providerId: integer("provider_id").notNull(),
-    createdAt: timestamp("created_at").notNull(),
-    createdBy: uuid("created_by").references(() => users.id),
-    updatedAt: timestamp("updated_at"),
-    updatedBy: uuid("updated_by").references(() => users.id),
-  },
-  (credential) => ({
-    userIdIdx: index("federated_credentials_user_id_idx").on(credential.userId),
-  })
-);
-
 export const botModels = createTable(
-  "bot_models",
+  "bot_model",
   {
     id: integer("id").notNull().primaryKey(),
     name: text("name"),
@@ -123,7 +143,7 @@ export const botModels = createTable(
 );
 
 export const bots = createTable(
-  "bots",
+  "bot",
   {
     id: uuid("id").notNull().primaryKey(),
     userId: uuid("user_id").notNull().references(() => users.id),
@@ -169,7 +189,7 @@ export const bots = createTable(
 );
 
 export const botSources = createTable(
-  "bot_sources",
+  "bot_source",
   {
     id: uuid("id").notNull().primaryKey(),
     botId: uuid("bot_id").notNull().references(() => bots.id),
@@ -198,7 +218,7 @@ export const botSources = createTable(
 );
 
 export const botSourceTypes = createTable(
-  "bot_source_types",
+  "bot_source_type",
   {
     id: integer("id").notNull().primaryKey(),
     name: text("name"),
@@ -210,7 +230,7 @@ export const botSourceTypes = createTable(
 );
 
 export const botSourceStatuses = createTable(
-  "bot_source_statuses",
+  "bot_source_statuse",
   {
     id: integer("id").notNull().primaryKey(),
     name: text("name"),
@@ -222,7 +242,7 @@ export const botSourceStatuses = createTable(
 );
 
 export const botSourceExtractedDatas = createTable(
-  "bot_source_extracted_datas",
+  "bot_source_extracted_data",
   {
     id: uuid("id").notNull().primaryKey(),
     botSourceId: uuid("bot_source_id").notNull().references(() => botSources.id),
@@ -236,7 +256,7 @@ export const botSourceExtractedDatas = createTable(
 );
 
 export const botConnects = createTable(
-  "bot_connects",
+  "bot_connect",
   {
     id: uuid("id").notNull().primaryKey(),
     botId: uuid("bot_id").notNull().references(() => bots.id),
@@ -254,7 +274,7 @@ export const botConnects = createTable(
 );
 
 export const threads = createTable(
-  "threads",
+  "thread",
   {
     id: uuid("id").notNull().primaryKey(),
     botId: uuid("bot_id").notNull().references(() => bots.id),
@@ -272,7 +292,7 @@ export const threads = createTable(
 );
 
 export const chats = createTable(
-  "chats",
+  "chat",
   {
     id: uuid("id").notNull().primaryKey(),
     threadId: uuid("thread_id").notNull().references(() => threads.id),
@@ -292,7 +312,7 @@ export const chats = createTable(
 );
 
 export const chatUsers = createTable(
-  "chat_users",
+  "chat_user",
   {
     id: uuid("id").notNull().primaryKey(),
     ip: text("ip"),
@@ -305,7 +325,7 @@ export const chatUsers = createTable(
 );
 
 export const invoices = createTable(
-  "invoices",
+  "invoice",
   {
     id: uuid("id").notNull().primaryKey(),
     planId: integer("plan_id").notNull().references(() => subscriptionPlans.id),
