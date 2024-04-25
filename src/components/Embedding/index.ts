@@ -6,24 +6,31 @@ import mockEmbedding from './mock-embedding.json' assert { type: "json" };
  */
 export default async function getEmbeddingsFromContents(contents: string[]) {
     const openAICred = env.OPENAI_API_KEY
-    // TODO: uncomment for live test
-    // const response = await fetch("https://api.openai.com/v1/embeddings", {
-    //     method: "POST",
-    //     body: JSON.stringify({
-    //         input: contents,
-    //         model: "text-embedding-3-small",
-    //         dimensions: 1024,
-    //     }),
-    //     headers: {
-    //         "Content-type": "application/json",
-    //         "Authorization": "Bearer " + openAICred
-    //     }
-    // })
 
-    // const { data } = await response.json()
+    let data: {
+        object: string;
+        index: number;
+        embedding: number[];
+    }[] = []
 
-    // TODO: Mock only remove when go live
-    const { data } = mockEmbedding
+    if (env.MOCK_EMBEDDING) {
+        data = mockEmbedding.data
+    } else {
+        const response = await fetch("https://api.openai.com/v1/embeddings", {
+            method: "POST",
+            body: JSON.stringify({
+                input: contents,
+                model: "text-embedding-3-small",
+                dimensions: 1024,
+            }),
+            headers: {
+                "Content-type": "application/json",
+                "Authorization": "Bearer " + openAICred
+            }
+        })
+
+        data = (await response.json()).data
+    }
 
     const result: {
         content: string,

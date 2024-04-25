@@ -342,7 +342,7 @@ export const invoices = createTable(
 );
 
 export const sourceVectors = createTable(
-  "source_vectors",
+  "source_vector",
   {
     id: uuid("id").notNull().primaryKey(),
     embeddings: vector("embeddings", { dimensions: 1024 }).notNull(),
@@ -350,7 +350,7 @@ export const sourceVectors = createTable(
 )
 
 export const dataSources = createTable(
-  "data_sources",
+  "data_source",
   {
     id : uuid('id').notNull().primaryKey(),
     content: text('content'),

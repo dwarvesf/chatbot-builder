@@ -5,7 +5,9 @@ import { Element, Text } from "domhandler";
 export default async function crawURL(url: string) : Promise<string[]>{ 
     const response = await fetch(url)
     if (response.status != 200) {
-        throw new Error("Unable to fetch web, status: " + response.status);
+        throw new Error("Unable to fetch web, status: " + response.status, {
+            cause: response
+        });
     }
 
     let document = await response.text()
@@ -73,12 +75,11 @@ function fishContent(el:Element) {
 
 // returns text content of common text tags
 function getTextContent(element: CheerioAPI, tag:string, attributes:{ [x: string]: string; }) {
-    switch (tag) {
-        case "a":
+    switch (true) {
+        case tag === "a":
             // <a> tag also includes href in case the bot want to provide the reference link to the user
             return element.text() + "[" + attributes["href"] + "]"
-        case "span":
-        case "p":
+        case /(h\d)|(span)|p/.test(tag):
             return element.text()
 
         default:

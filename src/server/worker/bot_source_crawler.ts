@@ -1,8 +1,8 @@
 import { randomUUID } from "crypto";
 import { eq } from "drizzle-orm";
 import { PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import embeddingContents from "~/components/Embedding";
-import webCrawler from "~/components/WebCrawler";
+import embeddingContents from "~/components/embedding";
+import webCrawler from "~/components/webcrawler";
 import * as schema from "~/migration/schema";
 import { db } from "~/server/db/";
 
