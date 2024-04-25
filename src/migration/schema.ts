@@ -230,7 +230,7 @@ export const botSourceTypes = createTable(
 );
 
 export const botSourceStatuses = createTable(
-  "bot_source_statuse",
+  "bot_source_status",
   {
     id: integer("id").notNull().primaryKey(),
     name: text("name"),
