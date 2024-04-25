@@ -1,8 +1,7 @@
-import React from "react";
-import z from "zod";
-import { useForm, type SubmitHandler } from "react-hook-form";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/router";
+import { useForm, type SubmitHandler } from "react-hook-form";
+import z from "zod";
 
 export const loginSchema = z.object({
   email: z.string().email(),
@@ -47,6 +46,10 @@ const LoginForm = () => {
         {errors.password && <span>This field is required</span>}
 
         <input type="submit" className="rounded border px-4 py-1" />
+
+        <div>
+          <button onClick={() => signIn('google')}>sign in with gooogle</button>
+        </div>
       </form>
     </div>
   );
