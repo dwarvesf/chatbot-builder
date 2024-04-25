@@ -1,6 +1,6 @@
 import type { GetServerSideProps, NextPage } from "next";
 import { SeoHead } from "~/components/SeoHead";
-import LoginForm from "~/components/form/LoginForm";
+import LoginForm from "~/components/form/Login";
 import BaseLayout from "~/components/layout/Layout";
 import { getServerAuthSession } from "~/server/auth";
 
