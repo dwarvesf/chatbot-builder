@@ -7,7 +7,9 @@
   },
   "shell": {
     "init_hook": [
-      "bun install"
+      "bun install",
+      "patch -p1 -N < patches/drizzle-kit.bin.cjs.patch || echo ''",
+      "patch -p1 -N < patches/drizzle-kit.utils.js.patch || echo ''"
     ],
     "scripts": {
       "init:postgres": [
@@ -19,6 +21,9 @@
         "psql -U postgres -d postgres -c 'CREATE EXTENSION IF NOT EXISTS timescaledb;'",
         "psql -U postgres -d postgres -c 'CREATE EXTENSION IF NOT EXISTS pg_trgm;'",
         "psql -U postgres -d postgres -c 'CREATE SCHEMA partman; CREATE EXTENSION pg_partman SCHEMA partman;'"
+      ],
+      "generate:pg": [
+        "bun run drizzle-kit generate:pg"
       ]
     }
   },
