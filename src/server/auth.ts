@@ -6,7 +6,6 @@ import {
   type NextAuthOptions
 } from "next-auth";
 import { type Adapter } from "next-auth/adapters";
-import Credentials from "next-auth/providers/credentials";
 import GoogleProvider, { GoogleProfile } from "next-auth/providers/google";
 
 import { env } from "~/env";
@@ -89,24 +88,6 @@ export const authOptions: NextAuthOptions = {
      *
      * @see https://next-auth.js.org/providers/github
      */
-    Credentials({
-      name: "credentials",
-      credentials: {
-        email: {
-          label: "Email",
-          type: "email",
-          placeholder: "jsmith@gmail.com",
-        },
-        password: { label: "Password", type: "password" },
-      },
-      authorize: async (_credentials) => {
-        return {
-          id: "1",
-          email: "admin@gmail.com",
-          username: "admin",
-        };
-      },
-    }),
   ],
 };
 

@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 import { bots } from "~/migration/schema";
 
@@ -8,21 +9,49 @@ import {
 } from "~/server/api/trpc";
 import { db } from "~/server/db";
 
-let post = {
-  id: 1,
-  name: "Hello World",
-};
-
 export const botRouter = createTRPCRouter({
   create: protectedProcedure
-    .input(z.object({ name: z.string().min(1) }))
+    .input(z.object({ 
+      name: z.string().min(1),
+      description: z.string(),
+      companyLogoAttachmentId: z.string(),
+      botAvatarAttachmentId: z.string(),
+      chatBubbleIconId: z.number(),
+      accentColour: z.string(),
+      subheading: z.string(),
+      welcomeMsg: z.string(),
+      inputBoxPlaceholder: z.string(),
+      showBrandingOnWidget: z.string(),
+      widgetPosition: z.number(),
+      showSourceWithResponse: z.string(),
+      postChatFeedback: z.string(),
+      widgetOpenDefault: z.string(),
+      showFloatingWelcomeMsg: z.string(),
+      showFloatingStarterQuestions: z.string(),
+      uploadedChars: z.number(),
+      maxChars: z.number(),
+      maxMsgCount: z.number(),
+      msgCount: z.number(),
+      modelId: z.number(),
+      multiLanguagesSupport: z.string(),
+      responseLength: z.number(),
+      sendEmailTranscript: z.string(),
+      suggestFollowupQuestions: z.string(),
+      customization: z.string(),
+      usageLimitPerUser: z.number(),
+      usageLimitPerUserType: z.number(),
+      userLimitWarningMsg: z.string(),
+      whileListIpsOnly: z.string(),
+    }))
     .mutation(async ({ input }) => {
-      // TODO: implement later: Create a bot
-      // simulate a slow db call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const bot = await db.insert(bots).values({
+        ...input,
+        createdAt: new Date(),
+        userId: '1',
+        id: uuidv4(),
+      }).returning();
 
-      post = { id: post.id + 1, name: input.name };
-      return post;
+      return bot
     }),
 
   getById: protectedProcedure
