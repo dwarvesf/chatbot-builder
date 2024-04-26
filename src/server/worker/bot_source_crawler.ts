@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { eq } from "drizzle-orm";
 import { type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import webCrawler from "~/components/crawler";
-import embeddingContents from "~/components/embedding2";
+import embeddingContents from "~/components/embedding";
 import * as schema from "~/migration/schema";
 import { BotSourceStatusEnum } from "~/model/bot_source_status";
 import { db } from "~/server/db/";
