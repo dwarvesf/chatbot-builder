@@ -2,6 +2,7 @@ import type { GetServerSideProps, NextPage } from "next";
 import { SeoHead } from "~/components/SeoHead";
 import LoginForm from "~/components/form/Login";
 import BaseLayout from "~/components/layout/Layout";
+import { ROUTES } from "~/constants/routes";
 import { getServerAuthSession } from "~/server/auth";
 
 const Login: NextPage = () => {
@@ -24,7 +25,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   if (session) {
     return {
       redirect: {
-        destination: "/",
+        destination: ROUTES.HOME,
         permanent: false,
       },
     };
