@@ -53,7 +53,7 @@ export const authOptions: NextAuthOptions = {
   secret: env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/login",
-    newUser: "/register",
+    newUser: "/",
     error: "/login",
   },
   adapter: DrizzleAdapter(db, createTable) as Adapter,
