@@ -3,6 +3,7 @@ import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { SeoHead } from "~/components/SeoHead";
 import Layout from "~/components/layout/Layout";
+import { ROUTES } from "~/constants/routes";
 import { api } from "~/utils/api";
 
 const Home: NextPage = () => {
@@ -34,7 +35,7 @@ const Home: NextPage = () => {
 
           {!session && (
             <div className="flex flex-row gap-2">
-              <Link href={"/login"} className="rounded border px-4 py-1">
+              <Link href={ROUTES.LOGIN} className="rounded border px-4 py-1">
                 Login
               </Link>
               <Link href={"/register"} className="rounded border px-4 py-1">

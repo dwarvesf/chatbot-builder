@@ -3,10 +3,11 @@ import { type GetServerSidePropsContext } from "next";
 import {
   getServerSession,
   type DefaultSession,
-  type NextAuthOptions
+  type NextAuthOptions,
 } from "next-auth";
 import { type Adapter } from "next-auth/adapters";
-import GoogleProvider, { GoogleProfile } from "next-auth/providers/google";
+import GoogleProvider, { type GoogleProfile } from "next-auth/providers/google";
+import { ROUTES } from "~/constants/routes";
 
 import { env } from "~/env";
 import { createTable } from "~/migration/schema";
@@ -47,14 +48,14 @@ export const authOptions: NextAuthOptions = {
           ...session.user,
           id: user?.id,
         },
-      }
+      };
     },
   },
   secret: env.NEXTAUTH_SECRET,
   pages: {
-    signIn: "/login",
-    newUser: "/",
-    error: "/login",
+    signIn: ROUTES.LOGIN,
+    newUser: ROUTES.HOME,
+    error: ROUTES.LOGIN,
   },
   adapter: DrizzleAdapter(db, createTable) as Adapter,
   providers: [
