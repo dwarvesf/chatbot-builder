@@ -5,7 +5,7 @@ import mockEmbedding from './mock-embedding.json' assert { type: "json" };
  * calls to openAI's embedding for the vector representation of the contents
  */
 export default async function getEmbeddingsFromContents(contents: string[]) {
-    const openAICred = env.OPENAI_API_KEY
+    const openAICred = env.OPENAI_API_KEY as string
 
     let data: {
         object: string;
