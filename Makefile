@@ -17,3 +17,6 @@ db-down-prune:
 
 db-migrate:
 	bun drizzle-kit push:pg
+
+db-seed:
+	bun src/migration/seed.ts
