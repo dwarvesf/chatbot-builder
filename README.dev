@@ -9,6 +9,16 @@ Start the db
 make local-up
 ```
 
+### Migrate
+```
+make db-migrate
+```
+
+### Seed
+```
+make db-seed
+```
+
 ### How to migrate database
  - Edit the schema file in `src/migration/schema.ts`
  - Apply the migration by running `make db-migrate`
