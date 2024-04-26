@@ -1,5 +1,4 @@
-
-import { CheerioAPI, load } from 'cheerio';
+import { load, type CheerioAPI } from 'cheerio';
 import { Element, Text } from "domhandler";
 
 export default async function crawURL(url: string) : Promise<string[]>{ 
