@@ -4,6 +4,7 @@ import { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import embeddingContents from "~/components/embedding";
 import webCrawler from "~/components/webcrawler";
 import * as schema from "~/migration/schema";
+import { BotSourceStatusEnum } from "~/model/bot_source_status";
 import { db } from "~/server/db/";
 
 export default async function crawlBotSources() {
@@ -13,7 +14,9 @@ export default async function crawlBotSources() {
             continue
         }
 
-        let botSourceStatus = 2 // "CRAWLED"
+        await updateBotSourceStatus(db, id, BotSourceStatusEnum.InProgress)
+
+        let botSourceStatus = BotSourceStatusEnum.Completed
 
         try {
             contents.push(...await webCrawler(url))
@@ -23,7 +26,7 @@ export default async function crawlBotSources() {
             }
         } catch (err) {
             // TODO: use logger for error log
-            botSourceStatus = 3 // "CRAWLED_FAILED"
+            botSourceStatus = BotSourceStatusEnum.Failed
         }
 
         await updateBotSourceStatus(db, id, botSourceStatus)
@@ -39,7 +42,7 @@ async function retrieveURLs(client: PostgresJsDatabase<typeof schema>) {
     const result = await client.select({
         id: schema.botSources.id,
         url: schema.botSources.url
-    }).from(schema.botSources).where(eq(schema.botSources.statusId, 1)) // TODO: change status id to `NOT_CRAWLED`'s id
+    }).from(schema.botSources).where(eq(schema.botSources.statusId, BotSourceStatusEnum.Created)) // TODO: change status id to `NOT_CRAWLED`'s id
 
     return result
 }
