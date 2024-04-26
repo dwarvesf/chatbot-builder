@@ -12,6 +12,7 @@ import {
   varchar
 } from "drizzle-orm/pg-core";
 import { AdapterAccount } from "next-auth/adapters";
+import { vector } from "~/migration/vector";
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
@@ -339,3 +340,20 @@ export const invoices = createTable(
     userIdIdx: index("invoice_user_id_idx").on(invoice.userId),
   })
 );
+
+export const sourceVectors = createTable(
+  "source_vector",
+  {
+    id: uuid("id").notNull().primaryKey(),
+    embeddings: vector("embeddings", { dimensions: 1024 }).notNull(),
+  }
+)
+
+export const dataSources = createTable(
+  "data_source",
+  {
+    id : uuid('id').notNull().primaryKey(),
+    content: text('content'),
+    vectors: uuid("vectors").references(() => sourceVectors.id),
+  }
+)

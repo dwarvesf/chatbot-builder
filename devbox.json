@@ -1,0 +1,33 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.10.5/.schema/devbox.schema.json",
+  "packages": {
+    "nodejs":                          "21.7.3",
+    "bun":                             "1.1.4",
+    "path:flakes/postgres#postgresql": ""
+  },
+  "shell": {
+    "init_hook": [
+      "bun install",
+      "patch -p1 -N < patches/drizzle-kit.bin.cjs.patch || echo ''",
+      "patch -p1 -N < patches/drizzle-kit.utils.js.patch || echo ''"
+    ],
+    "scripts": {
+      "init:postgres": [
+        "initdb -U postgres",
+        "echo \"shared_preload_libraries = 'pg_stat_statements, timescaledb'\" >> ./.devbox/virtenv/postgresql/data/postgresql.conf"
+      ],
+      "init:postgres-ext": [
+        "psql -U postgres -d postgres -c 'CREATE EXTENSION IF NOT EXISTS vector;'",
+        "psql -U postgres -d postgres -c 'CREATE EXTENSION IF NOT EXISTS timescaledb;'",
+        "psql -U postgres -d postgres -c 'CREATE EXTENSION IF NOT EXISTS pg_trgm;'",
+        "psql -U postgres -d postgres -c 'CREATE SCHEMA partman; CREATE EXTENSION pg_partman SCHEMA partman;'"
+      ],
+      "generate:pg": [
+        "bun run drizzle-kit generate:pg"
+      ]
+    }
+  },
+  "include": [
+    "plugin:postgresql"
+  ]
+}
