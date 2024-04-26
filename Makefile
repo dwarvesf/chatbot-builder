@@ -1,6 +1,10 @@
 install:
 	bun install
 
+.PHONY: build dev local-up db db-down db-down-prune db-migrate db-seed
+build:
+	bun run build
+
 dev:
 	bun dev
 

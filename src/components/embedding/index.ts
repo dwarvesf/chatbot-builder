@@ -5,13 +5,14 @@ import mockEmbedding from './mock-embedding.json' assert { type: "json" };
  * calls to openAI's embedding for the vector representation of the contents
  */
 export default async function getEmbeddingsFromContents(contents: string[]) {
-    const openAICred = env.OPENAI_API_KEY as string
+    const openAICred = env.OPENAI_API_KEY
 
-    let data: {
+    type EmbeddingData = {
         object: string;
         index: number;
-        embedding: number[];
-    }[] = []
+        embedding: number[]
+    }
+    let data: EmbeddingData[] = []
 
     if (env.MOCK_EMBEDDING) {
         data = mockEmbedding.data
@@ -29,7 +30,11 @@ export default async function getEmbeddingsFromContents(contents: string[]) {
             }
         })
 
-        data = (await response.json()).data
+        type JSONResponse = {
+          data: EmbeddingData[]
+        }
+        const resBody = await response.json() as JSONResponse
+        data = resBody.data
     }
 
     const result: {

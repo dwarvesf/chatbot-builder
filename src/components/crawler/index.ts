@@ -73,15 +73,19 @@ function fishContent(el:Element) {
 }
 
 // returns text content of common text tags
-function getTextContent(element: CheerioAPI, tag:string, attributes:{ [x: string]: string; }) {
-    switch (true) {
-        case tag === "a":
-            // <a> tag also includes href in case the bot want to provide the reference link to the user
-            return element.text() + "[" + attributes["href"] + "]"
-        case /(h\d)|(span)|p/.test(tag):
-            return element.text()
+function getTextContent(
+  element: CheerioAPI,
+  tag: string,
+  attributes: Record<string, string>
+) {
+  switch (true) {
+    case tag === "a":
+      // <a> tag also includes href in case the bot want to provide the reference link to the user
+      return element.text() + "[" + attributes.href + "]";
+    case /(h\d)|(span)|p/.test(tag):
+      return element.text();
 
-        default:
-            return "";
-    }
+    default:
+      return "";
+  }
 }
