@@ -9,7 +9,6 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 export const botSourceRouter = createTRPCRouter({
   create: protectedProcedure.input(z.object({
     botId: z.string(),
-    // typeId: z.union([ z.literal(BotSourceTypeEnum.Link), z.literal(BotSourceTypeEnum.Sitemap) ]),
     typeId: z.nativeEnum(BotSourceTypeEnum),
     statusId: z.number(),
     url: z.string(),
@@ -27,7 +26,6 @@ export const botSourceRouter = createTRPCRouter({
   }),
 
   getByBotId: protectedProcedure.input(z.string()).query(async ({ input }) => {
-    // TODO: Paging
     const arr = await db.query.botSources.findMany({
       where: eq(botSources.botId, input),
     });

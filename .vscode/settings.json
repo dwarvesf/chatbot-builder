@@ -1,5 +1,7 @@
 {
   "editor.codeActionsOnSave": {
     "source.organizeImports": "explicit",
-  }
+  },
+  "editor.detectIndentation": true,
+  "editor.tabSize": 2
 }
