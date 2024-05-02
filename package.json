@@ -15,6 +15,7 @@
     "@dwarvesf/react-utils": "^0.4.2",
     "@hookform/resolvers": "^3.3.4",
     "@mochi-ui/core": "^0.13.6",
+    "@mochi-ui/icons": "^0.8.0",
     "@mochi-ui/theme": "^0.18.0",
     "@mozilla/readability": "^0.5.0",
     "@t3-oss/env-nextjs": "^0.9.2",

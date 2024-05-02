@@ -1,13 +1,18 @@
+import { Button } from "@mochi-ui/core";
+import { GoogleColored } from "@mochi-ui/icons";
 import { signIn } from "next-auth/react";
-
 
 const LoginForm = () => {
   return (
-    <div className="radius flex flex-col items-center gap-2 border p-4">
-      <div>
-        <button onClick={() => signIn('google')}>sign in with gooogle</button>
-      </div>
-    </div>
+    <Button
+      variant="outline"
+      color="neutral"
+      onClick={() => signIn("google")}
+      className="mx-auto w-full max-w-[300px] items-center justify-between"
+    >
+      Sign in with Google
+      <GoogleColored width={24} height={24} />
+    </Button>
   );
 };
 
