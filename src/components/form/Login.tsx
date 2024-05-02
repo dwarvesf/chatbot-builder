@@ -10,7 +10,7 @@ const LoginForm = () => {
       onClick={() => signIn("google")}
       className="mx-auto w-full max-w-[300px] items-center justify-between"
     >
-      Sign in with Google
+      Log in with Google
       <GoogleColored width={24} height={24} />
     </Button>
   );
