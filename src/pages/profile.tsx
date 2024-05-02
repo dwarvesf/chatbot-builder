@@ -1,13 +1,16 @@
-import { PageContent } from "@mochi-ui/core";
+import { PageContent, PageHeader, PageHeaderTitle } from "@mochi-ui/core";
 import type { GetServerSideProps, NextPage } from "next";
 import { SeoHead } from "~/components/SeoHead";
 import { ROUTES } from "~/constants/routes";
 import { getServerAuthSession } from "~/server/auth";
 
-const Index: NextPage = () => {
+const Profile: NextPage = () => {
   return (
     <>
-      <SeoHead title="Dashboard" />
+      <SeoHead title="Profile" />
+      <PageHeader className="border-b border-divider">
+        <PageHeaderTitle>Profile</PageHeaderTitle>
+      </PageHeader>
       <PageContent>...</PageContent>
     </>
   );
@@ -28,7 +31,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   }
 
-  return { props: {} };
+  return { props: { session } };
 };
 
-export default Index;
+export default Profile;

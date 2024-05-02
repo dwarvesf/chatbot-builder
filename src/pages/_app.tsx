@@ -1,10 +1,12 @@
 import { type Session } from "next-auth";
-import { SessionProvider } from "next-auth/react";
+import { SessionProvider, useSession } from "next-auth/react";
 import { type AppType } from "next/app";
 import { Inter } from "next/font/google";
 
 import { api } from "~/utils/api";
 
+import React from "react";
+import { AuthenticatedLayout } from "~/components/layout";
 import "~/styles/globals.css";
 
 const inter = Inter({
@@ -12,14 +14,30 @@ const inter = Inter({
   variable: "--font-sans",
 });
 
+const InnerApp = ({ children }: { children: React.ReactNode }) => {
+  const { data: session } = useSession();
+  if (session) {
+    return <AuthenticatedLayout>{children}</AuthenticatedLayout>;
+  }
+
+  return <>{children}</>;
+};
+
 const MyApp: AppType<{ session: Session | null }> = ({
   Component,
   pageProps: { session, ...pageProps },
 }) => {
   return (
     <SessionProvider session={session}>
-      <main className={`font-sans ${inter.variable}`}>
-        <Component {...pageProps} />
+      <style jsx global>{`
+        html {
+          font-family: ${inter.style.fontFamily};
+        }
+      `}</style>
+      <main className="font-sans">
+        <InnerApp>
+          <Component {...pageProps} />
+        </InnerApp>
       </main>
     </SessionProvider>
   );
