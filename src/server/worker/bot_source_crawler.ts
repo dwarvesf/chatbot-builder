@@ -4,7 +4,7 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import crawURL from '~/components/crawler'
 import embeddingContents from '~/components/embedding'
 import * as schema from '~/migration/schema'
-import { BotSourceStatusEnum } from '~/model/bot_source_status'
+import { BotSourceStatusEnum } from '~/model/bot-source-status'
 import { db } from '~/server/db/'
 
 export default async function crawlBotSources() {
