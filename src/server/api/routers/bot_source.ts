@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm'
 import { v4 as uuidv4 } from 'uuid'
 import { z } from 'zod'
 import { botSources } from '~/migration/schema'
-import { BotSourceTypeEnum } from '~/model/bot_source_type'
+import { BotSourceTypeEnum } from '~/model/bot-source-type'
 import { db } from '~/server/db'
 import { createTRPCRouter, protectedProcedure } from '../trpc'
 

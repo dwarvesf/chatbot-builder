@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm'
 import { v4 as uuidv4 } from 'uuid'
 import { z } from 'zod'
 import { bots } from '~/migration/schema'
+import { BotModelEnum } from '~/model/bot-model'
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { db } from '~/server/db'
@@ -30,7 +31,7 @@ export const botRouter = createTRPCRouter({
         maxChars: z.number(),
         maxMsgCount: z.number(),
         msgCount: z.number(),
-        modelId: z.number(),
+        modelId: z.nativeEnum(BotModelEnum),
         multiLanguagesSupport: z.string(),
         responseLength: z.number(),
         sendEmailTranscript: z.string(),
