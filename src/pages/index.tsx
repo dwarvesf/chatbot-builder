@@ -10,6 +10,7 @@ import {
   Typography,
 } from '@mochi-ui/core'
 import type { GetServerSideProps, NextPage } from 'next'
+import Link from 'next/link'
 import { SeoHead } from '~/components/SeoHead'
 import { CreateBotModal } from '~/components/bot/CreateBotModal'
 import { ROUTES } from '~/constants/routes'
@@ -52,10 +53,14 @@ const Index: NextPage = () => {
         ) : (
           <div className="grid gap-4 grid-cols-4">
             {bots.map((bot) => (
-              <Card key={bot.id}>
-                <Avatar className="w-12 h-12" src="" />
-                <Typography level="h6">{bot.name}</Typography>
-                <Typography color="textSecondary">{bot.description}</Typography>
+              <Card asChild key={bot.id}>
+                <Link href={ROUTES.BOT_DETAIL(bot?.id)}>
+                  <Avatar className="w-12 h-12" src="" />
+                  <Typography level="h6">{bot.name}</Typography>
+                  <Typography color="textSecondary">
+                    {bot.description}
+                  </Typography>
+                </Link>
               </Card>
             ))}
           </div>

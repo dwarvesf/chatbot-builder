@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/non-nullable-type-assertion-style */
 import {
   Avatar,
   DesktopNav,
@@ -21,6 +22,7 @@ import {
 } from '@mochi-ui/icons'
 import { signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 import React, { useMemo } from 'react'
 import { ROUTES } from '~/constants/routes'
 
@@ -28,7 +30,7 @@ type AuthenticatedLayoutProps = {
   children: React.ReactNode
 }
 
-const headerItems: SidebarProps['headerItems'] = [
+const headerMainItems: SidebarProps['headerItems'] = [
   {
     title: 'Dashboard',
     type: 'link',
@@ -38,8 +40,43 @@ const headerItems: SidebarProps['headerItems'] = [
   },
 ]
 
+const headerBotItems = (botId: string) =>
+  [
+    {
+      title: 'Settings',
+      type: 'link',
+      as: Link,
+      href: ROUTES.BOT_DETAIL_SETTINGS(botId),
+      Icon: HomeSolid,
+    },
+    {
+      title: 'Sources',
+      type: 'link',
+      as: Link,
+      href: ROUTES.BOT_DETAIL_SOURCES(botId),
+      Icon: HomeSolid,
+    },
+    {
+      title: 'Appearance',
+      type: 'link',
+      as: Link,
+      href: ROUTES.BOT_DETAIL_APPEARANCE(botId),
+      Icon: HomeSolid,
+    },
+    {
+      title: 'Integration',
+      type: 'link',
+      as: Link,
+      href: ROUTES.BOT_DETAIL_INTEGRATIONS(botId),
+      Icon: HomeSolid,
+    },
+  ] as SidebarProps['headerItems']
+
 export const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
   const session = useSession()
+  const { pathname, query } = useRouter()
+  const { id } = query
+  const isBotPath = pathname.startsWith('/bots/[id]')
 
   const navItems = useMemo(
     () => [
@@ -97,14 +134,20 @@ export const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
     <Layout>
       <TopBar
         leftSlot={
-          <Typography className="!text-sm font-semibold">APP LOGO</Typography>
+          <Link href={ROUTES.HOME}>
+            <Typography className="!text-sm font-semibold">APP LOGO</Typography>
+          </Link>
         }
         rightSlot={<DesktopNav navItems={navItems} />}
       />
       <Layout className="flex-1">
         <Sidebar
           version="0.0.1"
-          headerItems={headerItems}
+          headerItems={
+            isBotPath
+              ? headerBotItems(id?.toString() as string)
+              : headerMainItems
+          }
           className="!h-[calc(100vh-56px)]"
         />
         <Layout className="h-[calc(100vh-56px)] w-10 flex-1">{children}</Layout>

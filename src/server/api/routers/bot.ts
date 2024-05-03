@@ -50,6 +50,7 @@ export const botRouter = createTRPCRouter({
           ...input,
           createdAt: new Date(),
           userId: ctx.session.user.id,
+          modelId: BotModelEnum.GPT4,
           id: uuidv4(),
         })
         .returning()
