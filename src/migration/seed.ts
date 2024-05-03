@@ -39,5 +39,13 @@ await db.insert(schema.botSourceTypes).values([
   },
 ])
 
+await db.insert(schema.botModels).values([
+  {
+    id: 1,
+    name: 'GPT-4',
+    createdAt: new Date(),
+  },
+])
+
 console.log('Database seeded successfully!')
 process.exit(0)
