@@ -20,7 +20,7 @@ import { api } from '~/utils/api'
 const Index: NextPage = () => {
   const { onOpenChange, isOpen, onOpen } = useDisclosure()
   const botsQuery = api.bot.getList.useQuery()
-  const bots = botsQuery.data ?? []
+  const bots = botsQuery?.data ?? []
   const isEmptyBots = bots.length === 0
 
   return (
