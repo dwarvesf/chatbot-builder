@@ -1,0 +1,19 @@
+node_modules
+dist
+build
+public
+storybook-static
+types
+
+# nextjs
+.next
+next.config.js
+out
+
+# test
+coverage
+cypress
+__stubs__
+__snapshots__
+*.test.ts
+*.test.tsx
