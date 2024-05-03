@@ -1,7 +1,7 @@
-import { NextPage } from "next";
-import { AuthenticatedLayout } from "~/components/layout";
-import { SeoHead } from "~/components/SeoHead";
-import { SiteHeader } from "~/components/SiteHeader";
+import { type NextPage } from 'next'
+import { AuthenticatedLayout } from '~/components/layout'
+import { SeoHead } from '~/components/SeoHead'
+import { SiteHeader } from '~/components/SiteHeader'
 
 const BotsPage: NextPage = () => {
   return (
@@ -12,7 +12,7 @@ const BotsPage: NextPage = () => {
         <div>Bots Page</div>
       </AuthenticatedLayout>
     </>
-  );
-};
+  )
+}
 
-export default BotsPage;
+export default BotsPage

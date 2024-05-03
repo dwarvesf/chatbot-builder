@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "postinstall": "husky install",
+    "format": "prettier -c --write \"*/**\"",
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",

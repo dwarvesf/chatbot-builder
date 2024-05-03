@@ -1,27 +1,27 @@
-import { type Session } from "next-auth";
-import { SessionProvider, useSession } from "next-auth/react";
-import { type AppType } from "next/app";
-import { Inter } from "next/font/google";
+import { type Session } from 'next-auth'
+import { SessionProvider, useSession } from 'next-auth/react'
+import { type AppType } from 'next/app'
+import { Inter } from 'next/font/google'
 
-import { api } from "~/utils/api";
+import { api } from '~/utils/api'
 
-import React from "react";
-import { AuthenticatedLayout } from "~/components/layout";
-import "~/styles/globals.css";
+import React from 'react'
+import { AuthenticatedLayout } from '~/components/layout'
+import '~/styles/globals.css'
 
 const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
+  subsets: ['latin'],
+  variable: '--font-sans',
+})
 
 const InnerApp = ({ children }: { children: React.ReactNode }) => {
-  const { data: session } = useSession();
+  const { data: session } = useSession()
   if (session) {
-    return <AuthenticatedLayout>{children}</AuthenticatedLayout>;
+    return <AuthenticatedLayout>{children}</AuthenticatedLayout>
   }
 
-  return <>{children}</>;
-};
+  return <>{children}</>
+}
 
 const MyApp: AppType<{ session: Session | null }> = ({
   Component,
@@ -40,7 +40,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
         </InnerApp>
       </main>
     </SessionProvider>
-  );
-};
+  )
+}
 
-export default api.withTRPC(MyApp);
+export default api.withTRPC(MyApp)

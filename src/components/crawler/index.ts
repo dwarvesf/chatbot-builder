@@ -1,7 +1,7 @@
-import { Readability } from "@mozilla/readability";
-import { load, type CheerioAPI } from "cheerio";
-import { Element, Text } from "domhandler";
-import { JSDOM } from "jsdom";
+import { Readability } from '@mozilla/readability'
+import { load, type CheerioAPI } from 'cheerio'
+import { Element, Text } from 'domhandler'
+import { JSDOM } from 'jsdom'
 
 export default async function crawURL(url: string): Promise<string[]> {
   const response = await fetch(url)
@@ -21,7 +21,7 @@ export default async function crawURL(url: string): Promise<string[]> {
   if (article?.content) {
     results.push(article.textContent)
   }
-  return results;
+  return results
 }
 
 /**
@@ -29,23 +29,23 @@ export default async function crawURL(url: string): Promise<string[]> {
  */
 function cleanTextFormat(string: string) {
   for (const format of [
-    "b",
-    "strong",
-    "i",
-    "em",
-    "mark",
-    "small",
-    "del",
-    "ins",
-    "sub",
-    "sup",
+    'b',
+    'strong',
+    'i',
+    'em',
+    'mark',
+    'small',
+    'del',
+    'ins',
+    'sub',
+    'sup',
   ]) {
     string = string.replaceAll(
-      new RegExp("<" + format + ">|</" + format + ">", "g"),
-      " ",
-    );
+      new RegExp('<' + format + '>|</' + format + '>', 'g'),
+      ' ',
+    )
   }
-  return string.replaceAll(new RegExp("<br>|<br/>|&nbsp;", "g"), " ");
+  return string.replaceAll(new RegExp('<br>|<br/>|&nbsp;', 'g'), ' ')
 }
 
 /**
@@ -56,28 +56,28 @@ function cleanTextFormat(string: string) {
  */
 function fishContent(el: Element) {
   if (el.children.length == 0) {
-    return [getTextContent(load(el), el.tagName, el.attribs).trim()];
+    return [getTextContent(load(el), el.tagName, el.attribs).trim()]
   }
 
-  let contents: string[] = [];
+  let contents: string[] = []
   for (const child of el.children) {
     if (child instanceof Element) {
-      contents = contents.concat(fishContent(child));
+      contents = contents.concat(fishContent(child))
     } else if (child instanceof Text) {
-      contents.push(child.nodeValue);
+      contents.push(child.nodeValue)
     }
   }
 
   if (el.tagName.match(/(ul)|(tr)/g)) {
     return [
       contents
-        .filter((s) => s.trim() != "")
+        .filter((s) => s.trim() != '')
         .map((s) => s.trim())
-        .join(", "),
-    ];
+        .join(', '),
+    ]
   }
 
-  return contents.filter((s) => s.trim() != "").map((s) => s.trim());
+  return contents.filter((s) => s.trim() != '').map((s) => s.trim())
 }
 
 // returns text content of common text tags
@@ -87,13 +87,13 @@ function getTextContent(
   attributes: Record<string, string>,
 ) {
   switch (true) {
-    case tag === "a":
+    case tag === 'a':
       // <a> tag also includes href in case the bot want to provide the reference link to the user
-      return element.text() + "[" + attributes.href + "]";
+      return element.text() + '[' + attributes.href + ']'
     case /(h\d)|(span)|p/.test(tag):
-      return element.text();
+      return element.text()
 
     default:
-      return "";
+      return ''
   }
 }

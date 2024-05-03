@@ -1,37 +1,37 @@
-import { randomUUID } from "crypto";
-import { eq } from "drizzle-orm";
-import { type PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import crawURL from "~/components/crawler";
-import embeddingContents from "~/components/embedding";
-import * as schema from "~/migration/schema";
-import { BotSourceStatusEnum } from "~/model/bot_source_status";
-import { db } from "~/server/db/";
+import { randomUUID } from 'crypto'
+import { eq } from 'drizzle-orm'
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js'
+import crawURL from '~/components/crawler'
+import embeddingContents from '~/components/embedding'
+import * as schema from '~/migration/schema'
+import { BotSourceStatusEnum } from '~/model/bot_source_status'
+import { db } from '~/server/db/'
 
 export default async function crawlBotSources() {
-  const contents: string[] = [];
+  const contents: string[] = []
   for (const { id, url } of await retrieveURLs(db)) {
     if (url == undefined) {
-      continue;
+      continue
     }
 
-    await updateBotSourceStatus(db, id, BotSourceStatusEnum.InProgress);
-    let botSourceStatus = BotSourceStatusEnum.Completed;
+    await updateBotSourceStatus(db, id, BotSourceStatusEnum.InProgress)
+    let botSourceStatus = BotSourceStatusEnum.Completed
 
     try {
-      contents.push(...(await crawURL(url)));
+      contents.push(...(await crawURL(url)))
 
       for (const { content, embedding } of await embeddingContents(contents)) {
-        await saveWebData(db, content, embedding);
+        await saveWebData(db, content, embedding)
       }
     } catch (err) {
       // TODO: use logger for error log
-      botSourceStatus = BotSourceStatusEnum.Failed;
+      botSourceStatus = BotSourceStatusEnum.Failed
     }
 
-    await updateBotSourceStatus(db, id, botSourceStatus);
+    await updateBotSourceStatus(db, id, botSourceStatus)
   }
 
-  return contents;
+  return contents
 }
 
 /**
@@ -44,9 +44,9 @@ async function retrieveURLs(client: PostgresJsDatabase<typeof schema>) {
       url: schema.botSources.url,
     })
     .from(schema.botSources)
-    .where(eq(schema.botSources.statusId, BotSourceStatusEnum.Created)); // TODO: change status id to `NOT_CRAWLED`'s id
+    .where(eq(schema.botSources.statusId, BotSourceStatusEnum.Created)) // TODO: change status id to `NOT_CRAWLED`'s id
 
-  return result;
+  return result
 }
 
 /**
@@ -57,21 +57,21 @@ async function saveWebData(
   content: string,
   embeddedContents: number[],
 ) {
-  const sourceVectorId = randomUUID();
+  const sourceVectorId = randomUUID()
 
   try {
     await client.insert(schema.sourceVectors).values({
       id: sourceVectorId,
       embeddings: embeddedContents,
-    });
+    })
 
     await client.insert(schema.dataSources).values({
       id: randomUUID(),
       content: content,
       vectors: sourceVectorId,
-    });
+    })
   } catch (err) {
-    console.log(err);
+    console.log(err)
   }
 }
 
@@ -88,5 +88,5 @@ async function updateBotSourceStatus(
     .set({
       statusId: status,
     })
-    .where(eq(schema.botSources.id, id));
+    .where(eq(schema.botSources.id, id))
 }

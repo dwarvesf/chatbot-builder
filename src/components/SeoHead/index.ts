@@ -1,1 +1,1 @@
-export * from "./SeoHead";
+export * from './SeoHead'
