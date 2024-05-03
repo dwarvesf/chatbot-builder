@@ -4,12 +4,12 @@ import { SeoHead } from '~/components/SeoHead'
 import { ROUTES } from '~/constants/routes'
 import { getServerAuthSession } from '~/server/auth'
 
-const Setting: NextPage = () => {
+const BotSources: NextPage = () => {
   return (
     <>
-      <SeoHead title="Setting" />
+      <SeoHead title="Sources" />
       <PageHeader className="border-b border-divider">
-        <PageHeaderTitle>Settings</PageHeaderTitle>
+        <PageHeaderTitle>Sources</PageHeaderTitle>
       </PageHeader>
       <PageContent>...</PageContent>
     </>
@@ -34,4 +34,4 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   return { props: {} }
 }
 
-export default Setting
+export default BotSources

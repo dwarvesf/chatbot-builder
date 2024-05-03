@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/non-nullable-type-assertion-style */
 import {
+  Avatar,
   DesktopNav,
   DropdownMenu,
   DropdownMenuContent,
@@ -7,15 +9,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   Layout,
-  ProfileBadge,
   Sidebar,
   TopBar,
   Typography,
   type SidebarProps,
 } from '@mochi-ui/core'
-import { DirectionLine, GearSolid, HomeSolid, UserSolid } from '@mochi-ui/icons'
+import {
+  DirectionLine,
+  DollarBubbleSolid,
+  HomeSolid,
+  UserSolid,
+} from '@mochi-ui/icons'
 import { signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 import React, { useMemo } from 'react'
 import { ROUTES } from '~/constants/routes'
 
@@ -23,7 +30,7 @@ type AuthenticatedLayoutProps = {
   children: React.ReactNode
 }
 
-const headerItems: SidebarProps['headerItems'] = [
+const headerMainItems: SidebarProps['headerItems'] = [
   {
     title: 'Dashboard',
     type: 'link',
@@ -31,28 +38,54 @@ const headerItems: SidebarProps['headerItems'] = [
     href: ROUTES.HOME,
     Icon: HomeSolid,
   },
-  {
-    title: 'Settings',
-    type: 'link',
-    as: Link,
-    href: ROUTES.SETTINGS,
-    Icon: GearSolid,
-  },
 ]
+
+const headerBotItems = (botId: string) =>
+  [
+    {
+      title: 'Settings',
+      type: 'link',
+      as: Link,
+      href: ROUTES.BOT_DETAIL_SETTINGS(botId),
+      Icon: HomeSolid,
+    },
+    {
+      title: 'Sources',
+      type: 'link',
+      as: Link,
+      href: ROUTES.BOT_DETAIL_SOURCES(botId),
+      Icon: HomeSolid,
+    },
+    {
+      title: 'Appearance',
+      type: 'link',
+      as: Link,
+      href: ROUTES.BOT_DETAIL_APPEARANCE(botId),
+      Icon: HomeSolid,
+    },
+    {
+      title: 'Integration',
+      type: 'link',
+      as: Link,
+      href: ROUTES.BOT_DETAIL_INTEGRATIONS(botId),
+      Icon: HomeSolid,
+    },
+  ] as SidebarProps['headerItems']
 
 export const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
   const session = useSession()
+  const { pathname, query } = useRouter()
+  const { id } = query
+  const isBotPath = pathname.startsWith('/bots/[id]')
 
   const navItems = useMemo(
     () => [
       // eslint-disable-next-line react/jsx-key
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <ProfileBadge
-            avatar={session.data?.user.image ?? ''}
-            name={session.data?.user.name ?? ''}
-            platform=""
-          />
+          <button>
+            <Avatar className="w-8 h-8" src={session.data?.user.image ?? ''} />
+          </button>
         </DropdownMenuTrigger>
         <DropdownMenuPortal>
           <DropdownMenuContent
@@ -64,15 +97,24 @@ export const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
               bottom: 32,
             }}
           >
+            <div className="px-3 py-1">
+              <Typography className="text-sm" component="b">
+                {session.data?.user.name}
+              </Typography>
+              <Typography className="text-sm">
+                {session.data?.user.email}
+              </Typography>
+            </div>
+            <DropdownMenuSeparator />
             <Link href={ROUTES.PROFILE}>
               <DropdownMenuItem leftIcon={<UserSolid />}>
                 Profile
               </DropdownMenuItem>
             </Link>
 
-            <Link href={ROUTES.SETTINGS}>
-              <DropdownMenuItem leftIcon={<GearSolid />}>
-                Settings
+            <Link href={ROUTES.BILLING}>
+              <DropdownMenuItem leftIcon={<DollarBubbleSolid />}>
+                Billing
               </DropdownMenuItem>
             </Link>
             <DropdownMenuSeparator />
@@ -92,14 +134,20 @@ export const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
     <Layout>
       <TopBar
         leftSlot={
-          <Typography className="!text-sm font-semibold">APP LOGO</Typography>
+          <Link href={ROUTES.HOME}>
+            <Typography className="!text-sm font-semibold">APP LOGO</Typography>
+          </Link>
         }
         rightSlot={<DesktopNav navItems={navItems} />}
       />
       <Layout className="flex-1">
         <Sidebar
           version="0.0.1"
-          headerItems={headerItems}
+          headerItems={
+            isBotPath
+              ? headerBotItems(id?.toString() as string)
+              : headerMainItems
+          }
           className="!h-[calc(100vh-56px)]"
         />
         <Layout className="h-[calc(100vh-56px)] w-10 flex-1">{children}</Layout>

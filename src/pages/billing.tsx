@@ -1,19 +1,15 @@
 import { PageContent, PageHeader, PageHeaderTitle } from '@mochi-ui/core'
 import type { GetServerSideProps, NextPage } from 'next'
-import { useParams } from 'next/navigation'
 import { SeoHead } from '~/components/SeoHead'
 import { ROUTES } from '~/constants/routes'
 import { getServerAuthSession } from '~/server/auth'
-import { api } from '~/utils/api'
 
-const BotDetail: NextPage = () => {
-  const { id } = useParams()
-  const botQuery = api.bot.getById.useQuery(id as string)
+const Billing: NextPage = () => {
   return (
     <>
-      <SeoHead title="Bot" />
+      <SeoHead title="Billing" />
       <PageHeader className="border-b border-divider">
-        <PageHeaderTitle>{botQuery.data?.name}</PageHeaderTitle>
+        <PageHeaderTitle>Billing</PageHeaderTitle>
       </PageHeader>
       <PageContent>...</PageContent>
     </>
@@ -38,4 +34,4 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   return { props: {} }
 }
 
-export default BotDetail
+export default Billing
