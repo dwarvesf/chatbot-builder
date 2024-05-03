@@ -1,4 +1,5 @@
 import {
+  Avatar,
   DesktopNav,
   DropdownMenu,
   DropdownMenuContent,
@@ -7,13 +8,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   Layout,
-  ProfileBadge,
   Sidebar,
   TopBar,
   Typography,
   type SidebarProps,
 } from '@mochi-ui/core'
-import { DirectionLine, GearSolid, HomeSolid, UserSolid } from '@mochi-ui/icons'
+import {
+  DirectionLine,
+  DollarBubbleSolid,
+  HomeSolid,
+  UserSolid,
+} from '@mochi-ui/icons'
 import { signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
 import React, { useMemo } from 'react'
@@ -31,13 +36,6 @@ const headerItems: SidebarProps['headerItems'] = [
     href: ROUTES.HOME,
     Icon: HomeSolid,
   },
-  {
-    title: 'Settings',
-    type: 'link',
-    as: Link,
-    href: ROUTES.SETTINGS,
-    Icon: GearSolid,
-  },
 ]
 
 export const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
@@ -48,11 +46,9 @@ export const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
       // eslint-disable-next-line react/jsx-key
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <ProfileBadge
-            avatar={session.data?.user.image ?? ''}
-            name={session.data?.user.name ?? ''}
-            platform=""
-          />
+          <button>
+            <Avatar className="w-8 h-8" src={session.data?.user.image ?? ''} />
+          </button>
         </DropdownMenuTrigger>
         <DropdownMenuPortal>
           <DropdownMenuContent
@@ -64,15 +60,24 @@ export const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
               bottom: 32,
             }}
           >
+            <div className="px-3 py-1">
+              <Typography className="text-sm" component="b">
+                {session.data?.user.name}
+              </Typography>
+              <Typography className="text-sm">
+                {session.data?.user.email}
+              </Typography>
+            </div>
+            <DropdownMenuSeparator />
             <Link href={ROUTES.PROFILE}>
               <DropdownMenuItem leftIcon={<UserSolid />}>
                 Profile
               </DropdownMenuItem>
             </Link>
 
-            <Link href={ROUTES.SETTINGS}>
-              <DropdownMenuItem leftIcon={<GearSolid />}>
-                Settings
+            <Link href={ROUTES.BILLING}>
+              <DropdownMenuItem leftIcon={<DollarBubbleSolid />}>
+                Billing
               </DropdownMenuItem>
             </Link>
             <DropdownMenuSeparator />

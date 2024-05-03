@@ -5,6 +5,7 @@ import { Inter } from 'next/font/google'
 
 import { api } from '~/utils/api'
 
+import { Toaster } from '@mochi-ui/core'
 import React from 'react'
 import { AuthenticatedLayout } from '~/components/layout'
 import '~/styles/globals.css'
@@ -34,6 +35,9 @@ const MyApp: AppType<{ session: Session | null }> = ({
           font-family: ${inter.style.fontFamily};
         }
       `}</style>
+      <div className="fixed top-3 right-3 z-50">
+        <Toaster />
+      </div>
       <main className="font-sans">
         <InnerApp>
           <Component {...pageProps} />
