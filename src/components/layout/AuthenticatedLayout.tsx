@@ -12,41 +12,36 @@ import {
   TopBar,
   Typography,
   type SidebarProps,
-} from "@mochi-ui/core";
-import {
-  DirectionLine,
-  GearSolid,
-  HomeSolid,
-  UserSolid,
-} from "@mochi-ui/icons";
-import { signOut, useSession } from "next-auth/react";
-import Link from "next/link";
-import React, { useMemo } from "react";
-import { ROUTES } from "~/constants/routes";
+} from '@mochi-ui/core'
+import { DirectionLine, GearSolid, HomeSolid, UserSolid } from '@mochi-ui/icons'
+import { signOut, useSession } from 'next-auth/react'
+import Link from 'next/link'
+import React, { useMemo } from 'react'
+import { ROUTES } from '~/constants/routes'
 
 type AuthenticatedLayoutProps = {
-  children: React.ReactNode;
-};
+  children: React.ReactNode
+}
 
-const headerItems: SidebarProps["headerItems"] = [
+const headerItems: SidebarProps['headerItems'] = [
   {
-    title: "Dashboard",
-    type: "link",
+    title: 'Dashboard',
+    type: 'link',
     as: Link,
     href: ROUTES.HOME,
     Icon: HomeSolid,
   },
   {
-    title: "Settings",
-    type: "link",
+    title: 'Settings',
+    type: 'link',
     as: Link,
     href: ROUTES.SETTINGS,
     Icon: GearSolid,
   },
-];
+]
 
 export const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
-  const session = useSession();
+  const session = useSession()
 
   const navItems = useMemo(
     () => [
@@ -54,8 +49,8 @@ export const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <ProfileBadge
-            avatar={session.data?.user.image ?? ""}
-            name={session.data?.user.name ?? ""}
+            avatar={session.data?.user.image ?? ''}
+            name={session.data?.user.name ?? ''}
             platform=""
           />
         </DropdownMenuTrigger>
@@ -91,7 +86,7 @@ export const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
       </DropdownMenu>,
     ],
     [session],
-  );
+  )
 
   return (
     <Layout>
@@ -110,5 +105,5 @@ export const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
         <Layout className="h-[calc(100vh-56px)] w-10 flex-1">{children}</Layout>
       </Layout>
     </Layout>
-  );
-};
+  )
+}

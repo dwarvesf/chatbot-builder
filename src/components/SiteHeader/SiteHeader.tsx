@@ -1,13 +1,13 @@
-import { Avatar, ProfileBadge } from "@mochi-ui/core";
-import Head from "next/head";
+import { Avatar, ProfileBadge } from '@mochi-ui/core'
+import Head from 'next/head'
 
 export type SiteHeaderProps = {
-  title?: string;
-  renderMiddle?: () => React.ReactNode;
-};
+  title?: string
+  renderMiddle?: () => React.ReactNode
+}
 
 export const SiteHeader = (props: SiteHeaderProps) => {
-  const { title, renderMiddle } = props;
+  const { title, renderMiddle } = props
 
   return (
     <header className="flex min-h-[64px] items-center justify-between gap-4 border-b px-6">
@@ -17,5 +17,5 @@ export const SiteHeader = (props: SiteHeaderProps) => {
         <ProfileBadge name="John Doe" avatar="" platform="" />
       </div>
     </header>
-  );
-};
+  )
+}

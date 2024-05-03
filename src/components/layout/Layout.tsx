@@ -1,8 +1,8 @@
-import React from "react";
+import React from 'react'
 
 type LayoutProps = {
-  children: React.ReactNode;
-};
+  children: React.ReactNode
+}
 
 const Layout = ({ children }: LayoutProps) => {
   return (
@@ -11,7 +11,7 @@ const Layout = ({ children }: LayoutProps) => {
         {children}
       </main>
     </div>
-  );
-};
+  )
+}
 
-export default Layout;
+export default Layout

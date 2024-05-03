@@ -1,9 +1,9 @@
-import type { GetServerSideProps, NextPage } from "next";
-import { SeoHead } from "~/components/SeoHead";
-import LoginForm from "~/components/form/Login";
-import BaseLayout from "~/components/layout/Layout";
-import { ROUTES } from "~/constants/routes";
-import { getServerAuthSession } from "~/server/auth";
+import type { GetServerSideProps, NextPage } from 'next'
+import { SeoHead } from '~/components/SeoHead'
+import LoginForm from '~/components/form/Login'
+import BaseLayout from '~/components/layout/Layout'
+import { ROUTES } from '~/constants/routes'
+import { getServerAuthSession } from '~/server/auth'
 
 const Login: NextPage = () => {
   return (
@@ -13,14 +13,14 @@ const Login: NextPage = () => {
         <LoginForm />
       </BaseLayout>
     </>
-  );
-};
+  )
+}
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const session = await getServerAuthSession({
     req: context.req,
     res: context.res,
-  });
+  })
 
   if (session) {
     return {
@@ -28,10 +28,10 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         destination: ROUTES.HOME,
         permanent: false,
       },
-    };
+    }
   }
 
-  return { props: {} };
-};
+  return { props: {} }
+}
 
-export default Login;
+export default Login

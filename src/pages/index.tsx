@@ -1,8 +1,8 @@
-import { PageContent } from "@mochi-ui/core";
-import type { GetServerSideProps, NextPage } from "next";
-import { SeoHead } from "~/components/SeoHead";
-import { ROUTES } from "~/constants/routes";
-import { getServerAuthSession } from "~/server/auth";
+import { PageContent } from '@mochi-ui/core'
+import type { GetServerSideProps, NextPage } from 'next'
+import { SeoHead } from '~/components/SeoHead'
+import { ROUTES } from '~/constants/routes'
+import { getServerAuthSession } from '~/server/auth'
 
 const Index: NextPage = () => {
   return (
@@ -10,14 +10,14 @@ const Index: NextPage = () => {
       <SeoHead title="Dashboard" />
       <PageContent>...</PageContent>
     </>
-  );
-};
+  )
+}
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const session = await getServerAuthSession({
     req: context.req,
     res: context.res,
-  });
+  })
 
   if (!session) {
     return {
@@ -25,10 +25,10 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         destination: ROUTES.LOGIN,
         permanent: false,
       },
-    };
+    }
   }
 
-  return { props: {} };
-};
+  return { props: {} }
+}
 
-export default Index;
+export default Index

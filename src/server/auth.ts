@@ -1,17 +1,17 @@
-import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import { type GetServerSidePropsContext } from "next";
+import { DrizzleAdapter } from '@auth/drizzle-adapter'
+import { type GetServerSidePropsContext } from 'next'
 import {
   getServerSession,
   type DefaultSession,
   type NextAuthOptions,
-} from "next-auth";
-import { type Adapter } from "next-auth/adapters";
-import GoogleProvider, { type GoogleProfile } from "next-auth/providers/google";
-import { ROUTES } from "~/constants/routes";
+} from 'next-auth'
+import { type Adapter } from 'next-auth/adapters'
+import GoogleProvider, { type GoogleProfile } from 'next-auth/providers/google'
+import { ROUTES } from '~/constants/routes'
 
-import { env } from "~/env";
-import { createTable } from "~/migration/schema";
-import { db } from "~/server/db";
+import { env } from '~/env'
+import { createTable } from '~/migration/schema'
+import { db } from '~/server/db'
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -19,13 +19,13 @@ import { db } from "~/server/db";
  *
  * @see https://next-auth.js.org/getting-started/typescript#module-augmentation
  */
-declare module "next-auth" {
+declare module 'next-auth' {
   interface Session extends DefaultSession {
-    user: DefaultSession["user"] & {
-      id: string;
+    user: DefaultSession['user'] & {
+      id: string
       // ...other properties
       // role: UserRole;
-    };
+    }
   }
 
   // interface User {
@@ -48,7 +48,7 @@ export const authOptions: NextAuthOptions = {
           ...session.user,
           id: user?.id,
         },
-      };
+      }
     },
   },
   secret: env.NEXTAUTH_SECRET,
@@ -72,7 +72,7 @@ export const authOptions: NextAuthOptions = {
           firstName: profile.given_name,
           lastName: profile.family_name,
           image: profile.picture,
-        };
+        }
       },
     }),
 
@@ -90,7 +90,7 @@ export const authOptions: NextAuthOptions = {
      * @see https://next-auth.js.org/providers/github
      */
   ],
-};
+}
 
 /**
  * Wrapper for `getServerSession` so that you don't need to import the `authOptions` in every file.
@@ -98,8 +98,8 @@ export const authOptions: NextAuthOptions = {
  * @see https://next-auth.js.org/configuration/nextjs
  */
 export const getServerAuthSession = (ctx: {
-  req: GetServerSidePropsContext["req"];
-  res: GetServerSidePropsContext["res"];
+  req: GetServerSidePropsContext['req']
+  res: GetServerSidePropsContext['res']
 }) => {
-  return getServerSession(ctx.req, ctx.res, authOptions);
-};
+  return getServerSession(ctx.req, ctx.res, authOptions)
+}
