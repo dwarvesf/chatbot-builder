@@ -3,6 +3,7 @@ import {
   foreignKey,
   index,
   integer,
+  jsonb,
   pgTableCreator,
   primaryKey,
   serial,
@@ -123,7 +124,7 @@ export const attachments = createTable(
     typeId: integer('type_id').notNull(),
     originalName: text('original_name'),
     cloudPath: text('cloud_path'),
-    createdAt: timestamp('created_at').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
     updatedAt: timestamp('updated_at'),
     updatedBy: uuid('updated_by').references(() => users.id),
@@ -138,7 +139,7 @@ export const botModels = createTable(
   {
     id: integer('id').notNull().primaryKey(),
     name: text('name'),
-    createdAt: timestamp('created_at').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
     updatedAt: timestamp('updated_at'),
     updatedBy: uuid('updated_by').references(() => users.id),
@@ -189,7 +190,7 @@ export const bots = createTable(
     usageLimitPerUserType: integer('usage_limit_per_user_type'),
     userLimitWarningMsg: text('user_limit_warning_msg'),
     whileListIpsOnly: text('while_list_ips_only'),
-    createdAt: timestamp('created_at').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
     updatedAt: timestamp('updated_at'),
     updatedBy: uuid('updated_by').references(() => users.id),
@@ -212,7 +213,7 @@ export const botSources = createTable(
     statusId: integer('status_id').notNull(),
     url: text('url'),
     extractedTokenLength: integer('extracted_token_length'),
-    createdAt: timestamp('created_at').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
     updatedAt: timestamp('updated_at'),
     updatedBy: uuid('updated_by').references(() => users.id),
@@ -247,27 +248,46 @@ export const botSourceStatuses = createTable(
   {
     id: integer('id').notNull().primaryKey(),
     name: text('name'),
-    createdAt: timestamp('created_at').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
   },
   (status) => ({}),
 )
 
-export const botSourceExtractedDatas = createTable(
+export const botSourceExtractedData = createTable(
   'bot_source_extracted_data',
   {
     id: uuid('id').notNull().primaryKey(),
     botSourceId: uuid('bot_source_id')
       .notNull()
       .references(() => botSources.id),
-    data: text('data'), // TODO: store this in NoSQL
-    createdAt: timestamp('created_at').notNull(),
+    data: jsonb('data'), // TODO: store this in NoSQL
+    createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
   },
   (data) => ({
     botSourceIdIdx: index('bot_source_extracted_data_bot_source_id_idx').on(
       data.botSourceId,
     ),
+  }),
+)
+
+export const botSourceExtractedDataVector = createTable(
+  'bot_source_extracted_data_vector',
+  {
+    id: uuid('id').notNull().primaryKey(),
+    botSourceExtractedDataId: uuid('bot_source_extracted_data_id')
+      .notNull()
+      .references(() => botSourceExtractedData.id),
+    content: text('content'),
+    embeddings: vector('vector', { dimensions: 1024 }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    createdBy: uuid('created_by').references(() => users.id),
+  },
+  (vector) => ({
+    botSourceExtractedDataIdIdx: index(
+      'bot_source_extracted_data_vector_bot_source_extracted_data_id_idx',
+    ).on(vector.botSourceExtractedDataId),
   }),
 )
 
@@ -281,7 +301,7 @@ export const botConnects = createTable(
     embededToken: text('embeded_token'),
     apiToken: text('api_token'),
     whiteListIps: text('white_list_ips'),
-    createdAt: timestamp('created_at').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
     updatedAt: timestamp('updated_at'),
     updatedBy: uuid('updated_by').references(() => users.id),
@@ -302,7 +322,7 @@ export const threads = createTable(
       .notNull()
       .references(() => users.id),
     title: text('title'),
-    createdAt: timestamp('created_at').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
     updatedAt: timestamp('updated_at'),
     updatedBy: uuid('updated_by').references(() => users.id),
@@ -326,7 +346,7 @@ export const chats = createTable(
     chatUserId: uuid('chat_user_id')
       .notNull()
       .references(() => users.id),
-    createdAt: timestamp('created_at').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
     updatedAt: timestamp('updated_at'),
     updatedBy: uuid('updated_by').references(() => users.id),
@@ -343,7 +363,7 @@ export const chatUsers = createTable(
     id: uuid('id').notNull().primaryKey(),
     ip: text('ip'),
     city: text('city'),
-    createdAt: timestamp('created_at').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
   },
   (user) => ({}),
@@ -360,7 +380,7 @@ export const invoices = createTable(
       .notNull()
       .references(() => users.id),
     amount: text('amount'),
-    createdAt: timestamp('created_at').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
   },
   (invoice) => ({
@@ -368,14 +388,3 @@ export const invoices = createTable(
     userIdIdx: index('invoice_user_id_idx').on(invoice.userId),
   }),
 )
-
-export const sourceVectors = createTable('source_vector', {
-  id: uuid('id').notNull().primaryKey(),
-  embeddings: vector('embeddings', { dimensions: 1024 }).notNull(),
-})
-
-export const dataSources = createTable('data_source', {
-  id: uuid('id').notNull().primaryKey(),
-  content: text('content'),
-  vectors: uuid('vectors').references(() => sourceVectors.id),
-})
