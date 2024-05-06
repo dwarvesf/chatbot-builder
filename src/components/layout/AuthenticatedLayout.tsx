@@ -17,7 +17,11 @@ import {
 import {
   DirectionLine,
   DollarBubbleSolid,
+  EyeShowSolid,
+  GearSolid,
   HomeSolid,
+  InboxSolid,
+  PlugSolid,
   UserSolid,
 } from '@mochi-ui/icons'
 import { signOut, useSession } from 'next-auth/react'
@@ -25,6 +29,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import React, { useMemo } from 'react'
 import { ROUTES } from '~/constants/routes'
+import { api } from '~/utils/api'
 
 type AuthenticatedLayoutProps = {
   children: React.ReactNode
@@ -47,28 +52,28 @@ const headerBotItems = (botId: string) =>
       type: 'link',
       as: Link,
       href: ROUTES.BOT_DETAIL_SETTINGS(botId),
-      Icon: HomeSolid,
+      Icon: GearSolid,
     },
     {
       title: 'Sources',
       type: 'link',
       as: Link,
       href: ROUTES.BOT_DETAIL_SOURCES(botId),
-      Icon: HomeSolid,
+      Icon: InboxSolid,
     },
     {
       title: 'Appearance',
       type: 'link',
       as: Link,
       href: ROUTES.BOT_DETAIL_APPEARANCE(botId),
-      Icon: HomeSolid,
+      Icon: EyeShowSolid,
     },
     {
-      title: 'Integration',
+      title: 'Integrations',
       type: 'link',
       as: Link,
       href: ROUTES.BOT_DETAIL_INTEGRATIONS(botId),
-      Icon: HomeSolid,
+      Icon: PlugSolid,
     },
   ] as SidebarProps['headerItems']
 
@@ -77,6 +82,10 @@ export const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
   const { pathname, query } = useRouter()
   const { id } = query
   const isBotPath = pathname.startsWith('/bots/[id]')
+  const botId = id as string
+  const botQuery = api.bot.getById.useQuery(botId, {
+    enabled: isBotPath,
+  })
 
   const navItems = useMemo(
     () => [
@@ -84,7 +93,10 @@ export const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button>
-            <Avatar className="w-8 h-8" src={session.data?.user.image ?? ''} />
+            <Avatar
+              className="w-8 h-8"
+              src={session?.data?.user?.image ?? ''}
+            />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuPortal>
@@ -99,10 +111,10 @@ export const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
           >
             <div className="px-3 py-1">
               <Typography className="text-sm" component="b">
-                {session.data?.user.name}
+                {session?.data?.user.name}
               </Typography>
               <Typography className="text-sm">
-                {session.data?.user.email}
+                {session?.data?.user.email}
               </Typography>
             </div>
             <DropdownMenuSeparator />
@@ -142,6 +154,22 @@ export const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
       />
       <Layout className="flex-1">
         <Sidebar
+          Header={({ expanded }) => {
+            if (!expanded || !isBotPath) {
+              return <></>
+            }
+            return (
+              <Link
+                href={ROUTES.BOT_DETAIL(botId)}
+                className="border-b px-8 h-[80px] flex items-center space-x-4"
+              >
+                <Avatar src="" />
+                <Typography component="b" className="truncate">
+                  {botQuery?.data?.name}
+                </Typography>
+              </Link>
+            )
+          }}
           version="0.0.1"
           headerItems={
             isBotPath
