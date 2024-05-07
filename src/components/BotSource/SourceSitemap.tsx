@@ -1,6 +1,13 @@
-import { Button, Card, IconButton, TextFieldInput } from '@mochi-ui/core'
+import {
+  Button,
+  Card,
+  IconButton,
+  TextFieldInput,
+  Typography,
+} from '@mochi-ui/core'
 import { ShareSolid, TrashBinLine } from '@mochi-ui/icons'
 import { useState } from 'react'
+import { isValidURL } from '~/utils/utils'
 import FileInput from '../FileInput/FileInput'
 
 export const SourceSitemap = () => {
@@ -11,7 +18,6 @@ export const SourceSitemap = () => {
   const [error, setError] = useState<string>('')
   const [loading, setLoading] = useState<boolean>(false)
   const [files, setFiles] = useState<FileList | null>(null)
-  
 
   const handleUploadTrain = () => {
     // TODO: upload and train
@@ -25,12 +31,10 @@ export const SourceSitemap = () => {
       return
     }
     // validate valid url
-    const urlRegex =
-      /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/
-    if (!urlRegex.test(currentURL)) {
-      setError('Invalid URL')
-      return
-    }
+     if (!isValidURL(currentURL)) {
+       setError('Invalid URL')
+       return
+     }
     // find sitemap url of the url
     const siteMap = await findSitemapURL(currentURL)
     if (!siteMap) {
@@ -73,34 +77,37 @@ export const SourceSitemap = () => {
       <div className="pb-4">
         <div className="flex pb-4 justify-between items-center">
           <div className="flex-1 w-fit">
-            <span className="flex font-bold">Upload URLs in bulk</span>
-            <span className="text-gray-500 text-sm">
+            <Typography className="flex font-bold">Upload URLs in bulk</Typography>
+            <Typography className="text-gray-500 text-sm">
               Download our template, add all URLs in the sheet, and upload
               instantly.
-            </span>
+            </Typography>
           </div>
           <div className="flex justify-center">
             <ShareSolid width={20} height={20} className="text-blue-500" />
-            <span className="text-blue-500">Template</span>
+            <Typography className="text-blue-500">Template</Typography>
           </div>
         </div>
         <FileInput onFilesSelect={handleSelectFiles} />
         {files && (
           <div className="flex flex-col p-1">
             {Object.values(files).map((file: File) => (
-              <div className="flex justify-between items-center" key={file.name}>
-                <span key={file.name} className="text-sm text-gray-700">
+              <div
+                className="flex justify-between items-center"
+                key={file.name}
+              >
+                <Typography key={file.name} className="text-sm text-gray-700">
                   {file.name}
-                </span>
-                  <IconButton
-                    label=""
-                    color="white"
-                    onClick={() => {
-                      handleDelete(file)
-                    }}
-                  >
-                    <TrashBinLine height={20} width={20} />
-                  </IconButton>
+                </Typography>
+                <IconButton
+                  label=""
+                  color="white"
+                  onClick={() => {
+                    handleDelete(file)
+                  }}
+                >
+                  <TrashBinLine height={20} width={20} />
+                </IconButton>
               </div>
             ))}
           </div>
@@ -109,7 +116,7 @@ export const SourceSitemap = () => {
 
       <Card>
         <div className="items-center justify-center">
-          <span className="text-sm text-gray-700">Enter a Website URL:</span>
+          <Typography className="text-sm text-gray-700">Enter a Website URL:</Typography>
           <div className="flex flex-row items-center justify-between p-1">
             <TextFieldInput
               value={currentURL}
@@ -121,7 +128,7 @@ export const SourceSitemap = () => {
               Get Sitemap
             </Button>
           </div>
-          <span className="text-sm text-red-700">{error}</span>
+          <Typography className="text-sm text-red-700">{error}</Typography>
         </div>
       </Card>
       <div className="flex items-center justify-center pt-4">

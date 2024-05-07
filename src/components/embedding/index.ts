@@ -39,7 +39,7 @@ export default async function getEmbeddingsFromContents(contents: string[]) {
 
   const result: {
     content: string
-    embedding: number[]
+    embeddings: number[]
   }[] = []
 
   for (const item of data) {
@@ -49,7 +49,7 @@ export default async function getEmbeddingsFromContents(contents: string[]) {
     if (object === 'embedding') {
       result.push({
         content: contents[index] ?? '',
-        embedding: embedding,
+        embeddings: embedding,
       })
     }
   }

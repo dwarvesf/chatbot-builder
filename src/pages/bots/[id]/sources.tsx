@@ -12,7 +12,7 @@ const BotSources: NextPage = () => {
       <PageHeader className="border-b border-divider">
         <PageHeaderTitle>Sources</PageHeaderTitle>
       </PageHeader>
-      <PageContent className='!pt-2' containerClassName='!m-0 !max-w-none'>
+      <PageContent className="!pt-2" containerClassName="!m-0 !max-w-none">
         <BotSource />
       </PageContent>
     </>

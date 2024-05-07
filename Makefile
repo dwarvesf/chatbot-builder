@@ -12,6 +12,7 @@ local-up: db
 
 db:
 	docker-compose -p chatbot_builder -f ./build/local/docker-compose.yml up -d
+	bun src/migration/create-extension.ts
 
 db-down:
 	docker-compose -p chatbot_builder -f ./build/local/docker-compose.yml down
@@ -24,3 +25,6 @@ db-migrate:
 
 db-seed:
 	bun src/migration/seed.ts
+
+lint-staged:
+	bun lint-staged

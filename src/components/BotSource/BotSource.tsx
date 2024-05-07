@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
 import {
+  Badge,
   Button,
   Card,
   IconButton,
@@ -9,27 +11,21 @@ import {
   TabTrigger,
   Table,
   Tabs,
+  Typography,
 } from '@mochi-ui/core'
 import { MenuSolid, RefreshSolid } from '@mochi-ui/icons'
 import { useParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { BotSourceStatusEnum } from '~/model/bot-source-status'
+import { BotSourceTypeEnum } from '~/model/bot-source-type'
 import { api } from '~/utils/api'
+import { formatDatetime } from '~/utils/utils'
 import { SourceLink } from './SourceLink'
 import { SourceSitemap } from './SourceSitemap'
 
-type SourceTab = {
+interface SourceTab {
   title: string
   subTitle: string
-}
-
-type Source = {
-  id: number
-  title: string
-  fileType: string
-  status: string
-  updatedOn: string
-  autoSync: string
-  visibility: string
 }
 
 const SOURCE_TABS: SourceTab[] = [
@@ -60,83 +56,14 @@ export const BotSource = () => {
   const [currentTab, setCurrentTab] = useState<SourceTab>(
     SOURCE_TABS[0] ?? { title: '', subTitle: '' },
   )
-  const [loading, setLoading] = useState<boolean>(false)
   const [page, setPage] = useState<number>(1)
   const [perPage, setPerPage] = useState<number>(5)
   const [dataType, setDataType] = useState<string>('Files / URLs')
-  const [data, setData] = useState<Source[]>([])
-  const sources = api.botSource.getByBotId.useQuery(id as string).data
-
-  const fetchData = ({
-    page,
-    dataType,
-  }: {
-    page?: number
-    dataType?: string
-  }) => {
-    // fetch data
-    setLoading(true)
-    try {
-      // fetch data
-      console.log('fetching data', page, dataType, id)
-    } catch (error) {
-      console.error(error)
-    }
-    setLoading(false)
-  }
-
-  useEffect(() => {
-    // fetch data
-    fetchData({ page })
-    // mock data
-    setData([
-      {
-        id: 1,
-        title: 'File 1',
-        fileType: 'File',
-        status: 'Active',
-        updatedOn: '2021-10-01',
-        autoSync: 'Yes',
-        visibility: 'Public',
-      },
-      {
-        id: 2,
-        title: 'URL 1',
-        fileType: 'URL',
-        status: 'Active',
-        updatedOn: '2021-10-01',
-        autoSync: 'Yes',
-        visibility: 'Public',
-      },
-      {
-        id: 3,
-        title: 'File 2',
-        fileType: 'File',
-        status: 'Active',
-        updatedOn: '2021-10-01',
-        autoSync: 'Yes',
-        visibility: 'Public',
-      },
-      {
-        id: 4,
-        title: 'URL 2',
-        fileType: 'URL',
-        status: 'Active',
-        updatedOn: '2021-10-01',
-        autoSync: 'Yes',
-        visibility: 'Public',
-      },
-      {
-        id: 5,
-        title: 'File 3',
-        fileType: 'File',
-        status: 'Active',
-        updatedOn: '2021-10-01',
-        autoSync: 'Yes',
-        visibility: 'Public',
-      },
-    ])
-  }, [])
+  const { data: sources, isLoading } = api.botSource.getByBotId.useQuery(
+    id as string,
+  )
+  const { mutate: syncSource, error: syncError } =
+    api.botSource.sync.useMutation()
 
   const handleTabClick = (tab: SourceTab) => {
     setCurrentTab(tab)
@@ -144,7 +71,6 @@ export const BotSource = () => {
 
   const handleChangePage = (page: number) => {
     setPage(page)
-    fetchData({ page })
   }
 
   const handleChangePerPage = (perPage: number) => {
@@ -153,17 +79,51 @@ export const BotSource = () => {
 
   const handleChangeDataType = (dataType: string) => {
     setDataType(dataType)
-    fetchData({ page })
   }
 
   const handleSync = async (id: string) => {
     // sync data
-    console.log('Syncing data', id)
+    syncSource({
+      botSourceId: id,
+    })
+  }
+
+  const data = (sources ?? []).map((item) => {
+    return {
+      id: item.id,
+      title: '',
+      url: item.url,
+      updatedAt: item.updatedAt,
+      typeId: item.typeId,
+      statusId: item.statusId,
+      action: item.statusId,
+      autoSync: true,
+      visibility: 'public',
+    }
+  })
+
+  const convertStatus = (status: number) => {
+    switch (status) {
+      case BotSourceStatusEnum.Created:
+        return 'Created'
+      case BotSourceStatusEnum.InProgress:
+        return 'In Progress'
+      case BotSourceStatusEnum.Completed:
+        return 'Completed'
+      case BotSourceStatusEnum.Failed:
+        return 'Failed'
+      case BotSourceStatusEnum.Crawling:
+        return 'Training'
+      case BotSourceStatusEnum.Embedding:
+        return 'Training'
+      default:
+        return '-'
+    }
   }
 
   return (
     <>
-      <span className="flex pb-3">{currentTab.subTitle}</span>
+      <Typography className="flex pb-3">{currentTab.subTitle}</Typography>
       <Card>
         <div>
           <Tabs defaultValue={'Links'}>
@@ -200,7 +160,7 @@ export const BotSource = () => {
           {Object.values(DATA_TABS).map((tab) => {
             return (
               <Button
-                className={`focus:ring-gray-200$ rounded-md  px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 ${ dataType === tab.title ? 'bg-blue-400' : 'bg-white'}`}
+                className={`focus:ring-gray-200$ rounded-md  px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 ${dataType === tab.title ? 'bg-blue-400' : 'bg-white'}`}
                 key={tab.title}
                 onClick={() => {
                   handleChangeDataType(tab.title)
@@ -219,51 +179,56 @@ export const BotSource = () => {
               cell: (data) => {
                 return (
                   <div>
-                    <span className="text-sm text-black font-semibold text-wrap">
-                      {data.row?.original.title}
-                    </span>
+                    <Typography className="max-w-[200px] text-sm text-black font-semibold text-wrap whitespace-nowrap text-ellipsis overflow-hidden">
+                      {data.row?.original.title || data.row?.original.url}
+                    </Typography>
                   </div>
                 )
               },
               header: 'Title',
             },
             {
-              accessorKey: 'fileType',
+              accessorKey: 'typeId',
               header: 'File type',
               cell: (data) => {
                 return (
-                  <span
-                    className={`text-sm text-white font-semibold px-2 py-1 rounded-md ${
-                      data.row?.original.fileType === 'File'
+                  <Typography
+                    className={`text-sm text-white font-semibold px-2 py-1 rounded-md w-11 ${
+                      data.row?.original.typeId === BotSourceTypeEnum.Link
                         ? 'bg-blue-500'
                         : 'bg-yellow-500'
                     }`}
                   >
-                    {data.row?.original.fileType}
-                  </span>
+                    {data.row?.original.typeId === BotSourceTypeEnum.Link
+                      ? 'Link'
+                      : 'File'}
+                  </Typography>
                 )
-              }
+              },
             },
             {
-              accessorKey: 'status',
+              accessorKey: 'statusId',
               header: 'Status',
               cell: (data) => {
                 return (
-                  <span
-                    className={`text-sm text-white font-semibold px-2 py-1 rounded-md ${
-                      data.row?.original.status === 'Active'
-                        ? 'bg-green-500'
-                        : 'bg-red-500'
-                    }`}
-                  >
-                    {data.row?.original.status}
-                  </span>
+                  <Badge>{convertStatus(data.row?.original.statusId)}</Badge>
                 )
-              }
+              },
             },
             {
-              accessorKey: 'updatedOn',
-              header: 'Updated On',
+              accessorKey: 'updatedAt',
+              header: 'Updated At',
+              cell: (data) => {
+                return (
+                  <div>
+                    <Typography className="text-sm text-black text-wrap">
+                      {data.row?.original.updatedAt
+                        ? formatDatetime(data.row?.original.updatedAt)
+                        : '-'}
+                    </Typography>
+                  </div>
+                )
+              },
             },
             {
               accessorKey: 'autoSync',
@@ -275,7 +240,7 @@ export const BotSource = () => {
               cell: (data) => {
                 return (
                   <Switch
-                    defaultChecked={data.row?.original.visibility === 'Public'}
+                    defaultChecked={data.row?.original.url === 'Public'}
                   />
                 )
               },
@@ -284,7 +249,7 @@ export const BotSource = () => {
               accessorKey: 'action',
               cell: (data) => {
                 return (
-                  <div>
+                  <div className="flex">
                     <IconButton label="" color="white">
                       <RefreshSolid
                         height={20}
@@ -294,6 +259,8 @@ export const BotSource = () => {
                           await handleSync(data.row.original.id.toString())
                         }}
                       />
+                    </IconButton>
+                    <IconButton label="" color="white">
                       <MenuSolid height={20} width={20} />
                     </IconButton>
                   </div>
@@ -303,24 +270,23 @@ export const BotSource = () => {
             },
           ]}
           data={data}
-          isLoading={loading}
+          isLoading={isLoading}
           stickyHeader
           emptyContent={
             <div className="flex justify-center items-center p-3">
-              <span className="text-sm text-gray-500">
+              <Typography className="text-sm text-gray-500">
                 No data found. Please upload a file or add a link
-              </span>
+              </Typography>
             </div>
           }
-          // onRow={function Va() {}}
         />
         <Pagination
           initItemsPerPage={5}
           initalPage={1}
           onItemPerPageChange={handleChangePerPage}
           onPageChange={handleChangePage}
-          totalItems={50}
-          totalPages={10}
+          totalItems={5}
+          totalPages={1}
         />
       </div>
     </>

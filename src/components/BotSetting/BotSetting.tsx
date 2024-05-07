@@ -3,5 +3,5 @@ export const BotSetting = () => {
     <div>
       <h2>Settings</h2>
     </div>
-  );
-};
+  )
+}

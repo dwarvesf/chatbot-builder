@@ -1,77 +1,111 @@
-import { Button, Card, IconButton, TextFieldInput } from "@mochi-ui/core";
-import { CheckLine, EditLine, PlusLine, TrashBinLine } from "@mochi-ui/icons";
-import { useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import {
+  Button,
+  Card,
+  IconButton,
+  TextFieldInput,
+  Typography,
+  useToast,
+} from '@mochi-ui/core'
+import { CheckLine, EditLine, PlusLine, TrashBinLine } from '@mochi-ui/icons'
+import { useParams } from 'next/navigation'
+import { useState } from 'react'
+import { BotSourceTypeEnum } from '~/model/bot-source-type'
+import { api } from '~/utils/api'
+import { isValidURL } from '~/utils/utils'
+
 
 export const SourceLink = () => {
-  const [currentURL, setCurrentURL] = useState<string>("");
-  const [urls, setUrls] = useState<string[]>([]);
-  const [editingURL, setEditingURL] = useState<string>("");
-  const [newURL, setNewURL] = useState<string>("");
-  const [error, setError] = useState<string>("");
+  const { id } = useParams()
+  const { toast } = useToast()
+  const [currentURL, setCurrentURL] = useState<string>('')
+  const [urls, setUrls] = useState<string[]>([])
+  const [editingURL, setEditingURL] = useState<string>('')
+  const [newURL, setNewURL] = useState<string>('')
+  const [error, setError] = useState<string>('')
 
-  const handleUploadTrain = () => {
-    // TODO: upload and train
-  };
+  const { mutate: createSource, error: createError } =
+    api.botSource.create.useMutation()
+
+  const handleUploadTrain = async () => {
+    if (!id) return
+    try {
+      const uploadPromises = urls.map((url: string) => {
+        return createSource({
+          botId: id?.toString() || '',
+          typeId: BotSourceTypeEnum.Link,
+          url,
+        })
+      })
+      await Promise.all(uploadPromises)
+
+      setUrls([])
+    } catch (error: any) {
+      toast({
+        description: error?.message ?? '',
+        scheme: 'danger',
+      })
+    }
+  }
   const handleAddLink = () => {
     if (!currentURL) {
-      return;
+      return
     }
     // validate valid url
-    const urlRegex =
-      /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
-    if (!urlRegex.test(currentURL)) {
-      setError("Invalid URL");
-      return;
-    }
     
+    if (!isValidURL(currentURL)) {
+      setError('Invalid URL')
+      return
+    }
+
     // check if url already exists
     if (urls.includes(currentURL)) {
-      setError("This link has already been added");
-      return;
+      setError('This link has already been added')
+      return
     }
-    setUrls([...urls, currentURL]);
+    setUrls([...urls, currentURL])
 
-    setCurrentURL("");
-    setError("");
-  };
+    setCurrentURL('')
+    setError('')
+  }
 
   const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = e.target;
-    setCurrentURL(value);
-    if(!value) setError("");
-  };
+    const { value } = e.target
+    setCurrentURL(value)
+    if (!value) setError('')
+  }
 
   const handleOnEditURL = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = e.target;
-    setNewURL(value);
-  };
+    const { value } = e.target
+    setNewURL(value)
+  }
 
   const handleSaveEdit = () => {
-    const index = urls.findIndex((url) => url === editingURL);
-    urls[index] = newURL;
-    setUrls([...urls]);
-    setNewURL("");
-    setEditingURL("");
-  };
+    const index = urls.findIndex((url) => url === editingURL)
+    urls[index] = newURL
+    setUrls([...urls])
+    setNewURL('')
+    setEditingURL('')
+  }
 
   const handleEdit = (url: string) => {
-    if (!url || url === editingURL) return;
-    setEditingURL(url);
-    setNewURL(url);
-  };
+    if (!url || url === editingURL) return
+    setEditingURL(url)
+    setNewURL(url)
+  }
 
   const handleDelete = (url: string) => {
-    const newUrls = urls.filter((u) => u !== url);
-    setUrls(newUrls);
-  };
+    const newUrls = urls.filter((u) => u !== url)
+    setUrls(newUrls)
+  }
 
   return (
     <div>
       <Card>
         <div className="items-center justify-center">
-          <span className="text-sm text-gray-700">
+          <Typography className="text-sm text-gray-700">
             Enter a Website or Youtube video URL:
-          </span>
+          </Typography>
           <div>
             {urls.map((url) => (
               <div key={url} className="flex justify-between p-1">
@@ -125,17 +159,17 @@ export const SourceLink = () => {
               placeholder="Enter a website URL"
             />
             <Button onClick={handleAddLink}>
-                <PlusLine height={20} width={20} />
+              <PlusLine height={20} width={20} />
             </Button>
           </div>
-          <span className="text-sm text-red-700">{error}</span>
+          <Typography className="text-sm text-red-700">{error}</Typography>
         </div>
       </Card>
       <div className="flex items-center justify-center pt-4">
-        <Button className="p-3" onClick={() => handleUploadTrain()} loading>
+        <Button className="p-3" onClick={() => handleUploadTrain()}>
           Upload and Train
         </Button>
       </div>
     </div>
   )
-};
+}

@@ -1,1 +1,1 @@
-export * from "./BotSetting";
+export * from './BotSetting'
