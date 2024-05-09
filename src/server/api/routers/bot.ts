@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
 import * as schema from '~/migration/schema'
@@ -69,16 +69,22 @@ export const botRouter = createTRPCRouter({
       return bot
     }),
 
-  getById: protectedProcedure.input(z.string()).query(async ({ input }) => {
-    const bot = await db.query.bots.findFirst({
-      where: eq(schema.bots.id, input),
-    })
-    return bot
-  }),
+  getById: protectedProcedure
+    .input(z.string())
+    .query(async ({ ctx, input }) => {
+      const bot = await db.query.bots.findFirst({
+        where: and(
+          eq(schema.bots.id, input),
+          eq(schema.bots.createdBy, ctx.session.user.id),
+        ),
+      })
+      return bot
+    }),
 
-  getList: protectedProcedure.query(async () => {
-    // TODO: Implement later: Filter + pagination
-    const bots = await db.query.bots.findMany()
+  getList: protectedProcedure.query(async ({ ctx }) => {
+    const bots = await db.query.bots.findMany({
+      where: eq(schema.bots.createdBy, ctx.session.user.id),
+    })
     return bots
   }),
 })
