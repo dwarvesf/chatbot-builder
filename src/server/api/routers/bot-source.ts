@@ -153,6 +153,8 @@ async function syncBotSource(bsId: string) {
         statusId: BotSourceStatusEnum.Failed,
       })
       .where(eq(schema.botSources.id, bsId))
+
+    throw error
   }
 }
 
