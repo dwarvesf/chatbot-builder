@@ -346,6 +346,7 @@ export const chats = createTable(
       .notNull()
       .references(() => botModels.id),
     chatUserId: uuid('chat_user_id').references(() => users.id),
+    parentChatId: uuid('parent_chat_id'),
     promptTokens: integer('promt_tokens'),
     completionTokens: integer('completion_tokens'),
     totalTokens: integer('total_tokens'),
@@ -357,6 +358,11 @@ export const chats = createTable(
   (chat) => ({
     threadIdIdx: index('chat_thread_id_idx').on(chat.threadId),
     chatUserIdIdx: index('chat_chat_user_id_idx').on(chat.chatUserId),
+    parentReference: foreignKey({
+      columns: [chat.parentChatId],
+      foreignColumns: [chat.id],
+      name: 'chat_parent_chat_id_fk',
+    }),
   }),
 )
 

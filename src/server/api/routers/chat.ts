@@ -82,6 +82,7 @@ export const chatRouter = createTRPCRouter({
               id: resId,
               botModelId: bot.modelId,
               roleId: ChatRoleEnum.Assistant,
+              parentChatId: chatId,
               threadId,
               msg: res.message.content,
               promptTokens: isLastMsg ? botRes?.usage?.prompt_tokens : 0,
