@@ -10,9 +10,12 @@ import { initTRPC, TRPCError } from '@trpc/server'
 import { type CreateNextContextOptions } from '@trpc/server/adapters/next'
 import { type Session } from 'next-auth'
 import superjson from 'superjson'
-import { ZodError } from 'zod'
+import { z, ZodError } from 'zod'
 
+import { eq } from 'drizzle-orm'
+import * as schema from '~/migration/schema'
 import { getServerAuthSession } from '~/server/auth'
+import { db } from '../db'
 
 /**
  * 1. CONTEXT
@@ -24,6 +27,7 @@ import { getServerAuthSession } from '~/server/auth'
 
 interface CreateContextOptions {
   session: Session | null
+  apiToken?: string
 }
 
 /**
@@ -36,9 +40,13 @@ interface CreateContextOptions {
  *
  * @see https://create.t3.gg/en/usage/trpc#-serverapitrpcts
  */
-const createInnerTRPCContext = ({ session }: CreateContextOptions) => {
+const createInnerTRPCContext = ({
+  session,
+  apiToken,
+}: CreateContextOptions) => {
   return {
     session,
+    apiToken,
   }
 }
 
@@ -54,9 +62,11 @@ export const createTRPCContext = async ({
 }: CreateNextContextOptions) => {
   // Get the session from the server using the getServerSession wrapper function
   const session = await getServerAuthSession({ req, res })
+  const apiToken = req.headers['x-api-token'] as string | undefined
 
   return createInnerTRPCContext({
     session,
+    apiToken,
   })
 }
 
@@ -137,3 +147,36 @@ const isAuthed = t.middleware(({ ctx, next }) => {
  * @see https://trpc.io/docs/procedures
  */
 export const protectedProcedure = t.procedure.use(isAuthed)
+
+interface IntegrationProcedureInput {
+  apiToken: string
+}
+export const integrationProcedure = t.procedure
+  .input(
+    z.object({
+      apiToken: z.string().optional(),
+    }),
+  )
+  .use(
+    t.middleware(async ({ ctx, next, input }) => {
+      const apiToken: string =
+        ctx.apiToken ?? (input as IntegrationProcedureInput)?.apiToken
+      if (!apiToken) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' })
+      }
+
+      const integration = await db.query.botIntegrations.findFirst({
+        where: eq(schema.botIntegrations.apiToken, apiToken),
+      })
+      if (!integration) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' })
+      }
+
+      return next({
+        ctx: {
+          session: { ...ctx.session, user: ctx?.session?.user },
+          apiToken: apiToken,
+        },
+      })
+    }),
+  )

@@ -17,6 +17,7 @@ export default async function getEmbeddingsFromContents(contents: string[]) {
   if (env.MOCK_EMBEDDING) {
     data = mockEmbedding.data
   } else {
+    console.log('Fetching embeddings from OpenAI')
     const response = await fetch('https://api.openai.com/v1/embeddings', {
       method: 'POST',
       body: JSON.stringify({
@@ -37,7 +38,7 @@ export default async function getEmbeddingsFromContents(contents: string[]) {
     data = resBody.data
   }
 
-  const result: {
+  const results: {
     content: string
     embeddings: number[]
   }[] = []
@@ -47,11 +48,11 @@ export default async function getEmbeddingsFromContents(contents: string[]) {
     const index: number = item.index
 
     if (object === 'embedding') {
-      result.push({
+      results.push({
         content: contents[index] ?? '',
         embeddings: embedding,
       })
     }
   }
-  return result
+  return results
 }

@@ -280,7 +280,7 @@ export const botSourceExtractedDataVector = createTable(
       .notNull()
       .references(() => botSourceExtractedData.id),
     content: text('content'),
-    embeddings: vector('vector', { dimensions: 1024 }),
+    vector: vector('vector', { dimensions: 1024 }),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
   },
@@ -291,8 +291,8 @@ export const botSourceExtractedDataVector = createTable(
   }),
 )
 
-export const botConnects = createTable(
-  'bot_connect',
+export const botIntegrations = createTable(
+  'bot_integration',
   {
     id: uuid('id').notNull().primaryKey(),
     botId: uuid('bot_id')
@@ -306,8 +306,9 @@ export const botConnects = createTable(
     updatedAt: timestamp('updated_at'),
     updatedBy: uuid('updated_by').references(() => users.id),
   },
-  (connect) => ({
-    botIdIdx: index('bot_connect_bot_id_idx').on(connect.botId),
+  (table) => ({
+    botIdIdx: index('bot_integration_bot_id_idx').on(table.botId),
+    apiTokenIdx: index('bot_integration_api_token_idx').on(table.apiToken),
   }),
 )
 
@@ -318,9 +319,7 @@ export const threads = createTable(
     botId: uuid('bot_id')
       .notNull()
       .references(() => bots.id),
-    userId: uuid('user_id')
-      .notNull()
-      .references(() => users.id),
+    userId: uuid('user_id').references(() => users.id),
     title: text('title'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
@@ -343,9 +342,13 @@ export const chats = createTable(
     roleId: integer('role_id').notNull(),
     msg: text('msg'),
     storageId: text('storage_id'),
-    chatUserId: uuid('chat_user_id')
+    botModelId: integer('bot_model_id')
       .notNull()
-      .references(() => users.id),
+      .references(() => botModels.id),
+    chatUserId: uuid('chat_user_id').references(() => users.id),
+    promptTokens: integer('promt_tokens'),
+    completionTokens: integer('completion_tokens'),
+    totalTokens: integer('total_tokens'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
     updatedAt: timestamp('updated_at'),
@@ -355,18 +358,6 @@ export const chats = createTable(
     threadIdIdx: index('chat_thread_id_idx').on(chat.threadId),
     chatUserIdIdx: index('chat_chat_user_id_idx').on(chat.chatUserId),
   }),
-)
-
-export const chatUsers = createTable(
-  'chat_user',
-  {
-    id: uuid('id').notNull().primaryKey(),
-    ip: text('ip'),
-    city: text('city'),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    createdBy: uuid('created_by').references(() => users.id),
-  },
-  (user) => ({}),
 )
 
 export const invoices = createTable(

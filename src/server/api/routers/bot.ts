@@ -1,9 +1,8 @@
 import { eq } from 'drizzle-orm'
-import { v4 as uuidv4 } from 'uuid'
+import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
-import { bots } from '~/migration/schema'
+import * as schema from '~/migration/schema'
 import { BotModelEnum } from '~/model/bot-model'
-
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { db } from '~/server/db'
 
@@ -44,14 +43,25 @@ export const botRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      const botId = uuidv7()
       const bot = await db
-        .insert(bots)
+        .insert(schema.bots)
         .values({
           ...input,
           createdAt: new Date(),
           userId: ctx.session.user.id,
-          modelId: BotModelEnum.GPT4,
-          id: uuidv4(),
+          modelId: BotModelEnum.GPT3,
+          id: botId,
+        })
+        .returning()
+
+      // Create integration
+      await db
+        .insert(schema.botIntegrations)
+        .values({
+          id: uuidv7(),
+          botId: botId,
+          apiToken: uuidv7(),
         })
         .returning()
 
@@ -60,7 +70,7 @@ export const botRouter = createTRPCRouter({
 
   getById: protectedProcedure.input(z.string()).query(async ({ input }) => {
     const bot = await db.query.bots.findFirst({
-      where: eq(bots.id, input),
+      where: eq(schema.bots.id, input),
     })
     return bot
   }),

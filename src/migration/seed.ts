@@ -63,6 +63,11 @@ await db
       name: 'GPT-4',
       createdAt: new Date(),
     },
+    {
+      id: 2,
+      name: 'GPT-3',
+      createdAt: new Date(),
+    },
   ])
   .onConflictDoNothing()
 

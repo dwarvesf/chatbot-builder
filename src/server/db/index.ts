@@ -1,6 +1,7 @@
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 
+import { type Logger } from 'drizzle-orm'
 import { env } from '~/env'
 import * as schema from '../../migration/schema'
 
@@ -15,4 +16,13 @@ const globalForDb = globalThis as unknown as {
 const conn = globalForDb.conn ?? postgres(env.DATABASE_URL)
 if (env.NODE_ENV !== 'production') globalForDb.conn = conn
 
-export const db = drizzle(conn, { schema })
+class MyLogger implements Logger {
+  logQuery(query: string, params: unknown[]): void {
+    console.log({ query, params })
+  }
+}
+
+export const db = drizzle(conn, {
+  schema,
+  // logger: new MyLogger()
+})
