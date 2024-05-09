@@ -5,4 +5,5 @@ export enum BotSourceStatusEnum {
   Failed = 4,
   Crawling = 5,
   Embedding = 6,
+  Training = 7,
 }

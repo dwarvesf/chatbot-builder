@@ -23,6 +23,17 @@ const Index: NextPage = () => {
   const bots = botsQuery?.data ?? []
   const isEmptyBots = bots.length === 0
 
+  // const botSourceSync = api.botSource.sync.useMutation()
+  const chatCreate = api.chatRouter.create.useMutation()
+
+  const onDev = async () => {
+    // await botSourceSync.mutateAsync({ botSourceId: 'ef7dc5a9-62c3-460f-8440-7b6922c9c1d0'})
+    await chatCreate.mutateAsync({
+      message: 'What is Dwarves?',
+      apiToken: '018f5bb6-77dd-7f83-9a16-683d523f0350',
+    })
+  }
+
   return (
     <>
       <SeoHead title="Dashboard" />
@@ -32,6 +43,13 @@ const Index: NextPage = () => {
             <Typography className="text-2xl">Your Bots</Typography>
           </SectionHeaderTitle>
           <SectionHeaderActions className="!flex-nowrap">
+            <Button
+              color={isEmptyBots ? 'neutral' : undefined}
+              variant={isEmptyBots ? 'outline' : undefined}
+              onClick={onDev}
+            >
+              Dev
+            </Button>
             <Button
               color={isEmptyBots ? 'neutral' : undefined}
               variant={isEmptyBots ? 'outline' : undefined}

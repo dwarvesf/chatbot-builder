@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
 import { eq, type InferSelectModel } from 'drizzle-orm'
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js'
-import { v4 as uuidv4, v4 } from 'uuid'
+import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
 import crawURL from '~/components/crawler'
 import getEmbeddingsFromContents from '~/components/embedding'
@@ -21,18 +21,25 @@ export const botSourceRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const botSource = await db
+      const botSources = await db
         .insert(schema.botSources)
         .values({
           ...input,
-          id: uuidv4(),
+          id: uuidv7(),
           createdBy: ctx.session.user.id,
           statusId: BotSourceStatusEnum.Created,
           createdAt: new Date(),
         })
         .returning()
 
-      return botSource
+      // Sync the bot source
+      if (botSources.length) {
+        for (const bs of botSources) {
+          await syncBotSource(bs.id)
+        }
+      }
+
+      return botSources
     }),
 
   sync: protectedProcedure
@@ -43,75 +50,7 @@ export const botSourceRouter = createTRPCRouter({
     )
     .mutation(async ({ input }) => {
       const bsId = input.botSourceId
-
-      try {
-        const bs = await db.query.botSources.findFirst({
-          where: eq(schema.botSources.id, bsId),
-        })
-        if (!bs) {
-          throw new Error('Bot source not found')
-        }
-        if (
-          bs.statusId !== BotSourceStatusEnum.Created &&
-          bs.statusId !== BotSourceStatusEnum.Failed
-        ) {
-          throw new Error('Invalid bot source status')
-        }
-
-        // Update status to crawling
-        await db
-          .update(schema.botSources)
-          .set({
-            statusId: BotSourceStatusEnum.Crawling,
-          })
-          .where(eq(schema.botSources.id, bsId))
-
-        // Crawl the bot source
-        const contents = await crawlBotSource(bs)
-
-        const bsDataId = v4()
-        await db.insert(schema.botSourceExtractedData).values({
-          id: bsDataId,
-          botSourceId: bsId,
-          data: JSON.stringify(contents),
-        })
-
-        // Update status to embedding
-        await db
-          .update(schema.botSources)
-          .set({
-            statusId: BotSourceStatusEnum.Embedding,
-          })
-          .where(eq(schema.botSources.id, bsId))
-
-        // Embed the bot source
-        for (const { content, embeddings } of await getEmbeddingsFromContents(
-          contents,
-        )) {
-          // Store data to DB
-          await saveEmbeddings(db, bsDataId, content, embeddings)
-        }
-
-        // Update status to completed
-        await db
-          .update(schema.botSources)
-          .set({
-            statusId: BotSourceStatusEnum.Completed,
-          })
-          .where(eq(schema.botSources.id, bsId))
-      } catch (error) {
-        // Set status to failed
-        console.error('Error while crawling bot source ', error)
-
-        // Update status to failed
-        await db
-          .update(schema.botSources)
-          .set({
-            statusId: BotSourceStatusEnum.Failed,
-          })
-          .where(eq(schema.botSources.id, bsId))
-      }
-
+      await syncBotSource(bsId)
       return null
     }),
 
@@ -147,6 +86,76 @@ export const botSourceRouter = createTRPCRouter({
     }),
 })
 
+async function syncBotSource(bsId: string) {
+  try {
+    const bs = await db.query.botSources.findFirst({
+      where: eq(schema.botSources.id, bsId),
+    })
+    if (!bs) {
+      throw new Error('Bot source not found')
+    }
+    if (
+      bs.statusId !== BotSourceStatusEnum.Created &&
+      bs.statusId !== BotSourceStatusEnum.Failed
+    ) {
+      throw new Error('Invalid bot source status')
+    }
+
+    // Update status to crawling
+    await db
+      .update(schema.botSources)
+      .set({
+        statusId: BotSourceStatusEnum.Crawling,
+      })
+      .where(eq(schema.botSources.id, bsId))
+
+    // Crawl the bot source
+    const contents = await crawlBotSource(bs)
+
+    const bsDataId = uuidv7()
+    await db.insert(schema.botSourceExtractedData).values({
+      id: bsDataId,
+      botSourceId: bsId,
+      data: JSON.stringify(contents),
+    })
+
+    // Update status to embedding
+    await db
+      .update(schema.botSources)
+      .set({
+        statusId: BotSourceStatusEnum.Embedding,
+      })
+      .where(eq(schema.botSources.id, bsId))
+
+    // Embed the bot source
+    for (const { content, embeddings } of await getEmbeddingsFromContents(
+      contents,
+    )) {
+      // Store data to DB
+      await saveEmbeddings(db, bsDataId, content, embeddings)
+    }
+
+    // Update status to completed
+    await db
+      .update(schema.botSources)
+      .set({
+        statusId: BotSourceStatusEnum.Completed,
+      })
+      .where(eq(schema.botSources.id, bsId))
+  } catch (error) {
+    // Set status to failed
+    console.error('Error while crawling bot source ', error)
+
+    // Update status to failed
+    await db
+      .update(schema.botSources)
+      .set({
+        statusId: BotSourceStatusEnum.Failed,
+      })
+      .where(eq(schema.botSources.id, bsId))
+  }
+}
+
 async function crawlBotSource(bs: InferSelectModel<typeof schema.botSources>) {
   switch (bs.typeId) {
     case BotSourceTypeEnum.Link:
@@ -173,9 +182,9 @@ async function saveEmbeddings(
   embeddings: number[],
 ) {
   await client.insert(schema.botSourceExtractedDataVector).values({
-    id: v4(),
+    id: uuidv7(),
     botSourceExtractedDataId: bsDataId,
     content,
-    embeddings,
+    vector: embeddings,
   })
 }
