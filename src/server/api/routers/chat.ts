@@ -169,10 +169,9 @@ async function buildPrompt(
   const prompt = `Question: ${msg} \n\nContext: ${contents.join('\n')}`
   return prompt
 }
+
 function getAIModel(modelID: BotModelEnum): string {
   switch (modelID) {
-    case BotModelEnum.GPT4:
-      return 'gpt-4'
     case BotModelEnum.GPT3:
       return 'gpt-3.5-turbo'
     default:

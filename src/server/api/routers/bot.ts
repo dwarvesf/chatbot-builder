@@ -69,6 +69,18 @@ export const botRouter = createTRPCRouter({
       return bot
     }),
 
+  updateBotSettings: protectedProcedure
+    .input(
+      z.object({
+        botId: z.string(),
+        // TODO: Fields to be updated
+      }),
+    )
+    .mutation(async ({ input }) => {
+      // TODO: Implement
+      return null
+    }),
+
   getById: protectedProcedure
     .input(z.string())
     .query(async ({ ctx, input }) => {
