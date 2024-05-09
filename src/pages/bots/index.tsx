@@ -9,7 +9,6 @@ const BotsPage: NextPage = () => {
       <SeoHead title="Your Bots" />
       <AuthenticatedLayout>
         <SiteHeader title="Your Bots" />
-        <div>Bots Page</div>
       </AuthenticatedLayout>
     </>
   )

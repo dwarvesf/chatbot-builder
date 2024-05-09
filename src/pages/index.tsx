@@ -29,7 +29,7 @@ const Index: NextPage = () => {
       <PageContent>
         <SectionHeader>
           <SectionHeaderTitle>
-            <span className="text-2xl">Your Bots</span>
+            <Typography className="text-2xl">Your Bots</Typography>
           </SectionHeaderTitle>
           <SectionHeaderActions className="!flex-nowrap">
             <Button

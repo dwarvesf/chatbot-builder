@@ -1,5 +1,6 @@
 import { PageContent, PageHeader, PageHeaderTitle } from '@mochi-ui/core'
 import type { GetServerSideProps, NextPage } from 'next'
+import { BotSetting } from '~/components/BotSetting'
 import { SeoHead } from '~/components/SeoHead'
 import { ROUTES } from '~/constants/routes'
 import { getServerAuthSession } from '~/server/auth'
@@ -11,7 +12,9 @@ const BotSettings: NextPage = () => {
       <PageHeader className="border-b border-divider">
         <PageHeaderTitle>Settings</PageHeaderTitle>
       </PageHeader>
-      <PageContent>...</PageContent>
+      <PageContent>
+        <BotSetting />
+      </PageContent>
     </>
   )
 }
