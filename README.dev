@@ -22,3 +22,12 @@ make db-seed
 ### How to migrate database
  - Edit the schema file in `src/migration/schema.ts`
  - Apply the migration by running `make db-migrate`
+
+### `vector(1024)` not found when running `make db-migrate`?
+
+Run these two commands:
+
+```
+patch -p1 -N < patches/drizzle-kit.bin.cjs.patch || echo ''
+patch -p1 -N < patches/drizzle-kit.utils.js.patch || echo ''
+```
