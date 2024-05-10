@@ -14,8 +14,11 @@ import { BotSourceTypeEnum } from '~/model/bot-source-type'
 import { api } from '~/utils/api'
 import { isValidURL } from '~/utils/utils'
 
+interface SourceLinkProps {
+  addLink: () => void;
+}
 
-export const SourceLink = () => {
+export const SourceLink = ({addLink}: SourceLinkProps) => {
   const { id } = useParams()
   const { toast } = useToast()
   const [currentURL, setCurrentURL] = useState<string>('')
@@ -38,6 +41,7 @@ export const SourceLink = () => {
         })
       })
       await Promise.all(uploadPromises)
+      addLink();
 
       setUrls([])
     } catch (error: any) {

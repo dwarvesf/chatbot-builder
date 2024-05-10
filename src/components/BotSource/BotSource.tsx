@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Badge,
   Button,
@@ -60,29 +61,34 @@ const DATA_TABS = [
   },
 ]
 
-const DETAIL_MENUS = {
-  VIEW_DETAIL: 'View detail',
-  DELETE: 'Delete',
+interface SourceContent {
+  id: string
+  data: unknown
+  createdAt: Date
+  createdBy: string | null
+  botSourceId: string
 }
 
 export const BotSource = () => {
   const id = useParams()?.id
+  const [selectedSourceId, setSelectedSourceId] = useState<string>('')
   const [currentTab, setCurrentTab] = useState<SourceTab>(
     SOURCE_TABS[0] ?? { title: '', subTitle: '' },
   )
   const [page, setPage] = useState<number>(1)
   const [perPage, setPerPage] = useState<number>(5)
   const [dataType, setDataType] = useState<string>('Files / URLs')
-  const { data: sources, isLoading } = api.botSource.getByBotId.useQuery(
-    id as string,
-  )
+  const {
+    data: sources,
+    isLoading,
+    refetch: refetchSources,
+  } = api.botSource.getByBotId.useQuery(id as string)
   const { mutate: syncSource, error: syncError } =
     api.botSource.sync.useMutation()
-  const sourceContents = [
-    '[](/ "Kênh thông tin kinh tế - tài chính Việt Nam") * * * * * * * [Bảng giá điện tử](http://liveboard.cafef.vn "Bảng giá điện tử") [Danh mục đầutư](https://s.cafef.vn/danh-muc-dau-tu.chn "Danh mục đầu tư") MỚI NHẤT! [Đọc nhanh >>](/doc-nhanh.chn "Đọc nhanh") * * * * * * [](/ "Trang chủ")* [XÃ HỘI](/xa-hoi.chn "XÃ HỘI")* [CHỨNG KHOÁN](/thi-truong-chung-khoan.chn "CHỨNG KHOÁN")* [BẤT ĐỘNG SẢN](/bat-dong-san.chn "BẤT ĐỘNG SẢN")* [DOANH NGHIỆP](/doanh-nghiep.chn "DOANH NGHIỆP")* [NGÂN HÀNG](/tai-chinh-ngan-hang.chn "NGÂN HÀNG")* [TÀI CHÍNH QUỐC TẾ](/tai-chinh-quoc-te.chn "TÀI CHÍNH QUỐC TẾ")* [VĨ MÔ](/vi-mo-dau-tu.chn "VĨ MÔ")* [KINH TẾ SỐ](/kinh-te-so.chn "KINH TẾ SỐ")* [THỊ TRƯỜNG](/thi-truong.chn "THỊ TRƯỜNG")* [SỐNG](/song.chn "SỐNG")* [LIFESTYLE](/lifestyle.chn "LIFESTYLE")* [ ](javascript:;) Tin tức [Xã hội](/xa-hoi.chn "xã hội") [Doanh nghiệp](/doanh-nghiep.chn "doanhnghiệp") [Kinh tế vĩ mô](/vi-mo-dau-tu.chn "kinh tế vĩ mô") Tài chính - Chứng khoán [Chứng',
-    'động sản sẽ tới sớm 15-04-2024 - 07:09 AM | [Bất động sản](/bat-dong-san.chn "Bất động sản") [Chia sẻ ](javascript:;) [](/ "Trang chủ") [](javascript:; "Chia sẻ") [](mailto:email@domain.com?subject=Ng%C3%A0y%20c%C3%A0ng%20nhi%E1%BB%81u%20nh%C3%B3m%20%E2%80%9Cc%C3%A1%20m%E1%BA%ADp%E2%80%9D%20%C4%91i%20s%C4%83n%20%C4%91%E1%BA%A5t%20%E1%BB%9F%20%E2%80%9Cch%C3%A2n%20s%C3%B3ng%E2%80%9D%2C%20chu%20k%E1%BB%B3%20t%C4%83ng%20gi%C3%A1%20b%E1%BA%A5t%20%C4%91%E1%BB%99ng%20s%E1%BA%A3n%20s%E1%BA%BD%20t%E1%BB%9Bi%20s%E1%BB%9Bm&body=https%3A%2F%2Fcafef.vn%2Fngay-cang-nhieu-nhom-ca-map-di-san-dat-o-chan-song-chu-ky-tang-gia-bat-dong-san-se-toi-som-188240415013645313.chn "email") ## Mặc dù vừa trải qua một giai đoạn trầm lắng kéo dài, song đất nền vẫn làkênh đầu tư được nhiều người ưa chuộng. * 14-04-2024[Khung cảnh đìu hiu trên tuyến phố đắt đỏ bậc nhất Hà Nội __](/khung-canh-diu-hiu-tren-tuyen-pho-dat-do-bac-nhat-ha-noi-188240414085656032.chn "Khung cảnh đìu hiu trên tuyến phố đắt đỏ bậc nhất Hà Nội")',
-    'đìu hiu trên tuyến phố đắt đỏ bậc nhất Hà Nội")* 13-04-2024[Những trường hợp sẽ bị Nhà nước thu hồi sổ đỏ khi áp dụng Luật Đất đai 2024,... __](/nhung-truong-hop-se-bi-nha-nuoc-thu-hoi-so-do-khi-ap-dung-luat-dat-dai-2024-nguoi-dan-cam-nam-chac-trong-tay-188240413162937989.chn "Những trường hợp sẽ bị Nhà nước thu hồi sổ đỏ khi áp dụng Luật Đất đai 2024, người dân cầm nắm chắc trong tay ") * 13-04-2024[Không chỉ chung cư, giá nhà trong ngõ liên tục tăng mạnh, chuyên gia khẳng định:... __](/khong-chi-chung-cu-gia-nha-trong-ngo-lien-tuc-tang-manh-chuyen-gia-khang-dinh-kho-giam-188240413170443766.chn "Không chỉ chung cư, giá nhà trong ngõ liên tục tăng mạnh, chuyên gia khẳng định: “Khó giảm!” ") [TIN MỚI](javascript:; "TIN MỚI") **Đất nền vẫn là “món khoái khẩu” của nhà đầu tư** Cách đây chỉ 1 năm, phân khúc đất nền ở các khu vực đều rơi vào trầm lắng,thậm chí có nơi gần như “đóng băng”. Theo đó nhiều nhà đầu tư phải giảm giá 20- 30% hoặc nhiều hơn với mong muốn tìm được khách mua. Hiện nay, khung cảnh',
-  ]
+  const { data: sourceContents = [], isLoading: isLoadingSourceContent } =
+    api.botSourceExtractedDataRouter.getList.useQuery({
+      botSourceId: selectedSourceId,
+    })
 
   const handleTabClick = (tab: SourceTab) => {
     setCurrentTab(tab)
@@ -143,7 +149,16 @@ export const BotSource = () => {
   const handleDelete = (id: string) => {
     console.log(id)
     // open confirm dialog
+  }
 
+  const handleViewDetail = (id: string) => {
+    setSelectedSourceId(id)
+  }
+
+  // trigger when add new link in SourceLink component to reload data
+  const handleAddLink = async () => {
+    // reload data
+    await refetchSources()
   }
 
   return (
@@ -172,7 +187,7 @@ export const BotSource = () => {
               </TabList>
               <div className="flex-1 p-6">
                 <TabContent value="Links" key="Links" id="1">
-                  <SourceLink />
+                  <SourceLink addLink={handleAddLink} />
                 </TabContent>
                 <TabContent value="Sitemaps" key="Sitemaps" id="2">
                   <SourceSitemap />
@@ -296,7 +311,15 @@ export const BotSource = () => {
                           <PopoverContent>
                             <div className="flex flex-col gap-1 justify-start">
                               <DrawerTrigger asChild>
-                                <Button key="view-detail" color="black">
+                                <Button
+                                  key="view-detail"
+                                  color="black"
+                                  onClick={() => {
+                                    handleViewDetail(
+                                      data.row.original.id.toString(),
+                                    )
+                                  }}
+                                >
                                   View detail
                                 </Button>
                               </DrawerTrigger>
@@ -341,24 +364,26 @@ export const BotSource = () => {
         </div>
         <DrawerPortal>
           <DrawerOverlay />
-          <DrawerContent
-            className={'text-center h-max p-6'}
-            showCloseBtn
-          >
+          <DrawerContent className={'text-center h-max p-6'} showCloseBtn>
             <div className="flex flex-col gap-2 py-2 w-[350px]">
               <Typography className="text-lg text-left font-semibold">
                 Source detail
               </Typography>
-              {sourceContents.map((content, index) => {
-                return (
-                  <Typography
-                    key={index}
-                    className="text-sm text-gray-950 p-4 rounded bg-gray-100"
-                  >
-                    {content}
-                  </Typography>
-                )
-              })}
+
+              {isLoadingSourceContent ? (
+                <Typography>Loading...</Typography>
+              ) : (
+                sourceContents?.map((content: SourceContent, index: number) => {
+                  return (
+                    <Typography
+                      key={index}
+                      className="text-sm text-gray-950 p-4 rounded bg-gray-100"
+                    >
+                      {content?.data as string}
+                    </Typography>
+                  )
+                })
+              )}
             </div>
           </DrawerContent>
         </DrawerPortal>
