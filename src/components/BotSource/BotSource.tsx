@@ -22,6 +22,7 @@ import {
   Table,
   Tabs,
   Typography,
+  useToast,
 } from '@mochi-ui/core'
 import { MenuSolid, RefreshSolid } from '@mochi-ui/icons'
 import { useParams } from 'next/navigation'
@@ -71,6 +72,7 @@ interface SourceContent {
 
 export const BotSource = () => {
   const id = useParams()?.id
+  const { toast } = useToast()
   const [selectedSourceId, setSelectedSourceId] = useState<string>('')
   const [currentTab, setCurrentTab] = useState<SourceTab>(
     SOURCE_TABS[0] ?? { title: '', subTitle: '' },
@@ -85,6 +87,8 @@ export const BotSource = () => {
   } = api.botSource.getByBotId.useQuery(id as string)
   const { mutate: syncSource, error: syncError } =
     api.botSource.sync.useMutation()
+  const { mutate: deleteSourceById, error: deleteError } =
+    api.botSource.deleteById.useMutation()
   const { data: sourceContents = [], isLoading: isLoadingSourceContent } =
     api.botSourceExtractedDataRouter.getList.useQuery({
       botSourceId: selectedSourceId,
@@ -106,7 +110,7 @@ export const BotSource = () => {
     setDataType(dataType)
   }
 
-  const handleSync = async (id: string) => {
+  const handleSync = (id: string) => {
     // sync data
     syncSource({
       botSourceId: id,
@@ -146,9 +150,24 @@ export const BotSource = () => {
     }
   }
 
-  const handleDelete = (id: string) => {
-    console.log(id)
-    // open confirm dialog
+  const handleDelete = async (id: string) => {
+    try {
+      deleteSourceById({
+        botSourceId: id,
+      })
+    } catch (error: any) {
+      toast({
+        description: error?.message ?? '',
+        scheme: 'danger',
+      })
+    }
+
+    // reload data
+    await refetchSources()
+    toast({
+      description: 'Delete successfully',
+      scheme: 'success',
+    })
   }
 
   const handleViewDetail = (id: string) => {
@@ -296,8 +315,8 @@ export const BotSource = () => {
                           height={20}
                           width={20}
                           color="blue"
-                          onClick={async () => {
-                            await handleSync(data.row.original.id.toString())
+                          onClick={() => {
+                            handleSync(data.row.original.id.toString())
                           }}
                         />
                       </IconButton>
@@ -326,8 +345,10 @@ export const BotSource = () => {
                               <Button
                                 key="delete"
                                 color="black"
-                                onClick={() => {
-                                  handleDelete(data.row.original.id.toString())
+                                onClick={async () => {
+                                  await handleDelete(
+                                    data.row.original.id.toString(),
+                                  )
                                 }}
                               >
                                 Delete
