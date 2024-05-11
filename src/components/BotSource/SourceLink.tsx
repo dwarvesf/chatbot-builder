@@ -1,8 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { useDisclosure } from '@dwarvesf/react-hooks'
 import {
   Button,
   Card,
   IconButton,
+  SectionHeader,
+  SectionHeaderActions,
+  SectionHeaderTitle,
   TextFieldInput,
   Typography,
   useToast,
@@ -13,14 +17,16 @@ import { useState } from 'react'
 import { BotSourceTypeEnum } from '~/model/bot-source-type'
 import { api } from '~/utils/api'
 import { isValidURL } from '~/utils/utils'
+import { BulkImportLinkModal } from './BulkLinkModal'
 
 interface SourceLinkProps {
-  addLink: () => void;
+  addLink: () => void
 }
 
-export const SourceLink = ({addLink}: SourceLinkProps) => {
+export const SourceLink = ({ addLink }: SourceLinkProps) => {
   const { id } = useParams()
   const { toast } = useToast()
+  const { onOpenChange, isOpen, onOpen } = useDisclosure()
   const [currentURL, setCurrentURL] = useState<string>('')
   const [urls, setUrls] = useState<string[]>([])
   const [editingURL, setEditingURL] = useState<string>('')
@@ -41,7 +47,7 @@ export const SourceLink = ({addLink}: SourceLinkProps) => {
         })
       })
       await Promise.all(uploadPromises)
-      addLink();
+      addLink()
 
       setUrls([])
     } catch (error: any) {
@@ -56,7 +62,7 @@ export const SourceLink = ({addLink}: SourceLinkProps) => {
       return
     }
     // validate valid url
-    
+
     if (!isValidURL(currentURL)) {
       setError('Invalid URL')
       return
@@ -107,9 +113,22 @@ export const SourceLink = ({addLink}: SourceLinkProps) => {
     <div>
       <Card>
         <div className="items-center justify-center">
-          <Typography className="text-sm text-gray-700">
-            Enter a Website or Youtube video URL:
-          </Typography>
+          <SectionHeader>
+            <SectionHeaderTitle>
+              <Typography className="text-2xl">
+                Enter a Website or Youtube video URL:
+              </Typography>
+            </SectionHeaderTitle>
+            <SectionHeaderActions className="!flex-nowrap">
+              <Button onClick={onOpen}>Bulk import</Button>
+              <BulkImportLinkModal
+                botId={id?.toString() ?? ''}
+                typeId={BotSourceTypeEnum.Link}
+                isOpen={isOpen}
+                onOpenChange={onOpenChange}
+              />
+            </SectionHeaderActions>
+          </SectionHeader>
           <div>
             {urls.map((url) => (
               <div key={url} className="flex justify-between p-1">
