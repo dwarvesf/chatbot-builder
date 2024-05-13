@@ -18,8 +18,9 @@ await db
 await db
   .insert(schema.botSourceTypes)
   .values([
-    { id: 1, name: 'Link', createdAt: new Date() },
-    { id: 2, name: 'Sitemap', createdAt: new Date() },
+    { id: 1, name: 'Link', visible: true, createdAt: new Date() },
+    { id: 2, name: 'Sitemap', visible: true, createdAt: new Date() },
+    { id: 3, name: 'SitemapChild', visible: false, createdAt: new Date() },
   ])
   .onConflictDoNothing()
 

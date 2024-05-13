@@ -1,5 +1,6 @@
 import { relations } from 'drizzle-orm'
 import {
+  boolean,
   foreignKey,
   index,
   integer,
@@ -237,6 +238,7 @@ export const botSourceTypes = createTable(
   {
     id: integer('id').notNull().primaryKey(),
     name: text('name'),
+    visible: boolean('visible'),
     createdAt: timestamp('created_at'),
     createdBy: uuid('created_by').references(() => users.id),
   },
