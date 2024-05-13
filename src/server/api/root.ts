@@ -1,5 +1,6 @@
 import { postRouter } from '~/server/api/routers/post'
 import { createCallerFactory, createTRPCRouter } from '~/server/api/trpc'
+import { botAIModelRouter } from './routers/ai-model'
 import { botRouter } from './routers/bot'
 import { botIntegrationRouter } from './routers/bot-integration'
 import { botSourceRouter } from './routers/bot-source'
@@ -13,6 +14,7 @@ import { chatRouter } from './routers/chat'
  */
 export const appRouter = createTRPCRouter({
   bot: botRouter,
+  botAIModelRouter: botAIModelRouter,
   botIntegrationRouter: botIntegrationRouter,
   botSource: botSourceRouter,
   botSourceExtractedDataRouter: botSourceExtractedDataRouter,
