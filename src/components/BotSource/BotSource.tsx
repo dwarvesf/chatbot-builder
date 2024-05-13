@@ -84,7 +84,10 @@ export const BotSource = () => {
     data: sources,
     isLoading,
     refetch: refetchSources,
-  } = api.botSource.getByBotId.useQuery(id as string)
+  } = api.botSource.getByBotId.useQuery({
+    botId: id as string,
+    typeIDs: [BotSourceTypeEnum.Link, BotSourceTypeEnum.Sitemap],
+  })
   const { mutate: syncSource, error: syncError } =
     api.botSource.sync.useMutation()
   const { mutate: deleteSourceById, error: deleteError } =
