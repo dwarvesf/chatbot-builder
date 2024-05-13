@@ -1,14 +1,12 @@
 import {
-  Avatar,
-  IconButton,
+  Button,
   PageContent,
   PageHeader,
   PageHeaderTitle,
-  Typography,
 } from '@mochi-ui/core'
-import { PaperplaneSolid } from '@mochi-ui/icons'
 import type { GetServerSideProps, NextPage } from 'next'
 import { useParams } from 'next/navigation'
+import { useRef } from 'react'
 import { SeoHead } from '~/components/SeoHead'
 import { ROUTES } from '~/constants/routes'
 import { getServerAuthSession } from '~/server/auth'
@@ -18,6 +16,8 @@ const BotDetail: NextPage = () => {
   const { id } = useParams()
   const botQuery = api.bot.getById.useQuery(id as string)
 
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+
   return (
     <>
       <SeoHead title="Bot" />
@@ -25,7 +25,23 @@ const BotDetail: NextPage = () => {
         <PageHeaderTitle>Preview</PageHeaderTitle>
       </PageHeader>
       <PageContent className="bg-gray-50">
-        <div className="border rounded-lg min-h-[calc(100dvh-240px)] bg-white relative">
+        <Button
+          type="button"
+          onClick={() => {
+            iframeRef.current?.contentWindow?.postMessage(
+              JSON.stringify({ type: 'test' }),
+              '*',
+            )
+          }}
+        >
+          Send test message to widget iframe
+        </Button>
+        <iframe
+          ref={iframeRef}
+          src="http://localhost:3001"
+          className="min-h-[calc(100dvh-240px)] w-full rounded-lg"
+        />
+        {/* <div className="border rounded-lg min-h-[calc(100dvh-240px)] bg-white relative">
           <div className="absolute top-0 flex items-center inset-x-0 border-b h-20 px-4">
             <div className="flex space-x-4">
               <Avatar src="" />
@@ -54,7 +70,7 @@ const BotDetail: NextPage = () => {
               </IconButton>
             </form>
           </div>
-        </div>
+        </div> */}
       </PageContent>
     </>
   )
