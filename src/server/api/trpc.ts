@@ -13,8 +13,8 @@ import superjson from 'superjson'
 import { z, ZodError } from 'zod'
 
 import { eq } from 'drizzle-orm'
-import * as schema from '~/migration/schema'
 import { getServerAuthSession } from '~/server/auth'
+import * as schema from '~/server/db/migration/schema'
 import { db } from '../db'
 
 /**

@@ -10,8 +10,8 @@ import GoogleProvider, { type GoogleProfile } from 'next-auth/providers/google'
 import { ROUTES } from '~/constants/routes'
 
 import { env } from '~/env'
-import { createTable } from '~/migration/schema'
 import { db } from '~/server/db'
+import { createTable } from '~/server/db/migration/schema'
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`

@@ -4,10 +4,10 @@ import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
 import getEmbeddingsFromContents from '~/components/embedding'
 import { env } from '~/env'
-import * as schema from '~/migration/schema'
 import { BotModelEnum } from '~/model/bot-model'
 import { ChatRoleEnum } from '~/model/chat'
 import { db } from '~/server/db'
+import * as schema from '~/server/db/migration/schema'
 import { createTRPCRouter, integrationProcedure } from '../trpc'
 
 const openai = new OpenAI({

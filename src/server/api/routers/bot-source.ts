@@ -9,10 +9,10 @@ import { z } from 'zod'
 import crawURL from '~/components/crawler'
 import getEmbeddingsFromContents from '~/components/embedding'
 import { env } from '~/env'
-import * as schema from '~/migration/schema'
 import { BotSourceStatusEnum } from '~/model/bot-source-status'
 import { BotSourceTypeEnum } from '~/model/bot-source-type'
 import { db } from '~/server/db'
+import * as schema from '~/server/db/migration/schema'
 import { createTRPCRouter, protectedProcedure } from '../trpc'
 
 export const botSourceRouter = createTRPCRouter({

@@ -3,7 +3,7 @@ import postgres from 'postgres'
 
 import { type Logger } from 'drizzle-orm'
 import { env } from '~/env'
-import * as schema from '../../migration/schema'
+import * as schema from './migration/schema'
 
 /**
  * Cache the database connection in development. This avoids creating a new connection on every HMR

@@ -14,7 +14,7 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core'
 import { type AdapterAccount } from 'next-auth/adapters'
-import { vector } from '~/migration/vector'
+import { vector } from '~/server/db/migration/vector'
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
