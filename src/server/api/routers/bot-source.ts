@@ -86,21 +86,34 @@ export const botSourceRouter = createTRPCRouter({
         offset: z.number().optional().default(0),
       }),
     )
-    .query(async ({ input }) => {
-      let query = db
+    .query(async ({ ctx, input }) => {
+      const bot = await db
+        .select({})
+        .from(schema.bots)
+        .where(
+          and(
+            eq(schema.bots.id, input.botId),
+            eq(schema.bots.createdBy, ctx.session.user.id),
+          ),
+        )
+      if (!bot.length) {
+        throw new Error('Bot not found')
+      }
+
+      const query = db
         .select()
         .from(schema.botSources)
-        .where(eq(schema.botSources.botId, input.botId))
         .limit(input.limit)
         .offset(input.offset)
         .$dynamic()
 
+      const whereQms = [eq(schema.botSources.botId, input.botId)]
+
       if (input?.typeIDs && input.typeIDs.length > 0) {
-        query = query.where(inArray(schema.botSources.typeId, input.typeIDs))
+        whereQms.push(inArray(schema.botSources.typeId, input.typeIDs))
       }
 
-      const arr = await query
-
+      const arr = await query.where(and(...whereQms))
       return arr
     }),
 
