@@ -1,9 +1,33 @@
-import { PageContent, PageHeader, PageHeaderTitle } from '@mochi-ui/core'
+import {
+  PageContent,
+  PageHeader,
+  PageHeaderTitle,
+  TabContent,
+  TabList,
+  TabTrigger,
+  Tabs,
+} from '@mochi-ui/core'
 import type { GetServerSideProps, NextPage } from 'next'
-import { BotSource } from '~/components/BotSource'
+import { LinkSource } from '~/components/BotSource/LinkSource'
 import { SeoHead } from '~/components/common/SeoHead'
 import { ROUTES } from '~/constants/routes'
 import { getServerAuthSession } from '~/server/auth'
+
+const items = [
+  {
+    value: 'links',
+    label: 'Links',
+    render: <LinkSource />,
+  },
+  {
+    value: 'sitemaps',
+    label: 'Sitemaps',
+  },
+  {
+    value: 'files-docs',
+    label: 'Files/Docs',
+  },
+]
 
 const BotSources: NextPage = () => {
   return (
@@ -12,8 +36,30 @@ const BotSources: NextPage = () => {
       <PageHeader className="border-b border-divider">
         <PageHeaderTitle>Sources</PageHeaderTitle>
       </PageHeader>
-      <PageContent className="!pt-2" containerClassName="!m-0 !max-w-none">
-        <BotSource />
+      <PageContent>
+        <Tabs defaultValue="links">
+          <TabList>
+            {items.map((item) => (
+              <TabTrigger
+                className="!text-base"
+                key={item.label}
+                value={item.value}
+              >
+                {item.label}
+              </TabTrigger>
+            ))}
+          </TabList>
+
+          <div className="border-b border-divider" />
+
+          <div className="mt-5">
+            {items.map((item) => (
+              <TabContent key={item.label} value={item.value}>
+                {item.render}
+              </TabContent>
+            ))}
+          </div>
+        </Tabs>
       </PageContent>
     </>
   )

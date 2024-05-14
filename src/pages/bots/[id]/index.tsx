@@ -9,6 +9,7 @@ import {
 import { PaperplaneSolid } from '@mochi-ui/icons'
 import type { GetServerSideProps, NextPage } from 'next'
 import { useParams } from 'next/navigation'
+import { useForm } from 'react-hook-form'
 import { SeoHead } from '~/components/common/SeoHead'
 import { ROUTES } from '~/constants/routes'
 import { getServerAuthSession } from '~/server/auth'
@@ -17,6 +18,25 @@ import { api } from '~/utils/api'
 const BotDetail: NextPage = () => {
   const { id } = useParams()
   const botQuery = api.bot.getById.useQuery(id as string)
+  const { mutate: createChat, data } = api.chatRouter.create.useMutation()
+  const { data: models } = api.botAIModelRouter.getList.useQuery()
+
+  const {
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<{
+    message: string
+  }>({
+    defaultValues: { message: '' },
+  })
+
+  async function sendMessage(data: { message: string }) {
+    try {
+      createChat({ message: data.message })
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   return (
     <>
@@ -36,11 +56,7 @@ const BotDetail: NextPage = () => {
             </div>
           </div>
           <div className="absolute bottom-0 inset-x-0 border-t">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault()
-              }}
-            >
+            <form onSubmit={handleSubmit(sendMessage)}>
               <input
                 placeholder="Send a message..."
                 className="h-20 w-full px-6 outline-none pr-10"
