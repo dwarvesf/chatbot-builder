@@ -33,7 +33,7 @@ export const BotLimit = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-row items-end space-x-4">
+      <div className="flex flex-row items-stretch space-x-4">
         <Controller
           name="usageLimitPerUser"
           control={control}
@@ -47,19 +47,19 @@ export const BotLimit = () => {
             </FormControl>
           )}
         />
-        <Typography className="flex justify-center py-2 whitespace-nowrap	">
+        <Typography level="p4" className="flex flex-col gap-2 mt-10">
           message per users
         </Typography>
         <Controller
           name="usageLimitPerUserType"
           control={control}
           render={({ field }) => (
-            <FormControl>
+            <FormControl className="mt-8">
               <Select {...field} value={`${field.value}`}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
-                <SelectContent className="max-w-fit" align="end">
+                <SelectContent className="max-w-fit h-[37.5]" align="end">
                   {options.map((props) => (
                     <SelectItem key={props.value} value={`${props.value}`}>
                       {props.label}

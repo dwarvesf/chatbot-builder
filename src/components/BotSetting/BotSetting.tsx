@@ -26,17 +26,14 @@ export interface BotSettingData {
 
 const schema = z.object({
   botId: z.string(),
-  name: z
-    .string()
-    .min(1, 'Required')
-    .max(50, 'Should not exceed 50 characters.'),
-  description: z.string().max(500, 'Should not exceed 500 characters.'),
+  name: z.string().min(1, 'Required').max(50, 'Max length is 50 characters.'),
+  description: z.string().max(500, 'Max length is 500 characters.'),
   modelId: z.nativeEnum(BotModelEnum),
-  messageNoSource: z.string().max(100, ' Should not exceed 100 characters.'),
-  messageServerError: z.string().max(100, 'Should not exceed 100 characters.'),
+  messageNoSource: z.string().max(100, 'Max length is 100 characters.'),
+  messageServerError: z.string().max(100, 'Max length is 100 characters.'),
   usageLimitPerUser: z.string(),
   usageLimitPerUserType: z.nativeEnum(UsageLimitTypeEnum),
-  userLimitWarningMsg: z.string().max(100, 'Should not exceed 100 characters.'),
+  userLimitWarningMsg: z.string().max(100, 'Max length is 100 characters.'),
 })
 
 export const BotSetting = () => {
@@ -87,23 +84,23 @@ export const BotSetting = () => {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="space-y-4 sm:max-w-[600px]">
           <div className="space-y-4 sm:max-w-[300px]">
-            <Typography level="p2" fontWeight="lg">
+            <Typography level="h3" fontWeight="lg">
               General
             </Typography>
             <BotDescription />
 
-            <Typography level="p2" fontWeight="lg">
+            <Typography level="h3" fontWeight="lg">
               Model
             </Typography>
             <BotModel />
           </div>
 
-          <Typography level="p2" fontWeight="lg">
+          <Typography level="h3" fontWeight="lg">
             Messages
           </Typography>
           <BotMessages />
 
-          <Typography level="p2" fontWeight="lg">
+          <Typography level="h3" fontWeight="lg">
             Usage Limit
           </Typography>
           <BotLimit />
