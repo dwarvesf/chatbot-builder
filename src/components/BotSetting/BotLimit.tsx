@@ -1,19 +1,19 @@
 import {
+  FormControl,
+  FormErrorMessage,
+  FormLabel,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-  FormControl,
-  FormErrorMessage,
-  FormLabel,
   TextFieldInput,
   TextFieldRoot,
   Typography,
 } from '@mochi-ui/core'
+import { Controller, useFormContext } from 'react-hook-form'
 import { UsageLimitTypeEnum } from '~/model/usage-limit-type'
 import { type BotSettingData } from './BotSetting'
-import { Controller, useFormContext } from 'react-hook-form'
 
 interface LimitOptions {
   label: string
@@ -29,47 +29,59 @@ const options: LimitOptions[] = [
 ]
 
 export const BotLimit = () => {
-  const { control } = useFormContext<BotSettingData>()
+  const { control, formState } = useFormContext<BotSettingData>()
+  const { errors } = formState
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-row items-stretch space-x-4">
-        <Controller
-          name="usageLimitPerUser"
-          control={control}
-          render={({ field, fieldState }) => (
-            <FormControl error={!!fieldState.error} hideHelperTextOnError>
-              <FormLabel>Usage limit per user</FormLabel>
-              <TextFieldRoot>
-                <TextFieldInput {...field} />
-              </TextFieldRoot>
-              <FormErrorMessage>{fieldState.error?.message}</FormErrorMessage>
-            </FormControl>
-          )}
-        />
-        <Typography level="p4" className="flex flex-col gap-2 mt-10">
-          message per users
-        </Typography>
-        <Controller
-          name="usageLimitPerUserType"
-          control={control}
-          render={({ field }) => (
-            <FormControl className="mt-8">
-              <Select {...field} value={`${field.value}`}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent className="max-w-fit h-[37.5]" align="end">
-                  {options.map((props) => (
-                    <SelectItem key={props.value} value={`${props.value}`}>
-                      {props.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormControl>
-          )}
-        />
+      <div className="space-y-2">
+        <div className="flex items-center space-x-4">
+          <Controller
+            name="usageLimitPerUser"
+            control={control}
+            render={({ field, fieldState }) => (
+              <FormControl error={!!fieldState.error} hideHelperTextOnError>
+                <FormLabel>Usage limit per user</FormLabel>
+                <TextFieldRoot>
+                  <TextFieldInput {...field} />
+                </TextFieldRoot>
+              </FormControl>
+            )}
+          />
+          <div className="flex items-center space-x-4 mt-6">
+            <Typography level="p4" className="flex flex-col gap-2">
+              message per users
+            </Typography>
+            <Controller
+              name="usageLimitPerUserType"
+              control={control}
+              render={({ field }) => (
+                <FormControl>
+                  <Select {...field} value={`${field.value}`}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent className="max-w-fit h-[37.5]" align="end">
+                      {options.map((props) => (
+                        <SelectItem key={props.value} value={`${props.value}`}>
+                          {props.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+              )}
+            />
+          </div>
+        </div>
+        {errors.usageLimitPerUser ? (
+          <Typography
+            level="span"
+            className="text-xs tracking-tighter !text-danger-outline-fg"
+          >
+            {errors.usageLimitPerUser?.message}
+          </Typography>
+        ) : null}
       </div>
 
       <Controller

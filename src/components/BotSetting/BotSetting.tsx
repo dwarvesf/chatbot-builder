@@ -1,16 +1,15 @@
-import { Typography } from '@mochi-ui/core'
-import { BotDescription } from './BotDescription'
-import { BotModel } from './BotModel'
-import { BotMessages } from './BotMessages'
-import { BotLimit } from './BotLimit'
-import { FormProvider, useForm } from 'react-hook-form'
-import { UsageLimitTypeEnum } from '~/model/usage-limit-type'
-import { BotModelEnum } from '~/model/bot-model'
-import { Button } from '@mochi-ui/core'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
+import { Button, Typography } from '@mochi-ui/core'
 import { useParams } from 'next/navigation'
+import { FormProvider, useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { BotModelEnum } from '~/model/bot-model'
+import { UsageLimitTypeEnum } from '~/model/usage-limit-type'
 import { api } from '~/utils/api'
+import { BotDescription } from './BotDescription'
+import { BotLimit } from './BotLimit'
+import { BotMessages } from './BotMessages'
+import { BotModel } from './BotModel'
 
 export interface BotSettingData {
   botId: string
@@ -84,23 +83,23 @@ export const BotSetting = () => {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="space-y-4 sm:max-w-[600px]">
           <div className="space-y-4 sm:max-w-[300px]">
-            <Typography level="h3" fontWeight="lg">
+            <Typography level="h6" fontWeight="lg">
               General
             </Typography>
             <BotDescription />
 
-            <Typography level="h3" fontWeight="lg">
+            <Typography level="h6" fontWeight="lg">
               Model
             </Typography>
             <BotModel />
           </div>
 
-          <Typography level="h3" fontWeight="lg">
+          <Typography level="h6" fontWeight="lg">
             Messages
           </Typography>
           <BotMessages />
 
-          <Typography level="h3" fontWeight="lg">
+          <Typography level="h6" fontWeight="lg">
             Usage Limit
           </Typography>
           <BotLimit />
