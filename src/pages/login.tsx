@@ -1,5 +1,5 @@
 import type { GetServerSideProps, NextPage } from 'next'
-import { SeoHead } from '~/components/SeoHead'
+import { SeoHead } from '~/components/common/SeoHead'
 import LoginForm from '~/components/form/Login'
 import BaseLayout from '~/components/layout/Layout'
 import { ROUTES } from '~/constants/routes'
