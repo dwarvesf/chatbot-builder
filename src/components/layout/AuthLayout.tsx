@@ -32,7 +32,7 @@ import React, { useMemo } from 'react'
 import { ROUTES } from '~/constants/routes'
 import { api } from '~/utils/api'
 
-type AuthenticatedLayoutProps = {
+type AuthLayoutProps = {
   children: React.ReactNode
 }
 
@@ -78,9 +78,9 @@ const headerBotItems = (botId: string) =>
     },
   ] as SidebarProps['headerItems']
 
-export const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
+export const AuthLayout = ({ children }: AuthLayoutProps) => {
   const session = useSession()
-  const { pathname, query } = useRouter()
+  const { pathname, query, asPath } = useRouter()
   const { id } = query
   const isBotPath = pathname.startsWith('/bots/[id]')
   const botId = id as string
@@ -174,6 +174,9 @@ export const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
                 </Typography>
               </Link>
             )
+          }}
+          isSelected={(item) => {
+            return asPath === item.href
           }}
           version="0.0.1"
           headerItems={

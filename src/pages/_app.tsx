@@ -8,7 +8,7 @@ import { api } from '~/utils/api'
 import { Toaster } from '@mochi-ui/core'
 import { ThreeDotLoading } from '@mochi-ui/icons'
 import React from 'react'
-import { AuthenticatedLayout } from '~/components/layout'
+import { AuthLayout } from '~/components/layout'
 import '~/styles/globals.css'
 
 const inter = Inter({
@@ -28,7 +28,7 @@ const InnerApp = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (session) {
-    return <AuthenticatedLayout>{children}</AuthenticatedLayout>
+    return <AuthLayout>{children}</AuthLayout>
   }
 
   return <>{children}</>
@@ -45,7 +45,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
           font-family: ${inter.style.fontFamily};
         }
       `}</style>
-      <div className="fixed top-3 right-3 z-50">
+      <div className="fixed top-3 right-3 z-[999]">
         <Toaster />
       </div>
       <main className="font-sans">

@@ -70,6 +70,7 @@ export const CreateBotModal = ({ isOpen, onSuccess, onOpenChange }: Props) => {
         scheme: 'success',
       })
       await onSuccess?.()
+      onOpenChange(false)
     }
     if (isError) {
       toast({
@@ -78,7 +79,6 @@ export const CreateBotModal = ({ isOpen, onSuccess, onOpenChange }: Props) => {
       })
       console.error(error)
     }
-    onOpenChange(false)
   }, [isSuccess, isError, error])
 
   async function onCreateBot(data: { botName: string }) {

@@ -1,2 +1,2 @@
-export * from './AuthenticatedLayout'
+export * from './AuthLayout'
 export * from './Layout'
