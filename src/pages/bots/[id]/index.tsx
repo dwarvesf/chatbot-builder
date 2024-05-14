@@ -9,7 +9,7 @@ import {
 import { PaperplaneSolid } from '@mochi-ui/icons'
 import type { GetServerSideProps, NextPage } from 'next'
 import { useParams } from 'next/navigation'
-import { SeoHead } from '~/components/SeoHead'
+import { SeoHead } from '~/components/common/SeoHead'
 import { ROUTES } from '~/constants/routes'
 import { getServerAuthSession } from '~/server/auth'
 import { api } from '~/utils/api'
