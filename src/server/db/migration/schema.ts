@@ -14,6 +14,7 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core'
 import { type AdapterAccount } from 'next-auth/adapters'
+import { BotSourceStatusEnum } from '~/model/bot-source-status'
 import { vector } from '~/server/db/migration/vector'
 
 /**
@@ -193,6 +194,7 @@ export const bots = createTable(
     usageLimitPerUserType: integer('usage_limit_per_user_type'),
     userLimitWarningMsg: text('user_limit_warning_msg'),
     whileListIpsOnly: text('while_list_ips_only'),
+    status: integer('status').notNull().default(BotSourceStatusEnum.Created),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
     updatedAt: timestamp('updated_at'),

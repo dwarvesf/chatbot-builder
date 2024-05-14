@@ -1,6 +1,7 @@
 import { and, eq } from 'drizzle-orm'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
+import { BotStatusEnum } from '~/model/bot'
 import { BotModelEnum } from '~/model/bot-model'
 import { UsageLimitTypeEnum } from '~/model/usage-limit-type'
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
@@ -66,6 +67,7 @@ export const botRouter = createTRPCRouter({
           userId: ctx.session.user.id,
           modelId: BotModelEnum.GPT3,
           id: botId,
+          status: BotStatusEnum.Active,
         })
         .returning()
 
@@ -136,8 +138,36 @@ export const botRouter = createTRPCRouter({
 
   getList: protectedProcedure.query(async ({ ctx }) => {
     const bots = await db.query.bots.findMany({
-      where: eq(schema.bots.createdBy, ctx.session.user.id),
+      where: and(
+        eq(schema.bots.createdBy, ctx.session.user.id),
+        eq(schema.bots.status, BotStatusEnum.Active),
+      ),
     })
     return bots
   }),
+
+  archive: protectedProcedure
+    .input(z.object({ botID: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const bot = await db.query.bots.findFirst({
+        where: and(
+          eq(schema.bots.id, input.botID),
+          eq(schema.bots.createdBy, ctx.session.user.id),
+        ),
+      })
+      if (!bot) {
+        throw new Error('Bot not found')
+      }
+
+      const updatedBot = await db
+        .update(schema.bots)
+        .set({
+          status: BotStatusEnum.Archived,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.bots.id, input.botID))
+        .returning()
+
+      return updatedBot
+    }),
 })
