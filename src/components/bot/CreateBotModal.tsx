@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { useAsyncEffect } from '@dwarvesf/react-hooks'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   Button,
@@ -23,8 +24,7 @@ import { api } from '~/utils/api'
 
 interface Props {
   isOpen?: boolean
-  onSucess?: () => void
-  onError?: () => void
+  onSuccess?: () => Promise<any>
   onOpenChange: (open: boolean) => void
 }
 
@@ -32,12 +32,7 @@ const schema = z.object({
   botName: z.string().min(1, { message: 'Required' }),
 })
 
-export const CreateBotModal = ({
-  isOpen,
-  onSucess,
-  onOpenChange,
-  onError,
-}: Props) => {
+export const CreateBotModal = ({ isOpen, onSuccess, onOpenChange }: Props) => {
   const {
     handleSubmit,
     control,
@@ -51,7 +46,13 @@ export const CreateBotModal = ({
     mode: 'onChange',
   })
   const { toast } = useToast()
-  const { mutate, error } = api.bot.create.useMutation()
+  const {
+    mutate: createBot,
+    error,
+    isSuccess,
+    isError,
+    isPending,
+  } = api.bot.create.useMutation()
 
   useEffect(() => {
     if (!isOpen) {
@@ -62,22 +63,33 @@ export const CreateBotModal = ({
     }
   }, [isOpen, reset])
 
-  // console.log({ error })
-
-  async function onCreateBot(data: { botName: string }) {
-    try {
-      mutate({ name: data.botName })
+  useAsyncEffect(async () => {
+    if (isSuccess) {
       toast({
         description: 'Created Bot successfully',
         scheme: 'success',
       })
+      await onSuccess?.()
+    }
+    if (isError) {
+      toast({
+        description: 'Failed to create Bot',
+        scheme: 'danger',
+      })
+      console.error(error)
+    }
+    onOpenChange(false)
+  }, [isSuccess, isError, error])
+
+  async function onCreateBot(data: { botName: string }) {
+    try {
+      createBot({ name: data.botName })
     } catch (error: any) {
       toast({
         description: error?.message ?? '',
         scheme: 'danger',
       })
     }
-    onOpenChange(false)
   }
 
   return (
@@ -113,8 +125,10 @@ export const CreateBotModal = ({
               </Button>
               <Button
                 type="submit"
-                disabled={isSubmitting || !!Object.keys(errors).length}
-                loading={isSubmitting}
+                disabled={
+                  isSubmitting || isPending || !!Object.keys(errors).length
+                }
+                loading={isSubmitting || isPending}
               >
                 Create
               </Button>

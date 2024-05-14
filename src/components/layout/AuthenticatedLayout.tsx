@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   Layout,
+  LogoWithText,
   Sidebar,
   TopBar,
   Typography,
@@ -147,7 +148,11 @@ export const AuthenticatedLayout = ({ children }: AuthenticatedLayoutProps) => {
       <TopBar
         leftSlot={
           <Link href={ROUTES.HOME}>
-            <Typography className="!text-sm font-semibold">APP LOGO</Typography>
+            <LogoWithText
+              logoProps={{ size: 'xs' }}
+              className="!gap-2"
+              textClassName="w-18 h-8"
+            />
           </Link>
         }
         rightSlot={<DesktopNav navItems={navItems} />}

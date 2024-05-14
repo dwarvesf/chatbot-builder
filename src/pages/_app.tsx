@@ -6,6 +6,7 @@ import { Inter } from 'next/font/google'
 import { api } from '~/utils/api'
 
 import { Toaster } from '@mochi-ui/core'
+import { ThreeDotLoading } from '@mochi-ui/icons'
 import React from 'react'
 import { AuthenticatedLayout } from '~/components/layout'
 import '~/styles/globals.css'
@@ -16,7 +17,16 @@ const inter = Inter({
 })
 
 const InnerApp = ({ children }: { children: React.ReactNode }) => {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
+
+  if (status === 'loading') {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center">
+        <ThreeDotLoading className="w-20 h-20 text-primary-600" />
+      </div>
+    )
+  }
+
   if (session) {
     return <AuthenticatedLayout>{children}</AuthenticatedLayout>
   }
