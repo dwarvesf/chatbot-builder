@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
 import * as asyncLib from 'async'
-import { eq, inArray, type InferSelectModel } from 'drizzle-orm'
+import { and, eq, inArray, type InferSelectModel } from 'drizzle-orm'
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import { XMLParser } from 'fast-xml-parser'
 import { uniq } from 'lodash'
@@ -52,8 +52,24 @@ export const botSourceRouter = createTRPCRouter({
         botSourceId: z.string(),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const bsId = input.botSourceId
+      const bs = await db
+        .select({
+          id: schema.botSources.id,
+        })
+        .from(schema.botSources)
+        .where(
+          and(
+            eq(schema.botSources.id, bsId),
+            eq(schema.botSources.createdBy, ctx.session.user.id),
+          ),
+        )
+      if (!bs.length) {
+        throw new Error('Bot source not found')
+      }
+
+      await cleanOldBotSourceData(bsId)
       await syncBotSource(bsId)
       return null
     }),
@@ -112,6 +128,59 @@ export const botSourceRouter = createTRPCRouter({
     }),
 })
 
+async function cleanOldBotSourceData(bsId: string) {
+  console.log('Cleaning old bot source data...')
+  // Find child bot sources
+  const rows = await db
+    .select({
+      id: schema.botSources.id,
+    })
+    .from(schema.botSources)
+    .where(eq(schema.botSources.parentId, bsId))
+
+  const childSourceIDs = rows.map((r) => r.id)
+
+  // Delete extracted data vector
+  const extractedDataIDs = await db
+    .select({
+      id: schema.botSourceExtractedData.id,
+    })
+    .from(schema.botSourceExtractedData)
+    .where(
+      inArray(schema.botSourceExtractedData.botSourceId, [
+        ...childSourceIDs,
+        bsId,
+      ]),
+    )
+  await db.delete(schema.botSourceExtractedDataVector).where(
+    inArray(
+      schema.botSourceExtractedDataVector.botSourceExtractedDataId,
+      extractedDataIDs.map((r) => r.id),
+    ),
+  )
+
+  // Delete extracted data
+  await db
+    .delete(schema.botSourceExtractedData)
+    .where(
+      inArray(schema.botSourceExtractedData.botSourceId, [
+        ...childSourceIDs,
+        bsId,
+      ]),
+    )
+
+  // Delete child bot sources
+  await db
+    .delete(schema.botSources)
+    .where(inArray(schema.botSources.id, childSourceIDs))
+
+  // Reset status
+  await db
+    .update(schema.botSources)
+    .set({ statusId: BotSourceStatusEnum.Created })
+    .where(eq(schema.botSources.id, bsId))
+}
+
 async function syncBotSource(bsId: string) {
   const bs = await db.query.botSources.findFirst({
     where: eq(schema.botSources.id, bsId),
@@ -133,6 +202,7 @@ async function syncBotSource(bsId: string) {
 async function syncBotSourceSitemap(
   bs: InferSelectModel<typeof schema.botSources>,
 ) {
+  console.log('Syncing bot source sitemap... ', bs.id)
   if (!bs.url) {
     throw new Error('URL is required')
   }
@@ -146,6 +216,7 @@ async function syncBotSourceSitemap(
   // get site map
   // Extract all unique urls from sitemap
   const urls = await getURLsFromSitemap(bs.url)
+  console.log('Found urls: ', urls.length)
   // Each url, crawl data => create child bot source + extracted data
   const asyncCount = Number(env.ASYNC_EMBEDDING_COUNT) || 1
   await asyncLib.mapLimit(urls, asyncCount, async (url: string) => {
@@ -164,6 +235,7 @@ async function syncBotSourceSitemap(
     await syncBotSource(childBotSourceId)
     return childBotSourceId
   })
+  console.log('All urls are crawled and embedded')
 
   // Update bot source status to completed
   await db
@@ -243,6 +315,7 @@ async function fetchSitemap(url: string) {
 async function syncBotSourceURL(
   bs: InferSelectModel<typeof schema.botSources>,
 ) {
+  console.log('Syncing bot source URL... ', bs.id, ' - ', bs.url)
   const bsId = bs.id
 
   try {
