@@ -1,10 +1,10 @@
 import { and, eq } from 'drizzle-orm'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
-import * as schema from '~/migration/schema'
 import { BotModelEnum } from '~/model/bot-model'
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { db } from '~/server/db'
+import * as schema from '~/server/db/migration/schema'
 
 export const botRouter = createTRPCRouter({
   create: protectedProcedure

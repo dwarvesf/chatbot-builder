@@ -24,7 +24,7 @@ db-migrate:
 	bun drizzle-kit push:pg
 
 db-seed:
-	bun src/migration/seed.ts
+	bun src/server/db/migration/seed.ts
 
 lint-staged:
 	bun lint-staged

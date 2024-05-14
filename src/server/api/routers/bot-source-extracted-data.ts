@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm'
 import { z } from 'zod'
-import * as schema from '~/migration/schema'
 import { db } from '~/server/db'
+import * as schema from '~/server/db/migration/schema'
 import { createTRPCRouter, protectedProcedure } from '../trpc'
 
 export const botSourceExtractedDataRouter = createTRPCRouter({
