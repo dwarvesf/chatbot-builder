@@ -92,9 +92,9 @@ export const botRouter = createTRPCRouter({
           modelId: input.modelId,
           noSourceWarningMsg: input.noSourceWarningMsg,
           serverErrorMsg: input.serverErrorMsg,
+          userLimitWarningMsg: input.userLimitWarningMsg,
           usageLimitPerUser: input.usageLimitPerUser,
           usageLimitPerUserType: input.usageLimitPerUserType,
-          userLimitWarningMsg: input.userLimitWarningMsg,
           updatedAt: new Date(),
           updatedBy: ctx.session.user.id,
         })
