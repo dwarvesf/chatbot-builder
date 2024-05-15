@@ -16,65 +16,43 @@ import * as schema from '~/server/db/migration/schema'
 import { createTRPCRouter, protectedProcedure } from '../trpc'
 
 export const botSourceRouter = createTRPCRouter({
-  create: protectedProcedure
-    .input(
-      z.object({
-        botId: z.string(),
-        typeId: z.nativeEnum(BotSourceTypeEnum),
-        url: z.string(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const botSources = await db
-        .insert(schema.botSources)
-        .values({
-          ...input,
-          id: uuidv7(),
-          createdBy: ctx.session.user.id,
-          statusId: BotSourceStatusEnum.Created,
-          createdAt: new Date(),
-        })
-        .returning()
+  create: createBotSourceHandler(),
+  createBulk: createLinkBotSourceBulkHandler(),
 
-      // Sync the bot source
-      if (botSources.length) {
-        for (const bs of botSources) {
-          await syncBotSource(bs.id)
-        }
-      }
+  sync: syncBotSourceHandler(),
 
-      return botSources
-    }),
+  getByBotId: getByBotIdHandler(),
 
-  sync: protectedProcedure
+  dev: protectedProcedure.query(async () => {
+    const arr = await db.query.botSources.findMany()
+    return arr
+  }),
+
+  deleteById: deleteByIdHandler(),
+})
+
+function deleteByIdHandler() {
+  return protectedProcedure
     .input(
       z.object({
         botSourceId: z.string(),
       }),
     )
-    .mutation(async ({ ctx, input }) => {
-      const bsId = input.botSourceId
-      const bs = await db
-        .select({
-          id: schema.botSources.id,
-        })
-        .from(schema.botSources)
-        .where(
-          and(
-            eq(schema.botSources.id, bsId),
-            eq(schema.botSources.createdBy, ctx.session.user.id),
-          ),
-        )
-      if (!bs.length) {
-        throw new Error('Bot source not found')
-      }
+    .mutation(async ({ input }) => {
+      // Delete extracted data
+      await db
+        .delete(schema.botSourceExtractedData)
+        .where(eq(schema.botSourceExtractedData.botSourceId, input.botSourceId))
 
-      await cleanOldBotSourceData(bsId)
-      await syncBotSource(bsId)
-      return null
-    }),
+      // Delete source
+      await db
+        .delete(schema.botSources)
+        .where(eq(schema.botSources.id, input.botSourceId))
+    })
+}
 
-  getByBotId: protectedProcedure
+function getByBotIdHandler() {
+  return protectedProcedure
     .input(
       z.object({
         botId: z.string(),
@@ -88,7 +66,9 @@ export const botSourceRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const bot = await db
-        .select({})
+        .select({
+          id: schema.bots.id,
+        })
         .from(schema.bots)
         .where(
           and(
@@ -126,31 +106,109 @@ export const botSourceRouter = createTRPCRouter({
         botSources: arr,
         pagination: { total: count, limit: input.limit, offset: input.offset },
       }
-    }),
+    })
+}
 
-  dev: protectedProcedure.query(async () => {
-    const arr = await db.query.botSources.findMany()
-    return arr
-  }),
-
-  deleteById: protectedProcedure
+function syncBotSourceHandler() {
+  return protectedProcedure
     .input(
       z.object({
         botSourceId: z.string(),
       }),
     )
-    .mutation(async ({ input }) => {
-      // Delete extracted data
-      await db
-        .delete(schema.botSourceExtractedData)
-        .where(eq(schema.botSourceExtractedData.botSourceId, input.botSourceId))
+    .mutation(async ({ ctx, input }) => {
+      const bsId = input.botSourceId
+      const bs = await db
+        .select({
+          id: schema.botSources.id,
+        })
+        .from(schema.botSources)
+        .where(
+          and(
+            eq(schema.botSources.id, bsId),
+            eq(schema.botSources.createdBy, ctx.session.user.id),
+          ),
+        )
+      if (!bs.length) {
+        throw new Error('Bot source not found')
+      }
 
-      // Delete source
-      await db
-        .delete(schema.botSources)
-        .where(eq(schema.botSources.id, input.botSourceId))
-    }),
-})
+      await cleanOldBotSourceData(bsId)
+      await syncBotSource(bsId)
+      return null
+    })
+}
+
+function createBotSourceHandler() {
+  return protectedProcedure
+    .input(
+      z.object({
+        botId: z.string(),
+        typeId: z.nativeEnum(BotSourceTypeEnum),
+        url: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const botSources = await db
+        .insert(schema.botSources)
+        .values({
+          ...input,
+          id: uuidv7(),
+          createdBy: ctx.session.user.id,
+          statusId: BotSourceStatusEnum.Created,
+          createdAt: new Date(),
+        })
+        .returning()
+
+      // Sync the bot source
+      if (botSources.length) {
+        for (const bs of botSources) {
+          await syncBotSource(bs.id)
+        }
+      }
+
+      return botSources
+    })
+}
+
+function createLinkBotSourceBulkHandler() {
+  return protectedProcedure
+    .input(
+      z.object({
+        botId: z.string(),
+        urls: z.array(z.string()),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const botSources = await db
+        .insert(schema.botSources)
+        .values(
+          input.urls.map((url) => ({
+            id: uuidv7(),
+            botId: input.botId,
+            typeId: BotSourceTypeEnum.Link,
+            url,
+            createdBy: ctx.session.user.id,
+            statusId: BotSourceStatusEnum.Created,
+            createdAt: new Date(),
+          })),
+        )
+        .returning()
+
+      // Sync the bot sources
+      const parallelCount = Number(env.ASYNC_BULK_IMPORT_THREAD_LIMIT)
+      await asyncLib.mapLimit(
+        botSources,
+        parallelCount,
+        async (bs: InferSelectModel<typeof schema.botSources>) => {
+          await syncBotSource(bs.id)
+          return bs.id
+        },
+      )
+
+      return botSources
+    })
+}
 
 async function cleanOldBotSourceData(bsId: string) {
   console.log('Cleaning old bot source data...')
