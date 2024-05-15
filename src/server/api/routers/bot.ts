@@ -73,12 +73,40 @@ export const botRouter = createTRPCRouter({
     .input(
       z.object({
         botId: z.string(),
-        // TODO: Fields to be updated
+        name: z.string().min(1),
+        description: z.string(),
+        modelId: z.nativeEnum(BotModelEnum),
+        noSourceWarningMsg: z.string(),
+        serverErrorMsg: z.string(),
+        usageLimitPerUser: z.number(),
+        usageLimitPerUserType: z.number(),
+        userLimitWarningMsg: z.string(),
       }),
     )
-    .mutation(async ({ input }) => {
-      // TODO: Implement
-      return null
+    .mutation(async ({ input, ctx }) => {
+      const bot = await db
+        .update(schema.bots)
+        .set({
+          name: input.name,
+          description: input.description,
+          modelId: input.modelId,
+          noSourceWarningMsg: input.noSourceWarningMsg,
+          serverErrorMsg: input.serverErrorMsg,
+          userLimitWarningMsg: input.userLimitWarningMsg,
+          usageLimitPerUser: input.usageLimitPerUser,
+          usageLimitPerUserType: input.usageLimitPerUserType,
+          updatedAt: new Date(),
+          updatedBy: ctx.session.user.id,
+        })
+        .where(
+          and(
+            eq(schema.bots.id, input.botId),
+            eq(schema.bots.createdBy, ctx.session.user.id),
+          ),
+        )
+        .returning()
+
+      return bot
     }),
 
   getById: protectedProcedure
