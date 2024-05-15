@@ -2,6 +2,7 @@ import { and, eq } from 'drizzle-orm'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
 import { BotModelEnum } from '~/model/bot-model'
+import { UsageLimitTypeEnum } from '~/model/usage-limit-type'
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { db } from '~/server/db'
 import * as schema from '~/server/db/migration/schema'
@@ -10,7 +11,7 @@ export const botRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
       z.object({
-        name: z.string().min(1),
+        name: z.string().min(1).max(50),
         description: z.string().optional(),
         companyLogoAttachmentId: z.string().optional(),
         botAvatarAttachmentId: z.string().optional(),
@@ -30,15 +31,25 @@ export const botRouter = createTRPCRouter({
         maxChars: z.number().optional(),
         maxMsgCount: z.number().optional(),
         msgCount: z.number().optional(),
-        modelId: z.nativeEnum(BotModelEnum).optional(),
+        modelId: z.nativeEnum(BotModelEnum).default(1),
         multiLanguagesSupport: z.string().optional(),
         responseLength: z.number().optional(),
         sendEmailTranscript: z.string().optional(),
         suggestFollowupQuestions: z.string().optional(),
         customization: z.string().optional(),
-        usageLimitPerUser: z.number().optional(),
-        usageLimitPerUserType: z.number().optional(),
-        userLimitWarningMsg: z.string().optional(),
+        usageLimitPerUser: z.number().default(50),
+        usageLimitPerUserType: z.nativeEnum(UsageLimitTypeEnum).default(3),
+        userLimitWarningMsg: z
+          .string()
+          .default(`You've reached the message limit.`),
+        noSourceWarningMsg: z
+          .string()
+          .default(
+            'The bot still needs to be trained, so please add the data and train it.',
+          ),
+        serverErrorMsg: z
+          .string()
+          .default('Apologies, there seems to be a server error.'),
         whileListIpsOnly: z.string().optional(),
       }),
     )
