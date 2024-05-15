@@ -14,7 +14,7 @@ export const BotMessages = () => {
   return (
     <div className="space-y-4">
       <Controller
-        name="messageNoSource"
+        name="noSourceWarningMsg"
         control={control}
         render={({ field, fieldState }) => (
           <FormControl error={!!fieldState.error} hideHelperTextOnError>
@@ -27,7 +27,7 @@ export const BotMessages = () => {
         )}
       />
       <Controller
-        name="messageServerError"
+        name="serverErrorMsg"
         control={control}
         render={({ field, fieldState }) => (
           <FormControl error={!!fieldState.error} hideHelperTextOnError>

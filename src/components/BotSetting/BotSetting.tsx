@@ -15,12 +15,12 @@ export interface BotSettingData {
   botId: string
   name: string
   description: string
-  modelId?: BotModelEnum | undefined
-  messageNoSource?: string | undefined
-  messageServerError?: string | undefined
-  usageLimitPerUser?: number | undefined
-  usageLimitPerUserType?: UsageLimitTypeEnum | undefined
-  userLimitWarningMsg?: string | undefined
+  modelId: BotModelEnum
+  noSourceWarningMsg: string
+  serverErrorMsg: string
+  usageLimitPerUser: number
+  usageLimitPerUserType: UsageLimitTypeEnum
+  userLimitWarningMsg: string
 }
 
 const schema = z.object({
@@ -28,8 +28,8 @@ const schema = z.object({
   name: z.string().min(1, 'Required').max(50, 'Max length is 50 characters.'),
   description: z.string().max(500, 'Max length is 500 characters.'),
   modelId: z.nativeEnum(BotModelEnum),
-  messageNoSource: z.string().max(100, 'Max length is 100 characters.'),
-  messageServerError: z.string().max(100, 'Max length is 100 characters.'),
+  noSourceWarningMsg: z.string().max(100, 'Max length is 100 characters.'),
+  serverErrorMsg: z.string().max(100, 'Max length is 100 characters.'),
   usageLimitPerUser: z.string(),
   usageLimitPerUserType: z.nativeEnum(UsageLimitTypeEnum),
   userLimitWarningMsg: z.string().max(100, 'Max length is 100 characters.'),
@@ -44,9 +44,9 @@ export const BotSetting = () => {
     name: 'Dwarves Bot',
     description: '',
     modelId: BotModelEnum.GPT3,
-    messageNoSource:
+    noSourceWarningMsg:
       'The bot still needs to be trained, so please add the data and train it.',
-    messageServerError: 'Apologies, there seems to be a server error.',
+    serverErrorMsg: 'Apologies, there seems to be a server error.',
     usageLimitPerUser: 1,
     usageLimitPerUserType: UsageLimitTypeEnum.PerDay,
     userLimitWarningMsg: `You've reached the message limit.`,
@@ -63,8 +63,8 @@ export const BotSetting = () => {
       name: data.name,
       description: data.description,
       modelId: Number(data.modelId),
-      messageNoSource: data.messageNoSource,
-      messageServerError: data.messageServerError,
+      noSourceWarningMsg: data.noSourceWarningMsg,
+      serverErrorMsg: data.serverErrorMsg,
       usageLimitPerUser: Number(data.usageLimitPerUser),
       usageLimitPerUserType: Number(data.usageLimitPerUserType),
       userLimitWarningMsg: data.userLimitWarningMsg,
