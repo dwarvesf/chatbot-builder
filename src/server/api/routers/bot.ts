@@ -31,14 +31,16 @@ export const botRouter = createTRPCRouter({
         maxChars: z.number().optional(),
         maxMsgCount: z.number().optional(),
         msgCount: z.number().optional(),
-        modelId: z.nativeEnum(BotModelEnum).default(1),
+        modelId: z.nativeEnum(BotModelEnum).default(BotModelEnum.GPT3),
         multiLanguagesSupport: z.string().optional(),
         responseLength: z.number().optional(),
         sendEmailTranscript: z.string().optional(),
         suggestFollowupQuestions: z.string().optional(),
         customization: z.string().optional(),
         usageLimitPerUser: z.number().default(50),
-        usageLimitPerUserType: z.nativeEnum(UsageLimitTypeEnum).default(3),
+        usageLimitPerUserType: z
+          .nativeEnum(UsageLimitTypeEnum)
+          .default(UsageLimitTypeEnum.PerDay),
         userLimitWarningMsg: z
           .string()
           .default(`You've reached the message limit.`),
