@@ -187,6 +187,8 @@ export const bots = createTable(
     sendEmailTranscript: text('send_email_transcript'),
     suggestFollowupQuestions: text('suggest_followup_questions'),
     customization: text('customization'),
+    noSourceWarningMsg: text('no_source_warning_message'),
+    serverErrorMsg: text('server_error_message'),
     usageLimitPerUser: integer('usage_limit_per_user'),
     usageLimitPerUserType: integer('usage_limit_per_user_type'),
     userLimitWarningMsg: text('user_limit_warning_msg'),
