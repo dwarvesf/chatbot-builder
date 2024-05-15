@@ -12,7 +12,7 @@ local-up: db
 
 db:
 	docker-compose -p chatbot_builder -f ./build/local/docker-compose.yml up -d
-	bun src/migration/create-extension.ts
+	bun src/server/db/migration/create-extension.ts
 
 db-down:
 	docker-compose -p chatbot_builder -f ./build/local/docker-compose.yml down
