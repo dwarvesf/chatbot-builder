@@ -15,10 +15,10 @@ import { api } from '~/utils/api'
 import { isValidURL } from '~/utils/utils'
 
 interface SourceLinkProps {
-  addLink: () => void;
+  addLink: () => void
 }
 
-export const SourceLink = ({addLink}: SourceLinkProps) => {
+export const SourceLink = ({ addLink }: SourceLinkProps) => {
   const { id } = useParams()
   const { toast } = useToast()
   const [currentURL, setCurrentURL] = useState<string>('')
@@ -41,7 +41,7 @@ export const SourceLink = ({addLink}: SourceLinkProps) => {
         })
       })
       await Promise.all(uploadPromises)
-      addLink();
+      addLink()
 
       setUrls([])
     } catch (error: any) {
@@ -56,7 +56,7 @@ export const SourceLink = ({addLink}: SourceLinkProps) => {
       return
     }
     // validate valid url
-    
+
     if (!isValidURL(currentURL)) {
       setError('Invalid URL')
       return
@@ -122,7 +122,6 @@ export const SourceLink = ({addLink}: SourceLinkProps) => {
                 <div className="flex gap-2">
                   <IconButton
                     label="Edit"
-                    color="white"
                     onClick={() => {
                       handleEdit(url)
                     }}
@@ -132,7 +131,6 @@ export const SourceLink = ({addLink}: SourceLinkProps) => {
                   {url !== editingURL && (
                     <IconButton
                       label=""
-                      color="white"
                       onClick={() => {
                         handleDelete(url)
                       }}
@@ -143,7 +141,6 @@ export const SourceLink = ({addLink}: SourceLinkProps) => {
                   {url === editingURL && (
                     <IconButton
                       label=""
-                      color="white"
                       onClick={() => {
                         handleSaveEdit()
                       }}

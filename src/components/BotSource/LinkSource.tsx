@@ -43,8 +43,10 @@ export function LinkSource() {
     defaultValues: { links: [] },
     resolver: zodResolver(linksSchema),
   })
+
   const { fields, remove, append } = useFieldArray({
     control: linksControl,
+    // @ts-expect-error - TS doesn't like the name property
     name: 'links',
   })
 
@@ -70,7 +72,7 @@ export function LinkSource() {
               key={field.id}
               name={`links.${index}`}
               control={linksControl}
-              render={({ field, fieldState }) => (
+              render={({ field }) => (
                 <div className="flex space-x-2">
                   <div className="flex-1">
                     <TextFieldInput

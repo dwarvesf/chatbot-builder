@@ -228,7 +228,7 @@ export const BotSource = () => {
                   onClick={() => {
                     handleChangeDataType(tab.title)
                   }}
-                  color="black"
+                  color="primary"
                 >
                   {tab.title}
                 </Button>
@@ -313,7 +313,7 @@ export const BotSource = () => {
                 cell: (data) => {
                   return (
                     <div className="flex">
-                      <IconButton label="" color="white">
+                      <IconButton label="">
                         <RefreshSolid
                           height={20}
                           width={20}
@@ -325,7 +325,7 @@ export const BotSource = () => {
                       </IconButton>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <IconButton label="" color="white">
+                          <IconButton label="">
                             <MenuSolid height={20} width={20} />
                           </IconButton>
                         </PopoverTrigger>
@@ -335,7 +335,7 @@ export const BotSource = () => {
                               <DrawerTrigger asChild>
                                 <Button
                                   key="view-detail"
-                                  color="black"
+                                  color="primary"
                                   onClick={() => {
                                     handleViewDetail(
                                       data.row.original.id.toString(),
@@ -347,7 +347,7 @@ export const BotSource = () => {
                               </DrawerTrigger>
                               <Button
                                 key="delete"
-                                color="black"
+                                color="primary"
                                 onClick={async () => {
                                   await handleDelete(
                                     data.row.original.id.toString(),
