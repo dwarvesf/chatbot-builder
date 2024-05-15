@@ -26,6 +26,7 @@
     "@trpc/next": "next",
     "@trpc/react-query": "next",
     "@trpc/server": "next",
+    "@vercel/blob": "^0.23.2",
     "async": "^3.2.5",
     "clsx": "^2.1.1",
     "dayjs": "^1.11.11",
