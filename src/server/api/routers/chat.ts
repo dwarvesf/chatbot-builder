@@ -1,4 +1,4 @@
-import { eq, sql, type InferSelectModel } from 'drizzle-orm'
+import { desc, eq, sql, type InferSelectModel } from 'drizzle-orm'
 import OpenAI from 'openai'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
@@ -15,24 +15,53 @@ const openai = new OpenAI({
 })
 
 export const chatRouter = createTRPCRouter({
-  create: integrationProcedure
+  create: createChatHandler(),
+  getList: getListHandler(),
+})
+
+function getListHandler() {
+  return integrationProcedure
     .input(
       z.object({
-        threadId: z.string().optional(),
+        threadId: z.string().uuid(),
+        limit: z.number().max(20).default(10),
+        offset: z.number().default(0),
+      }),
+    )
+    .query(async ({ input }) => {
+      const countRow = await db
+        .select({
+          count: sql<number>`COUNT(*)`,
+        })
+        .from(schema.chats)
+        .where(eq(schema.chats.threadId, input.threadId))
+      const count = Number(countRow[0]?.count) ?? 0
+
+      const chats = await db.query.chats.findMany({
+        where: eq(schema.chats.threadId, input.threadId),
+        orderBy: [desc(schema.chats.id)],
+        limit: input.limit,
+        offset: input.offset,
+      })
+
+      return {
+        chats,
+        pagination: { total: count, limit: input.limit, offset: input.offset },
+      }
+    })
+}
+
+function createChatHandler() {
+  return integrationProcedure
+    .input(
+      z.object({
+        threadId: z.string().uuid().optional(),
         message: z.string(),
       }),
     )
     .mutation(async ({ ctx, input: msg }) => {
-      const apiToken = ctx.apiToken
-      const bi = await db.query.botIntegrations.findFirst({
-        where: eq(schema.botIntegrations.apiToken, apiToken),
-      })
-      if (!bi) {
-        throw new Error('Integration not found')
-      }
-
       const bot = await db.query.bots.findFirst({
-        where: eq(schema.bots.id, bi?.botId),
+        where: eq(schema.bots.id, ctx.session.botId),
       })
       if (!bot) {
         throw new Error('Bot not found')
@@ -101,8 +130,8 @@ export const chatRouter = createTRPCRouter({
         assistants: assistantMsgs,
         res: botRes,
       }
-    }),
-})
+    })
+}
 
 async function askAI(bot: InferSelectModel<typeof schema.bots>, msg: string) {
   if (!bot) {

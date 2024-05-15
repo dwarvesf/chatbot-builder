@@ -120,7 +120,7 @@ export const BotSource = () => {
     })
   }
 
-  const data = (sources ?? []).map((item) => {
+  const data = (sources?.botSources ?? []).map((item) => {
     return {
       id: item.id,
       title: '',
