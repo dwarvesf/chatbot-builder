@@ -76,7 +76,7 @@ export const BotLimit = () => {
         </div>
         {errors.usageLimitPerUser ? (
           <Typography
-            level="span"
+            level="p7"
             className="text-xs tracking-tighter !text-danger-outline-fg"
           >
             {errors.usageLimitPerUser?.message}

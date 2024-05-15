@@ -31,10 +31,10 @@ export const SourceSitemap = () => {
       return
     }
     // validate valid url
-     if (!isValidURL(currentURL)) {
-       setError('Invalid URL')
-       return
-     }
+    if (!isValidURL(currentURL)) {
+      setError('Invalid URL')
+      return
+    }
     // find sitemap url of the url
     const siteMap = await findSitemapURL(currentURL)
     if (!siteMap) {
@@ -77,7 +77,9 @@ export const SourceSitemap = () => {
       <div className="pb-4">
         <div className="flex pb-4 justify-between items-center">
           <div className="flex-1 w-fit">
-            <Typography className="flex font-bold">Upload URLs in bulk</Typography>
+            <Typography className="flex font-bold">
+              Upload URLs in bulk
+            </Typography>
             <Typography className="text-gray-500 text-sm">
               Download our template, add all URLs in the sheet, and upload
               instantly.
@@ -101,7 +103,6 @@ export const SourceSitemap = () => {
                 </Typography>
                 <IconButton
                   label=""
-                  color="white"
                   onClick={() => {
                     handleDelete(file)
                   }}
@@ -116,7 +117,9 @@ export const SourceSitemap = () => {
 
       <Card>
         <div className="items-center justify-center">
-          <Typography className="text-sm text-gray-700">Enter a Website URL:</Typography>
+          <Typography className="text-sm text-gray-700">
+            Enter a Website URL:
+          </Typography>
           <div className="flex flex-row items-center justify-between p-1">
             <TextFieldInput
               value={currentURL}
