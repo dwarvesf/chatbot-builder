@@ -8,7 +8,7 @@ export const botSourceExtractedDataRouter = createTRPCRouter({
   getList: protectedProcedure
     .input(
       z.object({
-        botSourceId: z.string(),
+        botSourceId: z.string().uuid(),
       }),
     )
     .query(async ({ ctx, input }) => {

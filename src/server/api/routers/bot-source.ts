@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
 import * as asyncLib from 'async'
-import { and, eq, inArray, type InferSelectModel } from 'drizzle-orm'
+import { and, eq, inArray, sql, type InferSelectModel } from 'drizzle-orm'
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import { XMLParser } from 'fast-xml-parser'
 import { uniq } from 'lodash'
@@ -82,8 +82,8 @@ export const botSourceRouter = createTRPCRouter({
           .array(z.nativeEnum(BotSourceTypeEnum))
           .default([])
           .optional(),
-        limit: z.number().max(100).optional().default(10),
-        offset: z.number().optional().default(0),
+        limit: z.number().max(100).default(10),
+        offset: z.number().default(0),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -113,8 +113,19 @@ export const botSourceRouter = createTRPCRouter({
         whereQms.push(inArray(schema.botSources.typeId, input.typeIDs))
       }
 
+      const countRows = await db
+        .select({
+          count: sql<string>`COUNT(*)`,
+        })
+        .from(schema.botSources)
+        .where(and(...whereQms))
+      const count = Number(countRows[0]?.count) ?? 0
+
       const arr = await query.where(and(...whereQms))
-      return arr
+      return {
+        botSources: arr,
+        pagination: { total: count, limit: input.limit, offset: input.offset },
+      }
     }),
 
   dev: protectedProcedure.query(async () => {
