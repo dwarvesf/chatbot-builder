@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
-import { useDisclosure } from '@dwarvesf/react-hooks'
+import { useAsyncEffect, useDisclosure } from '@dwarvesf/react-hooks'
 import {
   Button,
   Card,
@@ -13,6 +13,7 @@ import {
   Switch,
   Table,
   Typography,
+  toast,
 } from '@mochi-ui/core'
 import { EyeShowSolid, ThreeDotLine, TrashBinSolid } from '@mochi-ui/icons'
 import { useParams } from 'next/navigation'
@@ -20,6 +21,7 @@ import { useState } from 'react'
 import { BotSourceTypeEnum } from '~/model/bot-source-type'
 import { api, type RouterOutputs } from '~/utils/api'
 import { formatDatetime } from '~/utils/utils'
+import { ConfirmDialog } from '../common/ConfirmDialog'
 import { SourceDetailDrawer } from './SourceDetailDrawer'
 import { SourceStatusBadge } from './SourceStatusBadge'
 import { SourceTypeBadge } from './SourceTypeBadge'
@@ -30,9 +32,41 @@ export const SourceTable = () => {
   const { id } = useParams()
   const { isOpen, onOpenChange, onOpen } = useDisclosure()
   const [activeSource, setActiveSource] = useState<BotSource>()
-  const { data, isPending } = api.botSource.getByBotId.useQuery({
+  const [deleteSource, setDeleteSource] = useState<BotSource>()
+  const {
+    data,
+    isPending,
+    refetch: refreshSources,
+  } = api.botSource.getByBotId.useQuery({
     botId: id as string,
   })
+  const {
+    onOpenChange: onDeleteOpenChange,
+    isOpen: isDeleteOpen,
+    onOpen: onDeleteOpen,
+  } = useDisclosure()
+
+  const {
+    mutate: deleteSourceById,
+    isPending: isDeletingSource,
+    isSuccess: isDeleteSuccess,
+    isError: isDeleteError,
+    error: deleteError,
+  } = api.botSource.deleteById.useMutation()
+
+  useAsyncEffect(async () => {
+    if (isDeleteSuccess) {
+      await refreshSources()
+      onOpenChange(false)
+    }
+    if (isDeleteError) {
+      toast({
+        description: 'Failed to delete source',
+        scheme: 'danger',
+      })
+      console.error(deleteError)
+    }
+  }, [isDeleteSuccess, isDeleteError, deleteError])
 
   return (
     <Card className="mt-10 shadow-input">
@@ -147,6 +181,10 @@ export const SourceTable = () => {
                         leftIcon={
                           <TrashBinSolid className="w-5 h-5 text-danger-outline-fg" />
                         }
+                        onClick={() => {
+                          onDeleteOpen()
+                          setDeleteSource(props.row.original)
+                        }}
                       >
                         <Typography level="h8" color="danger">
                           Delete
@@ -167,10 +205,26 @@ export const SourceTable = () => {
           </div>
         }
       />
-      <SourceDetailDrawer
-        source={activeSource}
-        isOpen={isOpen}
-        onOpenChange={onOpenChange}
+      {activeSource ? (
+        <SourceDetailDrawer
+          source={activeSource}
+          isOpen={isOpen}
+          onOpenChange={onOpenChange}
+        />
+      ) : null}
+      <ConfirmDialog
+        isSubmitting={isDeletingSource}
+        onConfirm={() => {
+          if (!deleteSource?.id) {
+            return
+          }
+          deleteSourceById({ botSourceId: deleteSource.id })
+        }}
+        title="Delete Source"
+        onOpenChange={onDeleteOpenChange}
+        open={isDeleteOpen}
+        message="Are your sure to delete the source?"
+        confirmButton={{ color: 'danger', text: 'Delete' }}
       />
     </Card>
   )
