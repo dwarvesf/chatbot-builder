@@ -1,4 +1,4 @@
-import { useDisclosure } from '@dwarvesf/react-hooks'
+import { useAsyncEffect, useDisclosure } from '@dwarvesf/react-hooks'
 import {
   Avatar,
   Button,
@@ -16,18 +16,22 @@ import {
   SectionHeaderTitle,
   Skeleton,
   Typography,
+  toast,
 } from '@mochi-ui/core'
 import { EditLine, ThreeDotLine, TrashBinSolid } from '@mochi-ui/icons'
 import type { GetServerSideProps, NextPage } from 'next'
 import Link from 'next/link'
+import { useState } from 'react'
 import { CreateBotModal } from '~/components/bot/CreateBotModal'
 import { ConfirmDialog } from '~/components/common/ConfirmDialog'
 import { Repeat } from '~/components/common/Repeat'
 import { SeoHead } from '~/components/common/SeoHead'
 import { ROUTES } from '~/constants/routes'
 import { getServerAuthSession } from '~/server/auth'
-import { api } from '~/utils/api'
+import { api, type RouterOutputs } from '~/utils/api'
 import { formatDatetime } from '~/utils/utils'
+
+type Bot = RouterOutputs['bot']['getList']['0']
 
 const Index: NextPage = () => {
   const { isOpen, onOpen, onOpenChange } = useDisclosure()
@@ -40,6 +44,33 @@ const Index: NextPage = () => {
     isOpen: isDeleteOpen,
     onOpen: onDeleteOpen,
   } = useDisclosure()
+  const [activeBot, setActiveBot] = useState<Bot>()
+
+  const {
+    mutate: deleteBot,
+    isPending: isDeletingBot,
+    isSuccess: isDeleteSuccess,
+    isError: isDeleteError,
+    error: deleteError,
+  } = api.bot.archive.useMutation()
+
+  useAsyncEffect(async () => {
+    if (isDeleteSuccess) {
+      toast({
+        description: 'Deleted Bot successfully',
+        scheme: 'success',
+      })
+      await botsQuery?.refetch()
+      onDeleteOpenChange(false)
+    }
+    if (isDeleteError) {
+      toast({
+        description: 'Failed to delete Bot',
+        scheme: 'danger',
+      })
+      console.error(deleteError)
+    }
+  }, [isDeleteSuccess, isDeleteError, deleteError])
 
   return (
     <>
@@ -82,7 +113,7 @@ const Index: NextPage = () => {
         ) : (
           <>
             {isEmptyBots ? (
-              <Card className="text-center space-y-3">
+              <Card className="text-center space-y-3 !py-8">
                 <Typography level="h5">No bots</Typography>
                 <Typography color="textSecondary">
                   Looks like you are missing a bot. Lets get you set up with
@@ -136,6 +167,7 @@ const Index: NextPage = () => {
                               }
                               onClick={(e) => {
                                 e.stopPropagation()
+                                setActiveBot(bot)
                                 onDeleteOpen()
                               }}
                             >
@@ -151,9 +183,11 @@ const Index: NextPage = () => {
                 ))}
                 <ConfirmDialog
                   onConfirm={() => {
-                    alert()
-                    onDeleteOpenChange(false)
+                    if (activeBot?.id) {
+                      deleteBot({ botID: activeBot.id })
+                    }
                   }}
+                  isSubmitting={isDeletingBot}
                   title="Delete Bot"
                   onOpenChange={onDeleteOpenChange}
                   open={isDeleteOpen}
