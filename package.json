@@ -27,6 +27,7 @@
     "@trpc/react-query": "next",
     "@trpc/server": "next",
     "async": "^3.2.5",
+    "clsx": "^2.1.1",
     "dayjs": "^1.11.11",
     "drizzle-orm": "^0.29.4",
     "fast-xml-parser": "^4.3.6",
