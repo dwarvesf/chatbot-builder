@@ -16,7 +16,6 @@ import { useParams } from 'next/navigation'
 import { Controller, useFieldArray, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { api } from '~/utils/api'
-import { BulkImportLinkModal } from './BulkImportLinkModal'
 
 const urlSchema = z
   .string()
@@ -35,7 +34,7 @@ interface LinksFormValues {
   links: string[]
 }
 
-export function LinkSource() {
+export function SitemapSourceLink() {
   const { id } = useParams()
   const botId = id as string
 
@@ -104,17 +103,7 @@ export function LinkSource() {
   return (
     <Card className="mx-auto space-y-4 shadow-input">
       <div className="flex justify-between">
-        <Typography level="p4">Enter a website link</Typography>
-        <Button size="sm" variant="soft" onClick={onOpen}>
-          Bulk import
-        </Button>
-        <BulkImportLinkModal
-          onSubmit={(links) => {
-            append(links)
-          }}
-          isOpen={isOpen}
-          onOpenChange={onOpenChange}
-        />
+        <Typography level="p4">Enter website URL</Typography>
       </div>
       <div>
         <form className="space-y-2 mb-5">
@@ -169,7 +158,7 @@ export function LinkSource() {
                 <TextFieldRoot>
                   <TextFieldInput
                     {...field}
-                    placeholder="Enter a website URL"
+                    placeholder="Enter a website URL or sitemap link"
                   />
                 </TextFieldRoot>
                 <FormErrorMessage>{fieldState.error?.message}</FormErrorMessage>
@@ -181,16 +170,18 @@ export function LinkSource() {
           </Button>
         </form>
       </div>
-      <div className="flex justify-center">
-        <Button
-          onClick={submitBotSource}
-          disabled={!errors || !isDirty}
-          loading={isPending}
-          className="w-40"
-        >
-          Upload and Train
-        </Button>
-      </div>
+      {getValues().links.length > 0 ? (
+        <div className="flex justify-center">
+          <Button
+            onClick={submitBotSource}
+            disabled={!errors || !isDirty}
+            loading={isPending}
+            className="w-40"
+          >
+            Upload and Train
+          </Button>
+        </div>
+      ) : null}
     </Card>
   )
 }

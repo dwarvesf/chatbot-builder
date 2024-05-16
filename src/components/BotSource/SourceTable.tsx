@@ -69,163 +69,175 @@ export const SourceTable = () => {
   }, [isDeleteSuccess, isDeleteError, deleteError])
 
   return (
-    <Card className="mt-10 shadow-input">
-      <Table<BotSource>
-        size="sm"
-        columns={[
-          {
-            accessorKey: 'url',
-            header: 'Url',
-            width: 400,
-            cell: (props) => {
-              const { url, typeId } = props.row.original
-              if (typeId === BotSourceTypeEnum.Link && url) {
+    <div className="mt-10">
+      <Typography level="h6" className="mb-4">
+        Source data
+      </Typography>
+      <Card className="shadow-input">
+        <Table<BotSource>
+          size="sm"
+          columns={[
+            {
+              accessorKey: 'url',
+              header: 'Url',
+              width: 400,
+              cell: (props) => {
+                const { url, typeId } = props.row.original
+                if (typeId === BotSourceTypeEnum.Link && url) {
+                  return (
+                    <Button
+                      variant="link"
+                      className="!p-0 max-w-[300px]"
+                      asChild
+                    >
+                      <a href={url} target="_blank" rel="noopener noreferrer">
+                        <span className="truncate">{url}</span>
+                      </a>
+                    </Button>
+                  )
+                }
                 return (
-                  <Button variant="link" className="!p-0 max-w-[300px]" asChild>
-                    <a href={url} target="_blank" rel="noopener noreferrer">
-                      <span className="truncate">{url}</span>
-                    </a>
+                  <Typography
+                    level="inherit"
+                    className="truncate max-w-[300px]"
+                  >
+                    {url}
+                  </Typography>
+                )
+              },
+            },
+            {
+              accessorKey: 'typeId',
+              header: 'Type',
+              width: 200,
+              cell: (props) => {
+                const { typeId } = props.row.original
+                return (
+                  <div className="flex">
+                    <SourceTypeBadge typeId={typeId} />
+                  </div>
+                )
+              },
+            },
+            {
+              accessorKey: 'statusId',
+              header: 'Status',
+              width: 200,
+              cell: (props) => {
+                const { statusId } = props.row.original
+                return (
+                  <div className="flex">
+                    <SourceStatusBadge statusId={statusId} />
+                  </div>
+                )
+              },
+            },
+            {
+              accessorKey: 'updatedAt',
+              header: 'Updated on',
+              width: 200,
+              cell: (props) => {
+                const { updatedAt, createdAt } = props.row.original
+                return formatDatetime(updatedAt ?? createdAt, 'DD MMM YYYY')
+              },
+            },
+            {
+              accessorKey: '',
+              header: 'Visibility',
+              width: 200,
+              cell: () => {
+                return <Switch />
+              },
+            },
+            {
+              header: '',
+              width: 50,
+              accessorKey: 'id',
+              cell: () => {
+                return (
+                  <Button size="sm" color="neutral" variant="outline">
+                    Sync
                   </Button>
                 )
-              }
-              return (
-                <Typography level="inherit" className="truncate max-w-[300px]">
-                  {url}
-                </Typography>
-              )
+              },
             },
-          },
-          {
-            accessorKey: 'typeId',
-            header: 'Type',
-            width: 200,
-            cell: (props) => {
-              const { typeId } = props.row.original
-              return (
-                <div className="flex">
-                  <SourceTypeBadge typeId={typeId} />
-                </div>
-              )
-            },
-          },
-          {
-            accessorKey: 'statusId',
-            header: 'Status',
-            width: 200,
-            cell: (props) => {
-              const { statusId } = props.row.original
-              return (
-                <div className="flex">
-                  <SourceStatusBadge statusId={statusId} />
-                </div>
-              )
-            },
-          },
-          {
-            accessorKey: 'updatedAt',
-            header: 'Updated on',
-            width: 200,
-            cell: (props) => {
-              const { updatedAt, createdAt } = props.row.original
-              return formatDatetime(updatedAt ?? createdAt, 'DD MMM YYYY')
-            },
-          },
-          {
-            accessorKey: '',
-            header: 'Visibility',
-            width: 200,
-            cell: () => {
-              return <Switch />
-            },
-          },
-          {
-            header: '',
-            width: 50,
-            accessorKey: 'id',
-            cell: () => {
-              return (
-                <Button size="sm" color="neutral" variant="outline">
-                  Sync
-                </Button>
-              )
-            },
-          },
-          {
-            header: '',
-            width: 50,
-            accessorKey: 'id',
-            cell: (props) => {
-              return (
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="p-1.5">
-                    <IconButton label="open" variant="ghost" color="neutral">
-                      <ThreeDotLine />
-                    </IconButton>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuContent
-                      className="min-w-[200px]"
-                      align="start"
-                    >
-                      <DropdownMenuItem
-                        leftIcon={<EyeShowSolid className="w-5 h-5" />}
-                        onClick={() => {
-                          onOpen()
-                          setActiveSource(props.row.original)
-                        }}
+            {
+              header: '',
+              width: 50,
+              accessorKey: 'id',
+              cell: (props) => {
+                return (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="p-1.5">
+                      <IconButton label="open" variant="ghost" color="neutral">
+                        <ThreeDotLine />
+                      </IconButton>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuPortal>
+                      <DropdownMenuContent
+                        className="min-w-[200px]"
+                        align="start"
                       >
-                        View
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        leftIcon={
-                          <TrashBinSolid className="w-5 h-5 text-danger-outline-fg" />
-                        }
-                        onClick={() => {
-                          onDeleteOpen()
-                          setDeleteSource(props.row.original)
-                        }}
-                      >
-                        <Typography level="h8" color="danger">
-                          Delete
-                        </Typography>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenuPortal>
-                </DropdownMenu>
-              )
+                        <DropdownMenuItem
+                          leftIcon={<EyeShowSolid className="w-5 h-5" />}
+                          onClick={() => {
+                            onOpen()
+                            setActiveSource(props.row.original)
+                          }}
+                        >
+                          View
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          leftIcon={
+                            <TrashBinSolid className="w-5 h-5 text-danger-outline-fg" />
+                          }
+                          onClick={() => {
+                            onDeleteOpen()
+                            setDeleteSource(props.row.original)
+                          }}
+                        >
+                          <Typography level="h8" color="danger">
+                            Delete
+                          </Typography>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenuPortal>
+                  </DropdownMenu>
+                )
+              },
             },
-          },
-        ]}
-        isLoading={isPending}
-        data={data?.botSources ?? []}
-        emptyContent={
-          <div className="pt-6 pb-2 text-center">
-            <Typography>No sources yet</Typography>
-          </div>
-        }
-      />
-      {activeSource ? (
-        <SourceDetailDrawer
-          source={activeSource}
-          isOpen={isOpen}
-          onOpenChange={onOpenChange}
-        />
-      ) : null}
-      <ConfirmDialog
-        isSubmitting={isDeletingSource}
-        onConfirm={() => {
-          if (!deleteSource?.id) {
-            return
+          ]}
+          isLoading={isPending}
+          data={data?.botSources ?? []}
+          emptyContent={
+            <div className="pt-6 pb-2 text-center">
+              <Typography>No sources yet</Typography>
+            </div>
           }
-          deleteSourceById({ botSourceId: deleteSource.id })
-        }}
-        title="Delete Source"
-        onOpenChange={onDeleteOpenChange}
-        open={isDeleteOpen}
-        message="Are your sure to delete the source?"
-        confirmButton={{ color: 'danger', text: 'Delete' }}
-      />
-    </Card>
+        />
+        {activeSource ? (
+          <SourceDetailDrawer
+            source={activeSource}
+            isOpen={isOpen}
+            onOpenChange={onOpenChange}
+          />
+        ) : null}
+        <ConfirmDialog
+          isSubmitting={isDeletingSource}
+          onConfirm={() => {
+            if (!deleteSource?.id) {
+              return
+            }
+            deleteSourceById({ botSourceId: deleteSource.id })
+          }}
+          title="Delete Source"
+          onOpenChange={onDeleteOpenChange}
+          open={isDeleteOpen}
+          message="Are your sure to delete the source?"
+          confirmButton={{ color: 'danger', text: 'Delete' }}
+        />
+      </Card>
+    </div>
   )
 }
