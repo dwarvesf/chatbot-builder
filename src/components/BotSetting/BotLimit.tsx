@@ -43,7 +43,7 @@ export const BotLimit = () => {
               <FormControl error={!!fieldState.error} hideHelperTextOnError>
                 <FormLabel>Usage limit per user</FormLabel>
                 <TextFieldRoot>
-                  <TextFieldInput {...field} />
+                  <TextFieldInput {...field} type="number" />
                 </TextFieldRoot>
               </FormControl>
             )}

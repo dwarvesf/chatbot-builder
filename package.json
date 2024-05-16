@@ -27,6 +27,7 @@
     "@trpc/react-query": "next",
     "@trpc/server": "next",
     "async": "^3.2.5",
+    "clsx": "^2.1.1",
     "dayjs": "^1.11.11",
     "drizzle-orm": "^0.29.4",
     "fast-xml-parser": "^4.3.6",
@@ -42,7 +43,8 @@
     "superjson": "^2.2.1",
     "tailwindcss-animate": "^1.0.7",
     "uuidv7": "^0.6.3",
-    "zod": "^3.23.6"
+    "zod": "^3.23.6",
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.3.0",

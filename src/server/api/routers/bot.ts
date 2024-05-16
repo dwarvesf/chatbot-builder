@@ -92,7 +92,7 @@ export const botRouter = createTRPCRouter({
         noSourceWarningMsg: z.string(),
         serverErrorMsg: z.string(),
         usageLimitPerUser: z.number(),
-        usageLimitPerUserType: z.number(),
+        usageLimitPerUserType: z.nativeEnum(UsageLimitTypeEnum),
         userLimitWarningMsg: z.string(),
       }),
     )
