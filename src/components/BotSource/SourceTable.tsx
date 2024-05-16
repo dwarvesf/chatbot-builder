@@ -57,7 +57,7 @@ export const SourceTable = () => {
   useAsyncEffect(async () => {
     if (isDeleteSuccess) {
       await refreshSources()
-      onOpenChange(false)
+      onDeleteOpenChange(false)
     }
     if (isDeleteError) {
       toast({
