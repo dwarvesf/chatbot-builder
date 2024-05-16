@@ -194,7 +194,12 @@ async function buildPrompt(
       schema.botSources,
       eq(schema.botSources.id, schema.botSourceExtractedData.botSourceId),
     )
-    .where(eq(schema.botSources.botId, bot.id))
+    .where(
+      and(
+        eq(schema.botSources.botId, bot.id),
+        eq(schema.botSources.visible, true),
+      ),
+    )
     .orderBy(sql`similarity DESC`)
     .limit(5)
 
