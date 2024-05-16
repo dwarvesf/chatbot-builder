@@ -1,4 +1,4 @@
-import { desc, eq, sql, type InferSelectModel } from 'drizzle-orm'
+import { and, desc, eq, gte, sql, type InferSelectModel } from 'drizzle-orm'
 import OpenAI from 'openai'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
@@ -6,6 +6,7 @@ import getEmbeddingsFromContents from '~/components/embedding'
 import { env } from '~/env'
 import { BotModelEnum } from '~/model/bot-model'
 import { ChatRoleEnum } from '~/model/chat'
+import { UsageLimitTypeEnum } from '~/model/usage-limit-type'
 import { db } from '~/server/db'
 import * as schema from '~/server/db/migration/schema'
 import { createTRPCRouter, integrationProcedure } from '../trpc'
@@ -77,6 +78,10 @@ function createChatHandler() {
           title: msg.message,
         })
         threadId = id
+      }
+      const isUsageLimitValid = await isUserUasgeLimitValid(threadId, bot.id)
+      if (!isUsageLimitValid) {
+        throw new Error('Usage limit exceeded')
       }
 
       // create new message
@@ -206,4 +211,60 @@ function getAIModel(modelID: BotModelEnum): string {
     default:
       throw new Error('Invalid model')
   }
+}
+
+async function isUserUasgeLimitValid(threadID: string, botID: string) {
+  const bot = await db.query.bots.findFirst({
+    where: eq(schema.bots.id, botID),
+  })
+  if (!bot) {
+    throw new Error('Bot not found')
+  }
+  if (!bot.usageLimitPerUser) {
+    return true
+  }
+
+  let sqlTimestamp = sql`'1 hour'`
+  switch (bot.usageLimitPerUserType) {
+    case UsageLimitTypeEnum.PerOneHour:
+      sqlTimestamp = sql`'1 hour'`
+      break
+    case UsageLimitTypeEnum.PerFourHours:
+      sqlTimestamp = sql`'4 hours'`
+      break
+    case UsageLimitTypeEnum.PerDay:
+      sqlTimestamp = sql`'24 hours'`
+      break
+    case UsageLimitTypeEnum.PerWeek:
+      sqlTimestamp = sql`'7 days'`
+      break
+    case UsageLimitTypeEnum.PerMonth:
+      sqlTimestamp = sql`'30 days'`
+      break
+    default:
+      break
+  }
+
+  const userUsage = await db
+    .select({
+      count: sql<number>`COUNT(*)`,
+    })
+    .from(schema.chats)
+    .where(
+      and(
+        eq(schema.chats.threadId, threadID),
+        gte(
+          schema.chats.createdAt,
+          sql`NOW() - INTERVAL ${sqlTimestamp}::INTERVAL`,
+        ),
+      ),
+    )
+
+  if (!userUsage || userUsage.length === 0) {
+    throw new Error('Failed to get user usage')
+  }
+  if (Number(userUsage[0]?.count) >= bot.usageLimitPerUser) {
+    return false
+  }
+  return true
 }
