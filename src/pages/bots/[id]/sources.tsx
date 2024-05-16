@@ -9,6 +9,7 @@ import {
 } from '@mochi-ui/core'
 import type { GetServerSideProps, NextPage } from 'next'
 import { LinkSource } from '~/components/BotSource/LinkSource'
+import { SourceTable } from '~/components/BotSource/SourceTable'
 import { SeoHead } from '~/components/common/SeoHead'
 import { ROUTES } from '~/constants/routes'
 import { getServerAuthSession } from '~/server/auth'
@@ -36,7 +37,7 @@ const BotSources: NextPage = () => {
       <PageHeader className="border-b border-divider">
         <PageHeaderTitle>Sources</PageHeaderTitle>
       </PageHeader>
-      <PageContent>
+      <PageContent className="bg-background-level1">
         <Tabs defaultValue="links">
           <TabList>
             {items.map((item) => (
@@ -60,6 +61,8 @@ const BotSources: NextPage = () => {
             ))}
           </div>
         </Tabs>
+
+        <SourceTable />
       </PageContent>
     </>
   )
