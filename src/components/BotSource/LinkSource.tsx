@@ -52,6 +52,7 @@ export function LinkSource() {
     control: linksControl,
     getValues,
     formState: { errors, isDirty },
+    reset: clearLinks,
   } = useForm<LinksFormValues>({
     defaultValues: { links: [] },
     resolver: zodResolver(linksSchema),
@@ -82,6 +83,7 @@ export function LinkSource() {
         scheme: 'success',
       })
       await refreshSourceTable()
+      clearLinks()
     }
     if (isError) {
       toast({
@@ -102,7 +104,7 @@ export function LinkSource() {
   return (
     <Card className="max-w-[600px] mx-auto space-y-4 shadow-input">
       <div className="flex justify-between">
-        <Typography>Enter a website link</Typography>
+        <Typography level="p4">Enter a website link</Typography>
         <Button size="sm" variant="soft" onClick={onOpen}>
           Bulk import
         </Button>
@@ -184,8 +186,9 @@ export function LinkSource() {
           onClick={submitBotSource}
           disabled={!errors || !isDirty}
           loading={isPending}
+          className="w-40"
         >
-          Upload and train
+          Upload and Train
         </Button>
       </div>
     </Card>

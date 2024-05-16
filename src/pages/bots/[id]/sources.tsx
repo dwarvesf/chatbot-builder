@@ -37,7 +37,7 @@ const BotSources: NextPage = () => {
       <PageHeader className="border-b border-divider">
         <PageHeaderTitle>Sources</PageHeaderTitle>
       </PageHeader>
-      <PageContent className="bg-background-level1">
+      <PageContent className="bg-background-level2">
         <Tabs defaultValue="links">
           <TabList>
             {items.map((item) => (

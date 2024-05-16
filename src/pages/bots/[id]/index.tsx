@@ -103,7 +103,7 @@ const BotDetail: NextPage = () => {
       <PageHeader className="border-b border-divider">
         <PageHeaderTitle>Preview</PageHeaderTitle>
       </PageHeader>
-      <PageContent className="bg-gray-50">
+      <PageContent className="bg-background-level2">
         <div className="border rounded-lg min-h-[calc(100dvh-240px)] bg-white relative">
           <div className="absolute top-0 flex items-center inset-x-0 border-b h-20 px-4">
             <div className="flex space-x-4">
