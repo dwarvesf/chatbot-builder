@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
 import * as asyncLib from 'async'
-import { and, eq, inArray, sql, type InferSelectModel } from 'drizzle-orm'
+import { and, eq, inArray, or, sql, type InferSelectModel } from 'drizzle-orm'
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import { XMLParser } from 'fast-xml-parser'
 import { uniq } from 'lodash'
@@ -39,6 +39,12 @@ function deleteByIdHandler() {
       }),
     )
     .mutation(async ({ input }) => {
+      const childSources = await db
+        .select({ id: schema.botSources.id })
+        .from(schema.botSources)
+        .where(eq(schema.botSources.parentId, input.botSourceId))
+      const childSourceIDs = childSources.map((r) => r.id)
+
       // Delete extracted data vector
       await db.delete(schema.botSourceExtractedDataVector).where(
         inArray(
@@ -49,7 +55,16 @@ function deleteByIdHandler() {
             })
             .from(schema.botSourceExtractedData)
             .where(
-              eq(schema.botSourceExtractedData.botSourceId, input.botSourceId),
+              or(
+                eq(
+                  schema.botSourceExtractedData.botSourceId,
+                  input.botSourceId,
+                ),
+                inArray(
+                  schema.botSourceExtractedData.botSourceId,
+                  childSourceIDs,
+                ),
+              ),
             ),
         ),
       )
@@ -57,9 +72,18 @@ function deleteByIdHandler() {
       // Delete extracted data
       await db
         .delete(schema.botSourceExtractedData)
-        .where(eq(schema.botSourceExtractedData.botSourceId, input.botSourceId))
+        .where(
+          or(
+            eq(schema.botSourceExtractedData.botSourceId, input.botSourceId),
+            inArray(schema.botSourceExtractedData.botSourceId, childSourceIDs),
+          ),
+        )
 
       // Delete source
+      await db
+        .delete(schema.botSources)
+        .where(inArray(schema.botSources.id, childSourceIDs))
+
       await db
         .delete(schema.botSources)
         .where(eq(schema.botSources.id, input.botSourceId))
