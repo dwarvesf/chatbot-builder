@@ -39,6 +39,21 @@ function deleteByIdHandler() {
       }),
     )
     .mutation(async ({ input }) => {
+      // Delete extracted data vector
+      await db.delete(schema.botSourceExtractedDataVector).where(
+        inArray(
+          schema.botSourceExtractedDataVector.botSourceExtractedDataId,
+          db
+            .select({
+              id: schema.botSourceExtractedData.id,
+            })
+            .from(schema.botSourceExtractedData)
+            .where(
+              eq(schema.botSourceExtractedData.botSourceId, input.botSourceId),
+            ),
+        ),
+      )
+
       // Delete extracted data
       await db
         .delete(schema.botSourceExtractedData)
