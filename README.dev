@@ -10,6 +10,13 @@ make local-up
 ```
 
 ### Migrate
+Would need to run: 
+```
+patch -p1 -N < patches/drizzle-kit.bin.cjs.patch || echo ''
+patch -p1 -N < patches/drizzle-kit.utils.js.patch || echo ''
+```
+To patch the fix of `vector(1024)` not found issue for the first time running the migration
+
 ```
 make db-migrate
 ```
@@ -23,11 +30,7 @@ make db-seed
  - Edit the schema file in `src/migration/schema.ts`
  - Apply the migration by running `make db-migrate`
 
-### `vector(1024)` not found when running `make db-migrate`?
-
-Run these two commands:
-
-```
-patch -p1 -N < patches/drizzle-kit.bin.cjs.patch || echo ''
-patch -p1 -N < patches/drizzle-kit.utils.js.patch || echo ''
-```
+### How to trigger migration on qa
+Currently we migrate manually on qa server. Would add cicd later.
+ - Update env `DATABASE_URL` in .env file
+ - Run `make db-migrate`
