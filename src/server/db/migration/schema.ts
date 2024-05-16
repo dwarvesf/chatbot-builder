@@ -156,7 +156,7 @@ export const bots = createTable(
       .notNull()
       .references(() => users.id),
     name: text('name'),
-    description: text('description'),
+    description: text('description').default(''),
     companyLogoAttachmentId: uuid('company_logo_attachment_id').references(
       () => attachments.id,
     ),
