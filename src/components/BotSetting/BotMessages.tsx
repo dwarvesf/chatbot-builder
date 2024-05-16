@@ -18,7 +18,7 @@ export const BotMessages = () => {
         control={control}
         render={({ field, fieldState }) => (
           <FormControl error={!!fieldState.error} hideHelperTextOnError>
-            <FormLabel>Message show when no Source is added</FormLabel>
+            <FormLabel>Message shown when no Source is added</FormLabel>
             <TextFieldRoot>
               <TextFieldInput {...field} />
             </TextFieldRoot>
@@ -31,7 +31,7 @@ export const BotMessages = () => {
         control={control}
         render={({ field, fieldState }) => (
           <FormControl error={!!fieldState.error} hideHelperTextOnError>
-            <FormLabel>Message show when no Source is added</FormLabel>
+            <FormLabel>Message shown when there is a Server Error</FormLabel>
             <TextFieldRoot>
               <TextFieldInput {...field} />
             </TextFieldRoot>

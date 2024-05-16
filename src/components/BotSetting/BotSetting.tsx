@@ -33,7 +33,7 @@ const schema = z.object({
   serverErrorMsg: z.string().max(100, 'Max length is 100 characters.'),
   userLimitWarningMsg: z.string().max(100, 'Max length is 100 characters.'),
   modelId: z.nativeEnum(BotModelEnum),
-  usageLimitPerUser: z.string(),
+  usageLimitPerUser: z.number(),
   usageLimitPerUserType: z.nativeEnum(UsageLimitTypeEnum),
 })
 
@@ -54,45 +54,14 @@ export const BotSetting = () => {
   const {
     handleSubmit,
     reset,
-    setValue,
     formState: { isSubmitting, isDirty },
   } = form
 
-  const onSubmit = async (props: BotSettingData) => {
-    const payload: BotSettingData = {
-      botId: id as string,
-      name: props.name,
-      description: props.description,
-      noSourceWarningMsg: props.noSourceWarningMsg,
-      serverErrorMsg: props.serverErrorMsg,
-      userLimitWarningMsg: props.userLimitWarningMsg,
-      modelId: Number(props.modelId),
-      usageLimitPerUser: Number(props.usageLimitPerUser),
-      usageLimitPerUserType: Number(props.usageLimitPerUserType),
-    }
-
-    try {
-      updateBotSettings(payload)
-    } catch (error) {
-      console.log(error)
-    }
-
-    await refetchBotSettings()
-  }
-
   const resetData = useCallback(
-    (data?: typeof sources) => {
+    (data?: BotSettingData) => {
       if (!data) return
       reset({
-        botId: id as string,
-        name: data.name!,
-        description: data.description!,
-        noSourceWarningMsg: data.noSourceWarningMsg!,
-        serverErrorMsg: data.serverErrorMsg!,
-        userLimitWarningMsg: data.userLimitWarningMsg!,
-        modelId: Number(data.modelId),
-        usageLimitPerUser: Number(data.usageLimitPerUser!),
-        usageLimitPerUserType: Number(data.usageLimitPerUserType!),
+        ...data,
       })
     },
 
@@ -102,20 +71,41 @@ export const BotSetting = () => {
   useEffect(() => {
     if (sources && !isInitialData.current) {
       isInitialData.current = true
-      setValue('name', sources.name!)
-      setValue('description', sources.description!)
-      setValue('noSourceWarningMsg', sources.noSourceWarningMsg!)
-      setValue('serverErrorMsg', sources.serverErrorMsg!)
-      setValue('userLimitWarningMsg', sources.userLimitWarningMsg!)
-      setValue('usageLimitPerUser', Number(sources.usageLimitPerUser))
-      setValue('modelId', Number(sources.modelId))
-      setValue('usageLimitPerUserType', Number(sources.usageLimitPerUserType))
+      reset({
+        botId: id as string,
+        name: sources.name!,
+        description: sources.description!,
+        noSourceWarningMsg: sources.noSourceWarningMsg!,
+        serverErrorMsg: sources.serverErrorMsg!,
+        userLimitWarningMsg: sources.userLimitWarningMsg!,
+        modelId: Number(sources.modelId),
+        usageLimitPerUser: Number(sources.usageLimitPerUser!),
+        usageLimitPerUserType: Number(sources.usageLimitPerUserType!),
+      })
     }
   }, [sources])
 
-  useEffect(() => {
-    resetData(sources)
-  }, [resetData, sources])
+  const onSubmit = async (props: BotSettingData) => {
+    const payload: BotSettingData = {
+      botId: id as string,
+      name: props.name,
+      description: props.description,
+      noSourceWarningMsg: props.noSourceWarningMsg,
+      serverErrorMsg: props.serverErrorMsg,
+      userLimitWarningMsg: props.userLimitWarningMsg,
+      modelId: props.modelId,
+      usageLimitPerUser: props.usageLimitPerUser,
+      usageLimitPerUserType: props.usageLimitPerUserType,
+    }
+
+    try {
+      updateBotSettings(payload)
+    } catch (error) {
+      console.log(error)
+    }
+    resetData(payload)
+    await refetchBotSettings()
+  }
 
   return (
     <FormProvider {...form}>
@@ -144,7 +134,7 @@ export const BotSetting = () => {
         <BotLimit />
       </div>
       <SaveBar
-        open={isDirty && isInitialData.current}
+        open={isDirty}
         isLoading={isSubmitting}
         onConfirm={handleSubmit(onSubmit)}
         onCancel={() => reset()}
