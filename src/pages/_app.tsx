@@ -46,7 +46,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
         }
       `}</style>
       <div className="fixed top-3 right-3 z-[999]">
-        <Toaster />
+        <Toaster duration={3000} />
       </div>
       <main className="font-sans">
         <InnerApp>
