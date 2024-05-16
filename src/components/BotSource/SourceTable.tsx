@@ -9,6 +9,7 @@ import {
   DropdownMenuPortal,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  IconButton,
   Switch,
   Table,
   Typography,
@@ -123,10 +124,15 @@ export const SourceTable = () => {
               return (
                 <DropdownMenu>
                   <DropdownMenuTrigger className="p-1.5">
-                    <ThreeDotLine className="w-5 h-5" />
+                    <IconButton label="open" variant="ghost" color="neutral">
+                      <ThreeDotLine />
+                    </IconButton>
                   </DropdownMenuTrigger>
                   <DropdownMenuPortal>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent
+                      className="min-w-[200px]"
+                      align="start"
+                    >
                       <DropdownMenuItem
                         leftIcon={<EyeShowSolid className="w-5 h-5" />}
                         onClick={() => {
@@ -155,6 +161,11 @@ export const SourceTable = () => {
         ]}
         isLoading={isPending}
         data={data?.botSources ?? []}
+        emptyContent={
+          <div className="pt-6 pb-2 text-center">
+            <Typography>No sources yet</Typography>
+          </div>
+        }
       />
       <SourceDetailDrawer
         source={activeSource}
