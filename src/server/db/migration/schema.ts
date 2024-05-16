@@ -222,6 +222,7 @@ export const botSources = createTable(
     createdBy: uuid('created_by').references(() => users.id),
     updatedAt: timestamp('updated_at'),
     updatedBy: uuid('updated_by').references(() => users.id),
+    visible: boolean('visible').default(true),
   },
   (source) => ({
     parentReference: foreignKey({

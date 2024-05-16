@@ -29,6 +29,7 @@ export const botSourceRouter = createTRPCRouter({
   }),
 
   deleteById: deleteByIdHandler(),
+  setVisibility: setVisibility(),
 })
 
 function deleteByIdHandler() {
@@ -86,6 +87,42 @@ function deleteByIdHandler() {
 
       await db
         .delete(schema.botSources)
+        .where(eq(schema.botSources.id, input.botSourceId))
+    })
+}
+
+function setVisibility() {
+  return protectedProcedure
+    .input(
+      z.object({
+        botSourceId: z.string(),
+        visible: z.boolean(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const bs = await db
+        .select({
+          id: schema.botSources.id,
+          visible: schema.botSources.visible,
+        })
+        .from(schema.botSources)
+        .where(
+          and(
+            eq(schema.botSources.id, input.botSourceId),
+            eq(schema.botSources.createdBy, ctx.session.user.id),
+          ),
+        )
+      if (!bs.length) {
+        throw new Error('Bot source not found')
+      }
+
+      await db
+        .update(schema.botSources)
+        .set({
+          visible: input.visible,
+          updatedAt: new Date(),
+          updatedBy: ctx.session.user.id,
+        })
         .where(eq(schema.botSources.id, input.botSourceId))
     })
 }
