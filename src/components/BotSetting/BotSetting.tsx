@@ -98,14 +98,14 @@ export const BotSetting = () => {
   useAsyncEffect(async () => {
     if (isSuccess) {
       toast({
-        description: 'Update Bot successfully',
+        description: 'Update settings successfully',
         scheme: 'success',
       })
       await refetchBotSettings()
     }
     if (isError) {
       toast({
-        description: 'Failed to update Bot',
+        description: 'Failed to update settings',
         scheme: 'danger',
       })
       console.error(error)
