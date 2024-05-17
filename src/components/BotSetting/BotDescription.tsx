@@ -23,7 +23,7 @@ export const BotDescription = () => {
           <FormControl error={!!fieldState.error}>
             <FormLabel>Bot name</FormLabel>
             <TextFieldRoot>
-              <TextFieldInput {...field} placeholder="Dwarves Bot" />
+              <TextFieldInput {...field} />
             </TextFieldRoot>
             <FormErrorMessage>{fieldState.error?.message}</FormErrorMessage>
           </FormControl>
