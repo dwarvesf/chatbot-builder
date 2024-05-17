@@ -8,7 +8,9 @@ import {
   Tabs,
 } from '@mochi-ui/core'
 import type { GetServerSideProps, NextPage } from 'next'
+import { FileDocSource } from '~/components/BotSource/FileDocSource'
 import { LinkSource } from '~/components/BotSource/LinkSource'
+import { SitemapSource } from '~/components/BotSource/SitemapSource/SitemapSource'
 import { SourceTable } from '~/components/BotSource/SourceTable'
 import { SeoHead } from '~/components/common/SeoHead'
 import { ROUTES } from '~/constants/routes'
@@ -23,10 +25,12 @@ const items = [
   {
     value: 'sitemaps',
     label: 'Sitemaps',
+    render: <SitemapSource />,
   },
   {
     value: 'files-docs',
     label: 'Files/Docs',
+    render: <FileDocSource />,
   },
 ]
 
@@ -42,8 +46,8 @@ const BotSources: NextPage = () => {
           <TabList>
             {items.map((item) => (
               <TabTrigger
-                className="!text-base"
                 key={item.label}
+                className="!text-base"
                 value={item.value}
               >
                 {item.label}
