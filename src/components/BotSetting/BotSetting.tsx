@@ -78,9 +78,9 @@ export const BotSetting = () => {
         noSourceWarningMsg: sources.noSourceWarningMsg!,
         serverErrorMsg: sources.serverErrorMsg!,
         userLimitWarningMsg: sources.userLimitWarningMsg!,
-        modelId: Number(sources.modelId),
-        usageLimitPerUser: Number(sources.usageLimitPerUser!),
-        usageLimitPerUserType: Number(sources.usageLimitPerUserType!),
+        modelId: sources.modelId,
+        usageLimitPerUser: sources.usageLimitPerUser!,
+        usageLimitPerUserType: sources.usageLimitPerUserType!,
       })
     }
   }, [sources])

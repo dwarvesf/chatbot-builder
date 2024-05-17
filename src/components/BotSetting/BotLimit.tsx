@@ -17,15 +17,15 @@ import { type BotSettingData } from './BotSetting'
 
 interface LimitOptions {
   label: string
-  value: UsageLimitTypeEnum
+  value: string
 }
 
 const options: LimitOptions[] = [
-  { label: 'Per One Hour', value: UsageLimitTypeEnum.PerOneHour },
-  { label: 'Per Four Hours', value: UsageLimitTypeEnum.PerFourHours },
-  { label: 'Per Day', value: UsageLimitTypeEnum.PerDay },
-  { label: 'Per Month', value: UsageLimitTypeEnum.PerMonth },
-  { label: 'Per Week', value: UsageLimitTypeEnum.PerWeek },
+  { label: 'Per One Hour', value: '1' },
+  { label: 'Per Four Hours', value: '2' },
+  { label: 'Per Day', value: '3' },
+  { label: 'Per Week', value: '4' },
+  { label: 'Per Month', value: '5' },
 ]
 
 export const BotLimit = () => {
@@ -60,13 +60,16 @@ export const BotLimit = () => {
               control={control}
               render={({ field }) => (
                 <FormControl>
-                  <Select {...field} value={`${field.value}`}>
+                  <Select
+                    value={`${field.value}`}
+                    onChange={(e) => field.onChange(Number(e))}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent className="max-w-fit h-[37.5]" align="end">
                       {options.map((props) => (
-                        <SelectItem key={props.value} value={`${props.value}`}>
+                        <SelectItem key={props.value} value={props.value}>
                           {props.label}
                         </SelectItem>
                       ))}
