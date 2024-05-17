@@ -12,7 +12,6 @@ import {
   Typography,
 } from '@mochi-ui/core'
 import { Controller, useFormContext } from 'react-hook-form'
-import { UsageLimitTypeEnum } from '~/model/usage-limit-type'
 import { type BotSettingData } from './BotSetting'
 
 interface LimitOptions {
@@ -43,10 +42,7 @@ export const BotLimit = () => {
               <FormControl error={!!fieldState.error} hideHelperTextOnError>
                 <FormLabel>Usage limit per user</FormLabel>
                 <TextFieldRoot>
-                  <TextFieldInput
-                    {...field}
-                    onChange={(e) => field.onChange(parseInt(e.target.value))}
-                  />
+                  <TextFieldInput {...field} />
                 </TextFieldRoot>
               </FormControl>
             )}

@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Typography } from '@mochi-ui/core'
+import { Typography, useToast } from '@mochi-ui/core'
 import { useParams } from 'next/navigation'
 import { FormProvider, useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -12,6 +13,7 @@ import { BotMessages } from './BotMessages'
 import { BotModel } from './BotModel'
 import { SaveBar } from '../SaveBar'
 import { useCallback, useEffect, useRef } from 'react'
+import { useAsyncEffect } from '@dwarvesf/react-hooks'
 
 export interface BotSettingData {
   botId: string
@@ -33,15 +35,22 @@ const schema = z.object({
   serverErrorMsg: z.string().max(100, 'Max length is 100 characters.'),
   userLimitWarningMsg: z.string().max(100, 'Max length is 100 characters.'),
   modelId: z.nativeEnum(BotModelEnum),
-  usageLimitPerUser: z.number(),
+  usageLimitPerUser: z.coerce.number(),
   usageLimitPerUserType: z.nativeEnum(UsageLimitTypeEnum),
 })
 
 export const BotSetting = () => {
   const id = useParams()?.id
   const isInitialData = useRef(false)
+  const { toast } = useToast()
 
-  const { mutate: updateBotSettings } = api.bot.updateBotSettings.useMutation()
+  const {
+    mutate: updateBotSettings,
+    error,
+    isSuccess,
+    isError,
+    isPending,
+  } = api.bot.updateBotSettings.useMutation()
 
   const { data: sources, refetch: refetchBotSettings } =
     api.bot.getById.useQuery(id as string)
@@ -54,6 +63,7 @@ export const BotSetting = () => {
   const {
     handleSubmit,
     reset,
+    getValues,
     formState: { isSubmitting, isDirty },
   } = form
 
@@ -85,6 +95,23 @@ export const BotSetting = () => {
     }
   }, [sources])
 
+  useAsyncEffect(async () => {
+    if (isSuccess) {
+      toast({
+        description: 'Update Bot successfully',
+        scheme: 'success',
+      })
+      await refetchBotSettings()
+    }
+    if (isError) {
+      toast({
+        description: 'Failed to update Bot',
+        scheme: 'danger',
+      })
+      console.error(error)
+    }
+  }, [isSuccess, isError, error])
+
   const onSubmit = async (props: BotSettingData) => {
     const payload: BotSettingData = {
       botId: id as string,
@@ -100,11 +127,13 @@ export const BotSetting = () => {
 
     try {
       updateBotSettings(payload)
-    } catch (error) {
-      console.log(error)
+    } catch (error: any) {
+      toast({
+        description: error?.message ?? '',
+        scheme: 'danger',
+      })
     }
     resetData(payload)
-    await refetchBotSettings()
   }
 
   return (
@@ -134,8 +163,8 @@ export const BotSetting = () => {
         <BotLimit />
       </div>
       <SaveBar
-        open={isDirty}
-        isLoading={isSubmitting}
+        open={isDirty || isPending || isError}
+        isLoading={isSubmitting || isPending}
         onConfirm={handleSubmit(onSubmit)}
         onCancel={() => reset()}
       />
