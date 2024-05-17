@@ -13,7 +13,7 @@ export const botRouter = createTRPCRouter({
     .input(
       z.object({
         name: z.string().min(1).max(50),
-        description: z.string().optional(),
+        description: z.string().default(''),
         companyLogoAttachmentId: z.string().optional(),
         botAvatarAttachmentId: z.string().optional(),
         chatBubbleIconId: z.number().optional(),
