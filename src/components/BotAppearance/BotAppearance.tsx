@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useParams } from 'next/navigation'
 import { FormProvider, useForm } from 'react-hook-form'
@@ -6,6 +7,9 @@ import { api } from '~/utils/api'
 import { WidgetName } from './WidgetName'
 import { WidgetMessage } from './WidgetMessage'
 import { useCallback, useEffect, useRef } from 'react'
+import { SaveBar } from '../SaveBar'
+import { useAsyncEffect } from '@dwarvesf/react-hooks'
+import { useToast } from '@mochi-ui/core'
 
 export interface BotAppearance {
   botId: string
@@ -29,8 +33,17 @@ const schema = z.object({
 export const BotAppearancePage = () => {
   const id = useParams()?.id
   const isInitialData = useRef(false)
+  const { toast } = useToast()
 
-  const { data: sources, refetch: refetchAppearance } =
+  const {
+    mutate: updateBotApearance,
+    error,
+    isSuccess,
+    isError,
+    isPending,
+  } = api.bot.updateBotApearance.useMutation()
+
+  const { data: sources, refetch: refetchBotAppearance } =
     api.bot.getById.useQuery(id as string)
 
   const form = useForm<BotAppearance>({
@@ -67,6 +80,23 @@ export const BotAppearancePage = () => {
     }
   }, [sources])
 
+  useAsyncEffect(async () => {
+    if (isSuccess) {
+      toast({
+        description: 'Update settings successfully',
+        scheme: 'success',
+      })
+      await refetchBotAppearance()
+    }
+    if (isError) {
+      toast({
+        description: 'Failed to update settings',
+        scheme: 'danger',
+      })
+      console.error(error)
+    }
+  }, [isSuccess, isError, error])
+
   const onSubmit = async (props: BotAppearance) => {
     const payload: BotAppearance = {
       botId: id as string,
@@ -75,8 +105,17 @@ export const BotAppearancePage = () => {
       widgetPlaceholder: props.widgetPlaceholder,
       widgetWelcomeMsg: props.widgetWelcomeMsg,
     }
+    try {
+      updateBotApearance(payload)
+    } catch (error: any) {
+      toast({
+        description: error?.message ?? '',
+        scheme: 'danger',
+      })
+    }
     resetData(payload)
   }
+
   return (
     <FormProvider {...form}>
       <form onSubmit={handleSubmit(onSubmit)} />
@@ -86,6 +125,13 @@ export const BotAppearancePage = () => {
         </div>
 
         <WidgetMessage />
+
+        <SaveBar
+          open={isDirty || isPending || isError}
+          isLoading={isSubmitting || isPending}
+          onConfirm={handleSubmit(onSubmit)}
+          onCancel={() => reset()}
+        />
       </div>
     </FormProvider>
   )
