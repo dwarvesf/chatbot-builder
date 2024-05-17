@@ -83,7 +83,7 @@ export const CreateBotModal = ({ isOpen, onSuccess, onOpenChange }: Props) => {
 
   async function onCreateBot(data: { botName: string }) {
     try {
-      createBot({ name: data.botName })
+      createBot({ name: data.botName, widgetName: data.botName })
     } catch (error: any) {
       toast({
         description: error?.message ?? '',
