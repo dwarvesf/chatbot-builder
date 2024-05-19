@@ -3,6 +3,7 @@ import type { GetServerSideProps, NextPage } from 'next'
 import { SeoHead } from '~/components/common/SeoHead'
 import { ROUTES } from '~/constants/routes'
 import { getServerAuthSession } from '~/server/auth'
+import { ProfilePage } from '~/components/Profile'
 
 const Profile: NextPage = () => {
   return (
@@ -11,7 +12,9 @@ const Profile: NextPage = () => {
       <PageHeader className="border-b border-divider">
         <PageHeaderTitle>Profile</PageHeaderTitle>
       </PageHeader>
-      <PageContent>...</PageContent>
+      <PageContent>
+        <ProfilePage />
+      </PageContent>
     </>
   )
 }

@@ -7,6 +7,7 @@ import { botSourceRouter } from './routers/bot-source'
 import { botSourceExtractedDataRouter } from './routers/bot-source-extracted-data'
 import { chatRouter } from './routers/chat'
 import { threadRouter } from './routers/thread'
+import { userRouter } from './routers/user'
 
 /**
  * This is the primary router for your server.
@@ -14,6 +15,7 @@ import { threadRouter } from './routers/thread'
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
+  user: userRouter,
   bot: botRouter,
   botAIModelRouter: botAIModelRouter,
   botIntegrationRouter: botIntegrationRouter,
