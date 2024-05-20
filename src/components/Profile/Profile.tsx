@@ -6,8 +6,8 @@ import { useCallback, useEffect, useRef } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { api } from '~/utils/api'
-import { ProfileName } from './ProfileName'
 import { SaveBar } from '../SaveBar'
+import { ProfileName } from './ProfileName'
 
 export interface Profile {
   firstName: string
@@ -81,7 +81,7 @@ export const ProfilePage = () => {
     }
   }, [isSuccess, isError, error])
 
-  const onSubmit = async (props: Profile) => {
+  const onSubmit = (props: Profile) => {
     const payload: Profile = {
       firstName: props.firstName,
       lastName: props.lastName,
