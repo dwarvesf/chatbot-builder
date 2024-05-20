@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '~/server/db'
 import * as schema from '~/server/db/migration/schema'
@@ -9,6 +9,8 @@ export const botSourceExtractedDataRouter = createTRPCRouter({
     .input(
       z.object({
         botSourceId: z.string().uuid(),
+        limit: z.number().max(100).default(10),
+        offset: z.number().default(0),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -22,10 +24,34 @@ export const botSourceExtractedDataRouter = createTRPCRouter({
         throw new Error('Bot source not found')
       }
 
-      const arr = await db.query.botSourceExtractedData.findMany({
-        where: eq(schema.botSourceExtractedData.botSourceId, input.botSourceId),
-      })
+      const query = db
+        .select()
+        .from(schema.botSourceExtractedData)
+        .limit(input.limit)
+        .offset(input.offset)
+        .$dynamic()
 
-      return arr
+      const whereQms = [
+        eq(schema.botSourceExtractedData.botSourceId, input.botSourceId),
+      ]
+
+      const arr = await query.where(and(...whereQms))
+
+      const countRows = await db
+        .select({
+          count: sql`COUNT(*)`,
+        })
+        .from(schema.botSourceExtractedData)
+        .where(and(...whereQms))
+      const count = Number(countRows[0]?.count) ?? 0
+
+      return {
+        data: arr,
+        pagination: {
+          total: count,
+          limit: input.limit,
+          offset: input.offset,
+        },
+      }
     }),
 })

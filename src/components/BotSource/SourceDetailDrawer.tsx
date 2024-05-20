@@ -26,6 +26,7 @@ export const SourceDetailDrawer = (props: SourceDetailDrawerProps) => {
       botSourceId: id ?? '',
     },
   )
+  const bsData = data?.data ?? []
 
   return (
     <Drawer anchor="right" onOpenChange={onOpenChange} open={isOpen}>
@@ -45,7 +46,7 @@ export const SourceDetailDrawer = (props: SourceDetailDrawerProps) => {
                 <SpinnerLine className="w-8 h-8 text-primary-plain-fg" />
               </div>
             ) : (
-              (data || []).map((item) => (
+              bsData.map((item) => (
                 <Card
                   className="bg-background-level1 overflow-auto max-h-[400px]"
                   key={item.id}

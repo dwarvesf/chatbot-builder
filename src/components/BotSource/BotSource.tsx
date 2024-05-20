@@ -92,10 +92,11 @@ export const BotSource = () => {
     api.botSource.sync.useMutation()
   const { mutate: deleteSourceById, error: deleteError } =
     api.botSource.deleteById.useMutation()
-  const { data: sourceContents = [], isLoading: isLoadingSourceContent } =
+  const { data: sourceContentsResp, isLoading: isLoadingSourceContent } =
     api.botSourceExtractedDataRouter.getList.useQuery({
       botSourceId: selectedSourceId,
     })
+  const sourceContents = sourceContentsResp?.data as SourceContent[]
 
   const handleTabClick = (tab: SourceTab) => {
     setCurrentTab(tab)
