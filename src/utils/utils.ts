@@ -24,3 +24,9 @@ export function formatDatetime(
 
   return dayjs(date).format(format)
 }
+
+export function delay(time: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, time)
+  })
+}
