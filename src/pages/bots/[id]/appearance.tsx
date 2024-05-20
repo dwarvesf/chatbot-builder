@@ -3,6 +3,7 @@ import type { GetServerSideProps, NextPage } from 'next'
 import { SeoHead } from '~/components/common/SeoHead'
 import { ROUTES } from '~/constants/routes'
 import { getServerAuthSession } from '~/server/auth'
+import { BotAppearancePage } from '~/components/BotAppearance'
 
 const BotAppearance: NextPage = () => {
   return (
@@ -11,7 +12,9 @@ const BotAppearance: NextPage = () => {
       <PageHeader className="border-b border-divider">
         <PageHeaderTitle>Appearance</PageHeaderTitle>
       </PageHeader>
-      <PageContent>...</PageContent>
+      <PageContent>
+        <BotAppearancePage />
+      </PageContent>
     </>
   )
 }

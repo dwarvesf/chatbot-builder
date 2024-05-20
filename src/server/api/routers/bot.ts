@@ -1,6 +1,7 @@
 import { and, eq } from 'drizzle-orm'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
+import { WidgetName } from '~/components/BotAppearance/WidgetName'
 import { BotStatusEnum } from '~/model/bot'
 import { BotModelEnum } from '~/model/bot-model'
 import { UsageLimitTypeEnum } from '~/model/usage-limit-type'
@@ -23,6 +24,10 @@ export const botRouter = createTRPCRouter({
         inputBoxPlaceholder: z.string().optional(),
         showBrandingOnWidget: z.string().optional(),
         widgetPosition: z.number().optional(),
+        widgetName: z.string().min(1).max(50),
+        widgetSubheading: z.string().default('Our bot answers instantly'),
+        widgetPlaceholder: z.string().default('Send a message...'),
+        widgetWelcomeMsg: z.string().default('Hey there, how can I help you'),
         showSourceWithResponse: z.string().optional(),
         postChatFeedback: z.string().optional(),
         widgetOpenDefault: z.string().optional(),
@@ -110,6 +115,38 @@ export const botRouter = createTRPCRouter({
           userLimitWarningMsg: input.userLimitWarningMsg,
           usageLimitPerUser: input.usageLimitPerUser,
           usageLimitPerUserType: input.usageLimitPerUserType,
+          updatedAt: new Date(),
+          updatedBy: ctx.session.user.id,
+        })
+        .where(
+          and(
+            eq(schema.bots.id, input.botId),
+            eq(schema.bots.createdBy, ctx.session.user.id),
+          ),
+        )
+        .returning()
+
+      return bot
+    }),
+
+  updateBotApearance: protectedProcedure
+    .input(
+      z.object({
+        botId: z.string(),
+        widgetName: z.string().min(1).max(50),
+        widgetSubheading: z.string(),
+        widgetPlaceholder: z.string(),
+        widgetWelcomeMsg: z.string(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const bot = await db
+        .update(schema.bots)
+        .set({
+          widgetName: input.widgetName,
+          widgetSubheading: input.widgetSubheading,
+          widgetPlaceholder: input.widgetPlaceholder,
+          widgetWelcomeMsg: input.widgetWelcomeMsg,
           updatedAt: new Date(),
           updatedBy: ctx.session.user.id,
         })
