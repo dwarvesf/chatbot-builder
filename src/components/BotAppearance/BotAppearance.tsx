@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { useAsyncEffect } from '@dwarvesf/react-hooks'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useToast } from '@mochi-ui/core'
 import { useParams } from 'next/navigation'
+import { useCallback, useEffect, useRef } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { api } from '~/utils/api'
-import { WidgetName } from './WidgetName'
-import { WidgetMessage } from './WidgetMessage'
-import { useCallback, useEffect, useRef } from 'react'
 import { SaveBar } from '../SaveBar'
-import { useAsyncEffect } from '@dwarvesf/react-hooks'
-import { useToast } from '@mochi-ui/core'
+import { WidgetMessage } from './WidgetMessage'
+import { WidgetName } from './WidgetName'
 
 export interface BotAppearance {
   botId: string
@@ -97,7 +97,7 @@ export const BotAppearancePage = () => {
     }
   }, [isSuccess, isError, error])
 
-  const onSubmit = async (props: BotAppearance) => {
+  const onSubmit = (props: BotAppearance) => {
     const payload: BotAppearance = {
       botId: id as string,
       widgetName: props.widgetName,
