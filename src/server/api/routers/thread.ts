@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { type InferSelectModel, eq } from 'drizzle-orm'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
 import { ChatRoleEnum } from '~/model/chat'
@@ -23,12 +23,12 @@ export const threadRouter = createTRPCRouter({
         throw new Error('Bot not found')
       }
 
-      let thread = null
-      let chat = null
+      let thread: InferSelectModel<typeof schema.threads> | undefined
+      let chat: InferSelectModel<typeof schema.chats> | undefined
       await db.transaction(async (db) => {
         // Create thread
         const threadId = uuidv7()
-        thread = await db
+        const rows = await db
           .insert(schema.threads)
           .values({
             id: threadId,
@@ -36,10 +36,14 @@ export const threadRouter = createTRPCRouter({
             title: input.title,
           })
           .returning()
+        if (!rows || rows.length === 0) {
+          throw new Error('Failed to create thread')
+        }
+        thread = rows[0]
 
         // Create first message
         const chatId = uuidv7()
-        chat = await db
+        const chatRows = await db
           .insert(schema.chats)
           .values({
             id: chatId,
@@ -49,6 +53,10 @@ export const threadRouter = createTRPCRouter({
             msg: input.firstMessage,
           })
           .returning()
+        if (!chatRows || chatRows.length === 0) {
+          throw new Error('Failed to create chat')
+        }
+        chat = chatRows[0]
       })
 
       return {
