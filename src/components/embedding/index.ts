@@ -1,6 +1,6 @@
+import { OpenAIEmbeddings } from '@langchain/openai'
 import { env } from '~/env'
 import mockEmbedding from './mock-embedding.json' assert { type: 'json' }
-
 /**
  * calls to openAI's embedding for the vector representation of the contents
  */
@@ -53,6 +53,35 @@ export default async function getEmbeddingsFromContents(contents: string[]) {
         embeddings: embedding,
       })
     }
+  }
+  return results
+}
+
+/**
+ * calls to openAI's embedding for the vector representation of the contents
+ */
+export async function embeddingDocuments(
+  documents: string[],
+): Promise<{ content: string; embeddings: number[] }[]> {
+  const openAICred = env.OPENAI_API_KEY
+
+  const model = new OpenAIEmbeddings({
+    apiKey: openAICred,
+    model: 'text-embedding-3-small',
+    dimensions: 1024,
+  })
+
+  const results: {
+    content: string
+    embeddings: number[]
+  }[] = []
+
+  for (const doc of documents) {
+    const data = await model.embedQuery(doc)
+    results.push({
+      content: doc,
+      embeddings: data,
+    })
   }
   return results
 }

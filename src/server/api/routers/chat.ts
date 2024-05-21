@@ -2,7 +2,7 @@ import { and, desc, eq, gte, sql } from 'drizzle-orm'
 import OpenAI from 'openai'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
-import getEmbeddingsFromContents from '~/components/embedding'
+import { embeddingDocuments } from '~/components/embedding'
 import { env } from '~/env'
 import { BotModelEnum } from '~/model/bot-model'
 import { ChatRoleEnum } from '~/model/chat'
@@ -174,7 +174,7 @@ async function askAI(bot: { id: string; modelId: BotModelEnum }, msg: string) {
 }
 
 async function buildPrompt(botId: string, msg: string) {
-  const msgVectors = await getEmbeddingsFromContents([msg])
+  const msgVectors = await embeddingDocuments([msg])
   if (!msgVectors?.length) {
     throw new Error('Failed to get embeddings')
   }

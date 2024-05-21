@@ -6,8 +6,9 @@ import { XMLParser } from 'fast-xml-parser'
 import { uniq } from 'lodash'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
+import recursiveChunkingData from '~/components/chunking'
 import crawURL from '~/components/crawler'
-import getEmbeddingsFromContents from '~/components/embedding'
+import { embeddingDocuments } from '~/components/embedding'
 import { env } from '~/env'
 import { BotSourceStatusEnum } from '~/model/bot-source-status'
 import { BotSourceTypeEnum } from '~/model/bot-source-type'
@@ -684,6 +685,9 @@ async function syncBotSourceURL(
       data: JSON.stringify(contents),
     })
 
+    // Data chunking
+    const chunking = await recursiveChunkingData(contents.join('\n'))
+
     // Update status to embedding
     console.log('Embedding bot source URL... ', bs.url)
     await db
@@ -692,9 +696,7 @@ async function syncBotSourceURL(
       .where(eq(schema.botSources.id, bsId))
 
     // Embed the bot source
-    for (const { content, embeddings } of await getEmbeddingsFromContents(
-      contents,
-    )) {
+    for (const { content, embeddings } of await embeddingDocuments(chunking)) {
       // Store data to DB
       await saveEmbeddings(db, bsDataId, content, embeddings)
     }

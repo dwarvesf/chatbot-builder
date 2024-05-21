@@ -1,4 +1,4 @@
-import { type AnyColumn, type SQLWrapper, sql } from 'drizzle-orm'
+import { sql, type AnyColumn, type SQLWrapper } from 'drizzle-orm'
 import { customType } from 'drizzle-orm/pg-core'
 
 export const vector = customType<{
