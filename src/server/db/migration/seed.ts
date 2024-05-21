@@ -21,6 +21,7 @@ await db
     { id: 1, name: 'Link', visible: true, createdAt: new Date() },
     { id: 2, name: 'Sitemap', visible: true, createdAt: new Date() },
     { id: 3, name: 'SitemapChild', visible: false, createdAt: new Date() },
+    { id: 4, name: 'File', visible: true, createdAt: new Date() },
   ])
   .onConflictDoNothing()
 

@@ -12,6 +12,8 @@ const getTypeLabel = (typeId: number) => {
       return 'Link'
     case BotSourceTypeEnum.Sitemap:
       return 'Sitemap'
+    case BotSourceTypeEnum.File:
+      return 'File'
     default:
       return ''
   }
@@ -23,6 +25,8 @@ const getColor = (typeId: number): BadgeProps['appearance'] => {
       return 'primary'
     case BotSourceTypeEnum.Sitemap:
       return 'warning'
+    case BotSourceTypeEnum.File:
+      return 'success'
     default:
       return 'primary'
   }

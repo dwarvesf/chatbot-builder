@@ -82,7 +82,8 @@ export const SourceTable = () => {
               header: 'Url',
               width: 400,
               cell: (props) => {
-                const { url, typeId } = props.row.original
+                const { url, typeId, ...rest } = props.row.original
+                console.log({ rest })
                 if (typeId === BotSourceTypeEnum.Link && url) {
                   return (
                     <Button
@@ -96,12 +97,13 @@ export const SourceTable = () => {
                     </Button>
                   )
                 }
+
                 return (
                   <Typography
                     level="inherit"
                     className="truncate max-w-[300px]"
                   >
-                    {url}
+                    {typeId === BotSourceTypeEnum.File ? url : url}
                   </Typography>
                 )
               },
