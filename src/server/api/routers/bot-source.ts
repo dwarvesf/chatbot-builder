@@ -30,6 +30,9 @@ export const botSourceRouter = createTRPCRouter({
 
   deleteById: deleteByIdHandler(),
   setVisibility: setVisibility(),
+
+  getSiteMaps: getSiteMaps(),
+  validateSitemapUrl: validateSitemapUrl(),
 })
 
 function deleteByIdHandler() {
@@ -400,6 +403,101 @@ async function syncBotSourceSitemap(
     .update(schema.botSources)
     .set({ statusId: BotSourceStatusEnum.Completed })
     .where(eq(schema.botSources.id, bs.id))
+}
+
+function getSiteMaps() {
+  return protectedProcedure
+    .input(
+      z.object({
+        url: z.string(),
+      }),
+    )
+    .query(async ({ input }) => {
+      // add https to url if not present
+      if (!input.url.startsWith('http')) {
+        input.url = `https://${input.url}`
+      }
+
+      // fetch robots.txt of the site
+      let robotsTxt
+
+      try {
+        robotsTxt = await fetch(`${input.url}/robots.txt`)
+      } catch (e) {
+        return []
+      }
+
+      const robotsTxtText = await robotsTxt.text()
+
+      // parse sitemap URLs from robots.txt
+      const sitemapUrls = extractSiteMapURLs(robotsTxtText, input.url)
+      return sitemapUrls
+    })
+}
+
+function validateSitemapUrl() {
+  return protectedProcedure
+    .input(
+      z.object({
+        url: z.string(),
+      }),
+    )
+    .query(async ({ input }) => {
+      return await isValidSitemapUrl(input.url)
+    })
+}
+
+export function extractSiteMapURLs(
+  robotsTxt: string,
+  websiteUrl: string,
+): string[] {
+  const sitemapUrls: string[] = []
+  const lines = robotsTxt.split('\n')
+
+  for (const line of lines) {
+    const match = line.match(/Sitemap:\s*(.+)/i)
+    if (match?.[1]) {
+      let sitemapUrl = match[1].trim()
+      // Ensure the sitemap URL is absolute
+      if (!sitemapUrl.startsWith('http')) {
+        sitemapUrl = new URL(sitemapUrl, websiteUrl).href
+      }
+      sitemapUrls.push(sitemapUrl)
+    }
+  }
+
+  return sitemapUrls
+}
+
+export async function isValidSitemapUrl(url: string): Promise<boolean> {
+  try {
+    const parsedUrl = new URL(url)
+
+    // Ensure the URL protocol is either http or https
+    if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+      return false
+    }
+
+    // Ensure the URL ends with .xml (basic check for sitemap format)
+    if (!parsedUrl.pathname.endsWith('.xml')) {
+      return false
+    }
+
+    // validate xml content in link is valid format
+    const xmlContent = await fetch(url)
+
+    const xmlContentText = await xmlContent.text()
+    const parser = new XMLParser()
+    const s = parser.parse(xmlContentText) as ISitemapStructure
+    if (!s?.urlset?.url?.length) {
+      return false
+    }
+
+    return true
+  } catch (error) {
+    // If the URL constructor throws an error, the URL is not valid
+    return false
+  }
 }
 
 export async function getURLsFromSitemap(url: string) {
