@@ -21,14 +21,16 @@ import { api } from '~/utils/api'
 interface ThreadItem {
   message: string
   isYou: boolean
+  isError?: boolean
 }
 
 const ChatThread = (props: {
   avatar?: string
   children: React.ReactNode
   isRight?: boolean
+  isError?: boolean
 }) => {
-  const { avatar, children, isRight } = props
+  const { avatar, children, isRight, isError = false } = props
 
   return (
     <div className={clsx('flex', { 'justify-end': isRight })}>
@@ -38,8 +40,9 @@ const ChatThread = (props: {
         <Avatar src={avatar ?? ''} />
         <div
           className={clsx('p-4 rounded-xl max-w-[80%]', {
-            'bg-secondary-100': isRight,
-            'bg-background-level2': !isRight,
+            'bg-secondary-100': isRight && !isError,
+            'bg-background-level2': !isRight && !isError,
+            'bg-danger-200': isError,
           })}
         >
           {children}
@@ -56,10 +59,20 @@ const BotDetail: NextPage = () => {
   const { data: botIntegration } = api.botIntegrationRouter.get.useQuery({
     botId: id as string,
   })
+
+  const apiToken = botIntegration?.[0]?.apiToken?.toString()
+
+  const {
+    mutate: createNewThread,
+    data: serverThread,
+    isPending: initialThreadPending,
+  } = api.thread.create.useMutation()
+
   const {
     mutate: createChat,
     data: chatData,
     isPending,
+    error: chatError,
   } = api.chatRouter.create.useMutation()
 
   const { handleSubmit, control, reset } = useForm<{
@@ -70,15 +83,30 @@ const BotDetail: NextPage = () => {
 
   const [thread, setThread] = useState<ThreadItem[]>([])
 
-  const addNewMessage = (message: string, isYou = false) => {
-    setThread((prev) => [...prev, { message, isYou }])
+  const addNewMessage = (message: string, isYou = false, isError = false) => {
+    setThread((prev) => [...prev, { message, isYou, isError }])
   }
+
+  useEffect(() => {
+    if (!serverThread && apiToken) {
+      createNewThread({
+        title: 'Preview',
+        apiToken: apiToken,
+      })
+    }
+  }, [createNewThread, serverThread, apiToken])
 
   useEffect(() => {
     if (chatData) {
       addNewMessage(chatData.assistants?.[0]?.[0]?.msg ?? '', false)
     }
   }, [JSON.stringify(chatData)])
+
+  useEffect(() => {
+    if (chatError) {
+      addNewMessage(chatError.message, false, true)
+    }
+  }, [chatError])
 
   async function sendMessage(data: { message: string }) {
     const submittedMessage = data.message.trim()
@@ -88,8 +116,8 @@ const BotDetail: NextPage = () => {
     try {
       createChat({
         message: data.message,
-        apiToken: botIntegration?.[0]?.apiToken?.toString(),
-        threadId: 'PLEASE_REPLACE_WITH_THREAD_ID', // TODO: Please replace with actual thread ID
+        apiToken,
+        threadId: serverThread?.thread?.id ?? '',
       })
       addNewMessage(data.message, true)
       reset()
@@ -116,21 +144,24 @@ const BotDetail: NextPage = () => {
             </div>
           </div>
           <div className="absolute inset-x-0 top-20 bottom-20 overflow-y-auto p-4 space-y-4">
-            <ChatThread avatar="">Hello! how can I help you?</ChatThread>
+            {!initialThreadPending && serverThread?.chat?.msg ? (
+              <ChatThread avatar="">{serverThread?.chat?.msg}</ChatThread>
+            ) : null}
             {thread.map((item, index) => (
               <ChatThread
                 key={index}
                 avatar={item.isYou ? data?.user.image ?? '' : ''}
                 isRight={item.isYou}
+                isError={item.isError}
               >
                 {item.message}
               </ChatThread>
             ))}
-            {isPending && (
+            {isPending || initialThreadPending || !serverThread ? (
               <ChatThread avatar="">
                 <Spinner className="mx-2" />
               </ChatThread>
-            )}
+            ) : null}
           </div>
           <div className="absolute bottom-0 inset-x-0 border-t">
             <form onSubmit={handleSubmit(sendMessage)}>
@@ -149,7 +180,7 @@ const BotDetail: NextPage = () => {
                 type="submit"
                 label="Send"
                 className="absolute right-5 top-6"
-                disabled={isPending}
+                disabled={isPending || initialThreadPending}
               >
                 {isPending ? <Spinner /> : <PaperplaneSolid />}
               </IconButton>
