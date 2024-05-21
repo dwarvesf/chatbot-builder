@@ -89,6 +89,7 @@ const BotDetail: NextPage = () => {
       createChat({
         message: data.message,
         apiToken: botIntegration?.[0]?.apiToken?.toString(),
+        threadId: 'PLEASE_REPLACE_WITH_THREAD_ID', // TODO: Please replace with actual thread ID
       })
       addNewMessage(data.message, true)
       reset()

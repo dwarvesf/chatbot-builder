@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, sql, type InferSelectModel } from 'drizzle-orm'
+import { and, desc, eq, gte, sql } from 'drizzle-orm'
 import OpenAI from 'openai'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
@@ -9,6 +9,7 @@ import { ChatRoleEnum } from '~/model/chat'
 import { UsageLimitTypeEnum } from '~/model/usage-limit-type'
 import { db } from '~/server/db'
 import * as schema from '~/server/db/migration/schema'
+import { type Nullable } from '~/utils/types'
 import { createTRPCRouter, integrationProcedure } from '../trpc'
 
 const openai = new OpenAI({
@@ -56,30 +57,41 @@ function createChatHandler() {
   return integrationProcedure
     .input(
       z.object({
-        threadId: z.string().uuid().optional(),
+        threadId: z.string().uuid(),
         message: z.string(),
       }),
     )
     .mutation(async ({ ctx, input: msg }) => {
-      const bot = await db.query.bots.findFirst({
-        where: eq(schema.bots.id, ctx.session.botId),
-      })
+      const rows = await db
+        .select({
+          id: schema.bots.id,
+          modelId: schema.bots.modelId,
+          usageLimitPerUserType: schema.bots.usageLimitPerUserType,
+          usageLimitPerUser: schema.bots.usageLimitPerUser,
+        })
+        .from(schema.bots)
+        .where(eq(schema.bots.id, ctx.session.botId))
+      const bot = rows.length ? rows[0] : null
       if (!bot) {
         throw new Error('Bot not found')
       }
 
-      let threadId = msg.threadId
-      if (!threadId) {
-        // create new thread
-        const id = uuidv7()
-        await db.insert(schema.threads).values({
-          id,
-          botId: bot.id,
-          title: msg.message,
-        })
-        threadId = id
+      const thread = await db.query.threads.findFirst({
+        where: and(
+          eq(schema.threads.id, msg.threadId),
+          eq(schema.threads.botId, bot.id),
+        ),
+      })
+      if (!thread) {
+        throw new Error('Thread not found')
       }
-      const isUsageLimitValid = await isUserUasgeLimitValid(threadId, bot.id)
+
+      const threadId = msg.threadId
+      const isUsageLimitValid = await isUserUsageLimitValid(
+        threadId,
+        bot.usageLimitPerUserType,
+        bot.usageLimitPerUser,
+      )
       if (!isUsageLimitValid) {
         throw new Error('Usage limit exceeded')
       }
@@ -138,13 +150,13 @@ function createChatHandler() {
     })
 }
 
-async function askAI(bot: InferSelectModel<typeof schema.bots>, msg: string) {
+async function askAI(bot: { id: string; modelId: BotModelEnum }, msg: string) {
   if (!bot) {
     return
   }
 
   // Build prompt
-  const prompt = await buildPrompt(bot, msg)
+  const prompt = await buildPrompt(bot.id, msg)
   console.log('Prompt:', prompt)
 
   // Ask gpt
@@ -161,10 +173,7 @@ async function askAI(bot: InferSelectModel<typeof schema.bots>, msg: string) {
   return chatCompletion
 }
 
-async function buildPrompt(
-  bot: InferSelectModel<typeof schema.bots>,
-  msg: string,
-) {
+async function buildPrompt(botId: string, msg: string) {
   const msgVectors = await getEmbeddingsFromContents([msg])
   if (!msgVectors?.length) {
     throw new Error('Failed to get embeddings')
@@ -196,7 +205,7 @@ async function buildPrompt(
     )
     .where(
       and(
-        eq(schema.botSources.botId, bot.id),
+        eq(schema.botSources.botId, botId),
         eq(schema.botSources.visible, true),
       ),
     )
@@ -218,19 +227,17 @@ function getAIModel(modelID: BotModelEnum): string {
   }
 }
 
-async function isUserUasgeLimitValid(threadID: string, botID: string) {
-  const bot = await db.query.bots.findFirst({
-    where: eq(schema.bots.id, botID),
-  })
-  if (!bot) {
-    throw new Error('Bot not found')
-  }
-  if (!bot.usageLimitPerUser) {
+async function isUserUsageLimitValid(
+  threadID: string,
+  usageLimitPerUserType: Nullable<number>,
+  usageLimitPerUser: Nullable<number>,
+) {
+  if (!usageLimitPerUser) {
     return true
   }
 
   let sqlTimestamp = sql`'1 hour'`
-  switch (bot.usageLimitPerUserType) {
+  switch (usageLimitPerUserType) {
     case UsageLimitTypeEnum.PerOneHour:
       sqlTimestamp = sql`'1 hour'`
       break
@@ -268,7 +275,7 @@ async function isUserUasgeLimitValid(threadID: string, botID: string) {
   if (!userUsage || userUsage.length === 0) {
     throw new Error('Failed to get user usage')
   }
-  if (Number(userUsage[0]?.count) >= bot.usageLimitPerUser) {
+  if (Number(userUsage[0]?.count) >= usageLimitPerUser) {
     return false
   }
   return true
