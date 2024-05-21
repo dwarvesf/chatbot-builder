@@ -35,12 +35,12 @@ export function FileDocSource() {
     }
   }, [isSuccess, isError, error])
 
-  const onUploadSuccess = async (url: string) => {
+  const onUploadSuccess = async (url: string, name?: string) => {
     if (!url) {
       return
     }
 
-    createSource({ botId, url, typeId: BotSourceTypeEnum.File })
+    createSource({ botId, url, name, typeId: BotSourceTypeEnum.File })
   }
 
   return (

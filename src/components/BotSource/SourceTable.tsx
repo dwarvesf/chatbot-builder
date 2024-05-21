@@ -82,8 +82,7 @@ export const SourceTable = () => {
               header: 'Url',
               width: 400,
               cell: (props) => {
-                const { url, typeId, ...rest } = props.row.original
-                console.log({ rest })
+                const { url, typeId, name, ...rest } = props.row.original
                 if (typeId === BotSourceTypeEnum.Link && url) {
                   return (
                     <Button
@@ -103,7 +102,7 @@ export const SourceTable = () => {
                     level="inherit"
                     className="truncate max-w-[300px]"
                   >
-                    {typeId === BotSourceTypeEnum.File ? url : url}
+                    {typeId === BotSourceTypeEnum.File ? name : url}
                   </Typography>
                 )
               },
@@ -147,8 +146,9 @@ export const SourceTable = () => {
               accessorKey: '',
               header: 'Visibility',
               width: 200,
-              cell: () => {
-                return <Switch />
+              cell: (props) => {
+                const { visible } = props.row.original
+                return <Switch checked={visible ?? false} />
               },
             },
             {
