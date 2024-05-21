@@ -87,6 +87,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
   const botQuery = api.bot.getById.useQuery(botId, {
     enabled: isBotPath,
   })
+  const profile = api.user.getUser.useQuery()
 
   const navItems = useMemo(
     () => [
@@ -94,10 +95,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button>
-            <Avatar
-              className="w-8 h-8"
-              src={session?.data?.user?.image ?? ''}
-            />
+            <Avatar className="w-8 h-8" src={profile?.data?.image ?? ''} />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuPortal>
@@ -112,7 +110,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
           >
             <div className="px-3 py-1">
               <Typography className="text-sm" component="b">
-                {session?.data?.user.name}
+                {profile?.data?.firstName + ' ' + profile?.data?.lastName ?? ''}
               </Typography>
               <Typography className="text-sm">
                 {session?.data?.user.email}
@@ -140,7 +138,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
         </DropdownMenuPortal>
       </DropdownMenu>,
     ],
-    [session],
+    [session, profile],
   )
 
   return (
