@@ -13,7 +13,7 @@ interface Props {
   onSuccess: (url: string, name?: string) => void | Promise<void>
 }
 
-const UploadFileModal = (props: Props) => {
+const SourceFileUploader = (props: Props) => {
   const { onSuccess } = props
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -153,4 +153,4 @@ const UploadFileModal = (props: Props) => {
   )
 }
 
-export default UploadFileModal
+export default SourceFileUploader
