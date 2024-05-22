@@ -63,7 +63,7 @@ export const ProfilePage = () => {
     if (sources && !isInitialData.current) {
       isInitialData.current = true
       reset({
-        firstName: sources.firstName!,
+        firstName: sources.name!,
         lastName: sources.lastName!,
         image: sources.image!,
       })

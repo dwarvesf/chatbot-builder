@@ -54,7 +54,6 @@ export const users = createTable('user', {
     () => subscriptionPlans.id,
   ),
   name: text('name'),
-  firstName: text('first_name'),
   lastName: text('last_name'),
   email: text('email').notNull(),
   emailVerified: timestamp('emailVerified'),

@@ -18,7 +18,9 @@ export const userRouter = createTRPCRouter({
       const user = await db
         .update(schema.users)
         .set({
-          ...input,
+          name: input.firstName,
+          lastName: input.lastName,
+          image: input.image,
           updatedAt: new Date(),
           updatedBy: ctx.session.user.id,
         })

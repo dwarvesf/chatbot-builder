@@ -15,7 +15,10 @@ export const ProfileAvatar = () => {
         <FormControl error={!!fieldState.error} hideHelperTextOnError>
           <FormLabel>Avatar</FormLabel>
           <AvatarUploader
-            avatar={avatar}
+            description="Support svg, png. max 5MB"
+            maxSize={5}
+            fileTypes={['jpeg', 'jpg', 'png']}
+            image={avatar}
             onSuccess={(blob) => {
               setValue('image', blob.url, {
                 shouldValidate: true,

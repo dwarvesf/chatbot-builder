@@ -25,7 +25,7 @@ import {
   PlugSolid,
   UserSolid,
 } from '@mochi-ui/icons'
-import { signOut, useSession } from 'next-auth/react'
+import { signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import React, { useMemo } from 'react'
@@ -79,7 +79,6 @@ const headerBotItems = (botId: string) =>
   ] as SidebarProps['headerItems']
 
 export const AuthLayout = ({ children }: AuthLayoutProps) => {
-  const session = useSession()
   const { pathname, query, asPath } = useRouter()
   const { id } = query
   const isBotPath = pathname.startsWith('/bots/[id]')
@@ -95,6 +94,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button>
+            {/* session?.data?.user.email */}
             <Avatar className="w-8 h-8" src={profile?.data?.image ?? ''} />
           </button>
         </DropdownMenuTrigger>
@@ -110,10 +110,10 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
           >
             <div className="px-3 py-1">
               <Typography className="text-sm" component="b">
-                {profile?.data?.firstName + ' ' + profile?.data?.lastName ?? ''}
+                {profile?.data?.name + ' ' + (profile?.data?.lastName ?? '')}
               </Typography>
               <Typography className="text-sm">
-                {session?.data?.user.email}
+                {profile?.data?.email}
               </Typography>
             </div>
             <DropdownMenuSeparator />
@@ -138,7 +138,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
         </DropdownMenuPortal>
       </DropdownMenu>,
     ],
-    [session, profile],
+    [profile],
   )
 
   return (
