@@ -39,6 +39,7 @@ export const SourceTable = () => {
     refetch: refreshSources,
   } = api.botSource.getByBotId.useQuery({
     botId: id as string,
+    limit: 100,
   })
   const {
     onOpenChange: onDeleteOpenChange,
@@ -82,8 +83,12 @@ export const SourceTable = () => {
               header: 'Url',
               width: 400,
               cell: (props) => {
-                const { url, typeId, name, ...rest } = props.row.original
-                if (typeId === BotSourceTypeEnum.Link && url) {
+                const { url, typeId, name } = props.row.original
+                if (
+                  (typeId === BotSourceTypeEnum.Link ||
+                    typeId === BotSourceTypeEnum.Sitemap) &&
+                  url
+                ) {
                   return (
                     <Button
                       variant="link"
@@ -102,7 +107,7 @@ export const SourceTable = () => {
                     level="inherit"
                     className="truncate max-w-[300px]"
                   >
-                    {typeId === BotSourceTypeEnum.File ? name : url}
+                    {name ?? url}
                   </Typography>
                 )
               },
