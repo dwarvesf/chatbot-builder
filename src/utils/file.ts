@@ -1,3 +1,5 @@
+import pdf2md from '@opendocsg/pdf2md'
+
 export function getFileExtension(fileName?: string): string {
   if (!fileName) {
     return ''
@@ -18,5 +20,24 @@ export function formatFileSize(sizeInBytes: number): string {
     return `${(sizeInBytes / (1024 * 1024)).toFixed(2)} MB`
   } else {
     return `${(sizeInBytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
+  }
+}
+
+export async function pdfToMd(pdfPath: string): Promise<string> {
+  try {
+    const response = await fetch(pdfPath)
+
+    if (!response.ok) {
+      throw new Error(`Error fetching PDF: ${response.statusText}`)
+    }
+
+    // Convert response to ArrayBuffer
+    const pdfBuffer = await response.arrayBuffer()
+
+    // convert pdf to markdown
+    const text = await pdf2md(pdfBuffer)
+    return text
+  } catch (e) {
+    return ''
   }
 }
