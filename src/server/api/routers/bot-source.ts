@@ -222,6 +222,7 @@ function createBotSourceHandler() {
         botId: z.string(),
         typeId: z.nativeEnum(BotSourceTypeEnum),
         url: z.string(),
+        name: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {

@@ -10,7 +10,7 @@ import { api } from '~/utils/api'
 import { formatFileSize, getFileExtension } from '~/utils/file'
 
 interface Props {
-  onSuccess: (url: string) => void | Promise<void>
+  onSuccess: (url: string, name?: string) => void | Promise<void>
 }
 
 const UploadFileModal = (props: Props) => {
@@ -66,7 +66,7 @@ const UploadFileModal = (props: Props) => {
         handleUploadUrl: '/api/upload-file',
       })
 
-      await onSuccess(blod.url)
+      await onSuccess(blod.url, selectedFile.name)
 
       toast({
         description: 'Uploaded file successfully',

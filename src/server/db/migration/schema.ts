@@ -221,6 +221,7 @@ export const botSources = createTable(
     typeId: integer('type_id').notNull(),
     statusId: integer('status_id').notNull(),
     url: text('url'),
+    name: text('name'),
     extractedTokenLength: integer('extracted_token_length'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
