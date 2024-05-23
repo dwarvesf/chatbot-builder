@@ -274,6 +274,8 @@ export const botSourceExtractedData = createTable(
       .notNull()
       .references(() => botSources.id),
     data: jsonb('data'), // TODO: store this in NoSQL
+    markdown: text('markdown'),
+    metadata: jsonb('metadata'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
   },

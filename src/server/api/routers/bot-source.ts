@@ -7,7 +7,7 @@ import { uniq } from 'lodash'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
 import recursiveChunkingData from '~/components/chunking'
-import crawURL from '~/components/crawler'
+import { crawlURLV2 } from '~/components/crawler'
 import { embeddingDocuments } from '~/components/embedding'
 import { env } from '~/env'
 import { BotSourceStatusEnum } from '~/model/bot-source-status'
@@ -676,17 +676,19 @@ async function syncBotSourceURL(
 
     // Crawl the bot source
     console.log('Crawling bot source URL... ', bs.url)
-    const contents = await crawBotSourceUrl(bs.url)
+    const data = await crawBotSourceUrl(bs.url)
 
     const bsDataId = uuidv7()
     await db.insert(schema.botSourceExtractedData).values({
       id: bsDataId,
       botSourceId: bsId,
-      data: JSON.stringify(contents),
+      data: data.content,
+      markdown: data.markdown,
+      metadata: data.metadata,
     })
 
     // Data chunking
-    const chunking = await recursiveChunkingData(contents.join('\n'))
+    const chunking = await recursiveChunkingData(data.markdown)
 
     // Update status to embedding
     console.log('Embedding bot source URL... ', bs.url)
@@ -728,7 +730,7 @@ async function crawBotSourceUrl(url: string | null) {
   if (!url) {
     throw new Error('URL is required')
   }
-  return await crawURL(url)
+  return await crawlURLV2(url)
 }
 
 async function saveEmbeddings(

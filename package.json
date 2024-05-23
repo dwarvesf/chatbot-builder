@@ -16,6 +16,7 @@
     "@dwarvesf/react-hooks": "^0.8.2",
     "@dwarvesf/react-utils": "^0.4.2",
     "@hookform/resolvers": "^3.3.4",
+    "@mendable/firecrawl-js": "^0.0.21",
     "@mochi-ui/core": "^0.14.3",
     "@mochi-ui/icons": "^0.8.1",
     "@mochi-ui/theme": "^0.20.1",
