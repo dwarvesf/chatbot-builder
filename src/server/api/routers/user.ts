@@ -11,14 +11,16 @@ export const userRouter = createTRPCRouter({
       z.object({
         firstName: z.string().min(1).max(50),
         lastName: z.string().min(1).max(50),
+        image: z.string(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
       const user = await db
         .update(schema.users)
         .set({
-          firstName: input.firstName,
+          name: input.firstName,
           lastName: input.lastName,
+          image: input.image,
           updatedAt: new Date(),
           updatedBy: ctx.session.user.id,
         })
