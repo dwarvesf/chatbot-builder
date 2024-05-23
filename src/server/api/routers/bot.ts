@@ -1,7 +1,6 @@
 import { and, eq } from 'drizzle-orm'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
-import { WidgetName } from '~/components/BotAppearance/WidgetName'
 import { BotStatusEnum } from '~/model/bot'
 import { BotModelEnum } from '~/model/bot-model'
 import { UsageLimitTypeEnum } from '~/model/usage-limit-type'
@@ -137,6 +136,7 @@ export const botRouter = createTRPCRouter({
         widgetSubheading: z.string(),
         widgetPlaceholder: z.string(),
         widgetWelcomeMsg: z.string(),
+        accentColour: z.string(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -147,6 +147,7 @@ export const botRouter = createTRPCRouter({
           widgetSubheading: input.widgetSubheading,
           widgetPlaceholder: input.widgetPlaceholder,
           widgetWelcomeMsg: input.widgetWelcomeMsg,
+          accentColour: input.accentColour,
           updatedAt: new Date(),
           updatedBy: ctx.session.user.id,
         })
