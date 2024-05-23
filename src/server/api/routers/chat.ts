@@ -58,7 +58,7 @@ function createChatHandler() {
     .input(
       z.object({
         threadId: z.string().uuid(),
-        message: z.string(),
+        message: z.string().max(500),
       }),
     )
     .mutation(async ({ ctx, input: msg }) => {
