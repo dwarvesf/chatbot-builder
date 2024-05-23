@@ -15,7 +15,7 @@ export const ProfileAvatar = () => {
         <FormControl error={!!fieldState.error} hideHelperTextOnError>
           <FormLabel>Avatar</FormLabel>
           <AvatarUploader
-            description="Support svg, png. max 5MB"
+            description="Support jpeg, jpg, png format. Max 5MB"
             maxSize={5}
             fileTypes={['jpeg', 'jpg', 'png']}
             image={avatar}
