@@ -376,8 +376,6 @@ async function syncBotSource(bsId: string) {
       return syncBotSourceURL(bs)
     case BotSourceTypeEnum.Sitemap:
       return syncBotSourceSitemap(bs)
-    case BotSourceTypeEnum.SitemapFileChild:
-      return syncBotSourceSitemap(bs)
     case BotSourceTypeEnum.SitemapChildUrl:
       return syncBotSourceURL(bs)
     case BotSourceTypeEnum.SitemapFile:

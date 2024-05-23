@@ -5,5 +5,4 @@ export enum BotSourceTypeEnum {
   File = 4,
   SitemapChildUrl = 5,
   SitemapFile = 6,
-  SitemapFileChild = 7,
 }
