@@ -137,8 +137,7 @@ function getByBotIdHandler() {
             BotSourceTypeEnum.Sitemap,
             BotSourceTypeEnum.File,
             BotSourceTypeEnum.SitemapFile,
-          ])
-          .optional(),
+          ]),
         parentBotSourceID: z.string().uuid().optional(),
         limit: z.number().max(100).default(10),
         offset: z.number().default(0),
