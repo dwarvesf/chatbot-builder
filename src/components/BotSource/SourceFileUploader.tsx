@@ -23,6 +23,7 @@ const SourceFileUploader = (props: Props) => {
 
   const { refetch: refreshSourceTable } = api.botSource.getByBotId.useQuery({
     botId,
+    limit: 100,
   })
 
   const onDrop = useCallback(
@@ -40,6 +41,15 @@ const SourceFileUploader = (props: Props) => {
         })
         return
       }
+
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          description: 'File size exceeds 10MB limit',
+          scheme: 'danger',
+        })
+        return
+      }
+
       setSelectedFile(file)
     },
     [toast],
@@ -134,7 +144,7 @@ const SourceFileUploader = (props: Props) => {
                 : 'Click to upload or drag and drop your file here'}
             </Typography>
             <Typography color="textTertiary" level="p5">
-              Up to 50MB. Support PDF, TXT, DOCS
+              Up to 10MB. Support PDF, TXT, DOCS
             </Typography>
           </>
         </div>
