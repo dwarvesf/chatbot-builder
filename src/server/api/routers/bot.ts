@@ -131,6 +131,8 @@ export const botRouter = createTRPCRouter({
   updateBotApearance: protectedProcedure
     .input(
       z.object({
+        companyLogoAttachmentId: z.string(),
+        botAvatarAttachmentId: z.string(),
         botId: z.string(),
         widgetName: z.string().min(1).max(50),
         widgetSubheading: z.string(),
@@ -143,6 +145,8 @@ export const botRouter = createTRPCRouter({
       const bot = await db
         .update(schema.bots)
         .set({
+          companyLogoAttachmentId: input.companyLogoAttachmentId,
+          botAvatarAttachmentId: input.botAvatarAttachmentId,
           widgetName: input.widgetName,
           widgetSubheading: input.widgetSubheading,
           widgetPlaceholder: input.widgetPlaceholder,

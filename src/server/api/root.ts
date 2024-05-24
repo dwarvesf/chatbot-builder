@@ -1,6 +1,7 @@
 import { postRouter } from '~/server/api/routers/post'
 import { createCallerFactory, createTRPCRouter } from '~/server/api/trpc'
 import { botAIModelRouter } from './routers/ai-model'
+import { attachmentRouter } from './routers/attachment'
 import { botRouter } from './routers/bot'
 import { botIntegrationRouter } from './routers/bot-integration'
 import { botSourceRouter } from './routers/bot-source'
@@ -24,6 +25,7 @@ export const appRouter = createTRPCRouter({
   chatRouter: chatRouter,
   post: postRouter,
   thread: threadRouter,
+  attachments: attachmentRouter,
 })
 
 // export type definition of API
