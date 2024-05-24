@@ -95,6 +95,7 @@ const SourceParentList = ({
     botId,
     limit: 100,
     parentBotSourceID: sourceId,
+    typeIDs: [BotSourceTypeEnum.SitemapChildUrl],
   })
 
   const bsData = data?.botSources ?? []

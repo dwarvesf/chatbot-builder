@@ -361,7 +361,7 @@ async function syncBotSourceSitemapFile(
     // Fetch file content
     const res = await fetch(fileURL)
     const content = await res.text()
-    const siteMapUrls = content.split('\n')
+    const siteMapUrls = content.split('\n').filter((url) => url.trim() !== '')
 
     // Create child bot sources
     const asyncCount = Number(env.ASYNC_EMBEDDING_COUNT) || 1
@@ -430,7 +430,12 @@ async function syncBotSourceSitemap(
         createdBy: bs.createdBy,
       })
 
-      await syncBotSource(childBotSourceId)
+      try {
+        await syncBotSource(childBotSourceId)
+      } catch (error) {
+        console.error('Error while crawling child bot source ', error)
+      }
+
       return childBotSourceId
     })
     console.log('All urls are crawled and embedded')
