@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 
 import {
+  Button,
   Card,
   Drawer,
   DrawerContent,
@@ -10,8 +11,8 @@ import {
   Separator,
   Typography,
 } from '@mochi-ui/core'
-import { ArrowLeftLine, SpinnerLine } from '@mochi-ui/icons'
-import { useState } from 'react'
+import { ArrowLeftLine, ArrowRightLine, SpinnerLine } from '@mochi-ui/icons'
+import { useEffect, useState } from 'react'
 import { BotSourceTypeEnum } from '~/model/bot-source-type'
 import { api, type RouterOutputs } from '~/utils/api'
 
@@ -32,11 +33,11 @@ export const SourceDetailDrawer = (props: SourceDetailDrawerProps) => {
     !isSitemap && id ? id : null,
   )
 
-  if (
-    typeId === BotSourceTypeEnum.Sitemap ||
-    typeId === BotSourceTypeEnum.SitemapFile
-  ) {
-  }
+  useEffect(() => {
+    if (id) {
+      setChunkListId(!isSitemap && id ? id : null)
+    }
+  }, [id, isSitemap])
 
   return (
     <Drawer anchor="right" onOpenChange={onOpenChange} open={isOpen}>
@@ -46,13 +47,14 @@ export const SourceDetailDrawer = (props: SourceDetailDrawerProps) => {
           <div className="flex space-x-2 items-center">
             {chunkListId && isSitemap ? (
               <IconButton
-                size="sm"
+                size="lg"
                 label="back"
                 onClick={() => setChunkListId(null)}
                 variant="link"
                 color="neutral"
+                className="flex-none"
               >
-                <ArrowLeftLine />
+                <ArrowLeftLine className="text-xl" />
               </IconButton>
             ) : null}
             <Typography level="h6" className="truncate max-w-[300px]">
@@ -61,12 +63,13 @@ export const SourceDetailDrawer = (props: SourceDetailDrawerProps) => {
           </div>
 
           <Separator className="my-3" />
-          <div className="absolute inset-0 px-6 py-4 bottom-0 top-[66px] overflow-y-auto">
+
+          <div className="absolute inset-0 px-6 py-4 bottom-0 top-[66px] overflow-y-auto space-y-3">
             {!chunkListId && id && botId ? (
               <SourceParentList
                 botId={botId}
                 sourceId={id}
-                onItemClick={setChunkListId}
+                onViewDetail={setChunkListId}
               />
             ) : null}
             {chunkListId ? <SourceChunkList sourceId={chunkListId} /> : null}
@@ -80,10 +83,14 @@ export const SourceDetailDrawer = (props: SourceDetailDrawerProps) => {
 interface SourceParentListProps {
   sourceId: string
   botId: string
-  onItemClick: (id: string) => void
+  onViewDetail: (id: string) => void
 }
 
-const SourceParentList = ({ sourceId, botId }: SourceParentListProps) => {
+const SourceParentList = ({
+  sourceId,
+  botId,
+  onViewDetail,
+}: SourceParentListProps) => {
   const { data, isPending } = api.botSource.getByBotId.useQuery({
     botId,
     limit: 100,
@@ -101,10 +108,29 @@ const SourceParentList = ({ sourceId, botId }: SourceParentListProps) => {
       ) : (
         bsData.map((item) => (
           <Card
-            className="bg-background-level1 overflow-auto max-h-[400px]"
+            className="!bg-background-level1 overflow-auto flex items-center justify-between"
             key={item.id}
           >
-            {item?.url}
+            <Button variant="link" className="!p-0" asChild>
+              <a
+                href={item?.url ?? ''}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span className="truncate max-w-[270px]">{item?.url}</span>
+              </a>
+            </Button>
+            <IconButton
+              variant="outline"
+              color="neutral"
+              label="view detail"
+              onClick={(e) => {
+                e.stopPropagation()
+                onViewDetail(item.id)
+              }}
+            >
+              <ArrowRightLine />
+            </IconButton>
           </Card>
         ))
       )}
@@ -129,7 +155,7 @@ const SourceChunkList = ({ sourceId }: { sourceId: string }) => {
       ) : (
         bsData.map((item) => (
           <Card
-            className="bg-background-level1 overflow-auto max-h-[400px]"
+            className="!bg-background-level1 overflow-auto max-h-[400px]"
             key={item.id}
           >
             {item?.data as string}
