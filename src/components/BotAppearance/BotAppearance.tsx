@@ -45,12 +45,12 @@ export const BotAppearancePage = () => {
   const { toast } = useToast()
   const [isFetchingData, setIsFetchingData] = useState<boolean>(false)
   const {
-    mutate: updateBotApearance,
+    mutate: updateBotAppearance,
     error,
     isSuccess,
     isError,
     isPending,
-  } = api.bot.updateBotApearance.useMutation()
+  } = api.bot.updateBotAppearance.useMutation()
 
   const { data: sources, refetch: refetchBotAppearance } =
     api.bot.getById.useQuery(id as string)
@@ -134,7 +134,7 @@ export const BotAppearancePage = () => {
 
     console.log(payload)
     try {
-      updateBotApearance(payload)
+      updateBotAppearance(payload)
     } catch (error: any) {
       toast({
         description: error?.message ?? '',

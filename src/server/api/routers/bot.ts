@@ -128,7 +128,7 @@ export const botRouter = createTRPCRouter({
       return bot
     }),
 
-  updateBotApearance: protectedProcedure
+  updateBotAppearance: protectedProcedure
     .input(
       z.object({
         companyLogoAttachmentId: z.string(),
