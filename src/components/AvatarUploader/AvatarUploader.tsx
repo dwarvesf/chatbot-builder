@@ -4,14 +4,14 @@ import { SpinnerLine } from '@mochi-ui/icons'
 import { BlobAccessError, type PutBlobResult } from '@vercel/blob'
 import { upload } from '@vercel/blob/client'
 import clsx from 'clsx'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 
 interface AvatarUploaderProps {
   onSuccess: (blob: PutBlobResult) => void
   fileTypes: string[]
-  maxSize: number
+  maxSizeInMB: number
   description: string
-  image: string
+  image?: string
 }
 
 export const AvatarUploader = (props: AvatarUploaderProps) => {
@@ -19,13 +19,17 @@ export const AvatarUploader = (props: AvatarUploaderProps) => {
     onSuccess,
     image: avatarProp,
     fileTypes,
-    maxSize,
+    maxSizeInMB,
     description,
   } = props
   const { toast } = useToast()
-  const [avatar, setAvatar] = useState(avatarProp)
+  const [avatar, setAvatar] = useState(
+    avatarProp ??
+      'https://source.boringavatars.com/beam/120/?colors=665c52,74b3a7,a3ccaf,E6E1CF,CC5B14',
+  )
   const [isLoading, setIsLoading] = useState(false)
   const inputFileRef = useRef<HTMLInputElement>(null)
+  const id = useId()
 
   useEffect(() => {
     if (avatarProp) {
@@ -44,9 +48,9 @@ export const AvatarUploader = (props: AvatarUploaderProps) => {
     const newAvatar = URL.createObjectURL(file)
 
     if (file) {
-      if (file.size > 1024 * 1024 * maxSize) {
+      if (file.size > 1024 * 1024 * maxSizeInMB) {
         toast({
-          description: 'File size must be less than or equals to 5MB',
+          description: `File size must be less than or equals to ${maxSizeInMB}MB`,
           scheme: 'danger',
         })
         return
@@ -91,7 +95,7 @@ export const AvatarUploader = (props: AvatarUploaderProps) => {
   return (
     <div className="bg-background-surface border border-neutral-outline-border rounded-xl">
       <label
-        htmlFor="upload"
+        htmlFor={id}
         className="flex w-full h-full py-2 px-3 cursor-pointer gap-4 items-center"
       >
         <div className="relative p-0 text-[0px]">
@@ -110,7 +114,7 @@ export const AvatarUploader = (props: AvatarUploaderProps) => {
           {description}
         </Typography>
         <input
-          id="upload"
+          id={id}
           className="hidden"
           ref={inputFileRef}
           type="file"
