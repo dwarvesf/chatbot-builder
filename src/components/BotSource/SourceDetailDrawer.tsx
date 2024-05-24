@@ -24,7 +24,7 @@ interface SourceDetailDrawerProps {
 
 export const SourceDetailDrawer = (props: SourceDetailDrawerProps) => {
   const { onOpenChange, isOpen, source } = props
-  const { url: name, id, typeId, botId } = source ?? {}
+  const { url: url, name, id, typeId, botId } = source ?? {}
   const isSitemap =
     typeId === BotSourceTypeEnum.Sitemap ||
     typeId === BotSourceTypeEnum.SitemapFile
@@ -58,7 +58,7 @@ export const SourceDetailDrawer = (props: SourceDetailDrawerProps) => {
               </IconButton>
             ) : null}
             <Typography level="h6" className="truncate max-w-[300px]">
-              {name}
+              {name || url}
             </Typography>
           </div>
 
