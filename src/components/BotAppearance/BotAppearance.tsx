@@ -8,12 +8,16 @@ import { FormProvider, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { api } from '~/utils/api'
 import { SaveBar } from '../SaveBar'
+import { BotAvatarWidget } from './BotAvatarWidget'
+import { BotCompanyLogo } from './BotCompanyLogo'
 import { ColorPicker } from './ColorPicker'
 import { WidgetMessage } from './WidgetMessage'
 import { WidgetName } from './WidgetName'
 
 export interface BotAppearance {
   botId: string
+  companyLogoAttachmentId: string
+  botAvatarAttachmentId: string
   widgetName: string
   widgetSubheading: string
   widgetPlaceholder: string
@@ -23,6 +27,8 @@ export interface BotAppearance {
 
 const schema = z.object({
   botId: z.string(),
+  companyLogoAttachmentId: z.string(),
+  botAvatarAttachmentId: z.string(),
   widgetName: z
     .string()
     .min(1, 'Required')
@@ -30,7 +36,7 @@ const schema = z.object({
   widgetSubheading: z.string().max(50, 'Max length is 50 characters.'),
   widgetPlaceholder: z.string().max(100, 'Max length is 100 characters.'),
   widgetWelcomeMsg: z.string().max(100, 'Max length is 100 characters.'),
-  accentColour: z.string().max(7, 'Required').default('#ffffff'),
+  accentColour: z.string().max(7, 'Required'),
 })
 
 export const BotAppearancePage = () => {
@@ -61,6 +67,8 @@ export const BotAppearancePage = () => {
   } = form
 
   const color = watch('accentColour')
+  const companyLogoAttachmentId = watch('companyLogoAttachmentId')
+  const botAvatarAttachmentId = watch('botAvatarAttachmentId')
 
   const resetData = useCallback(
     (data?: BotAppearance) => {
@@ -83,6 +91,8 @@ export const BotAppearancePage = () => {
 
       reset({
         botId: id as string,
+        companyLogoAttachmentId: sources.companyLogoAttachmentId!,
+        botAvatarAttachmentId: sources.botAvatarAttachmentId!,
         widgetName: sources.widgetName!,
         widgetSubheading: sources.widgetSubheading!,
         widgetPlaceholder: sources.widgetPlaceholder!,
@@ -113,6 +123,8 @@ export const BotAppearancePage = () => {
   const onSubmit = (props: BotAppearance) => {
     const payload: BotAppearance = {
       botId: id as string,
+      companyLogoAttachmentId: props.companyLogoAttachmentId,
+      botAvatarAttachmentId: props.botAvatarAttachmentId,
       widgetName: props.widgetName,
       widgetSubheading: props.widgetSubheading,
       widgetPlaceholder: props.widgetPlaceholder,
@@ -140,6 +152,10 @@ export const BotAppearancePage = () => {
           <div className="min-h-screen max-w-[600px] space-y-8">
             <div className="max-w-[400px] space-y-8">
               <WidgetName />
+              <BotCompanyLogo
+                companyLogoAttachmentId={companyLogoAttachmentId}
+              />
+              <BotAvatarWidget botAvatarAttachmentId={botAvatarAttachmentId} />
               <ColorPicker defaultColor={color} />
             </div>
 
