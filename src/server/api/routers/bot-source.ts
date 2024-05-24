@@ -1,18 +1,19 @@
 /* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
 import * as asyncLib from 'async'
-import { and, eq, inArray, or, sql, type InferSelectModel } from 'drizzle-orm'
+import { and, eq, inArray, sql, type InferSelectModel } from 'drizzle-orm'
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import { XMLParser } from 'fast-xml-parser'
 import { uniq } from 'lodash'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
-import crawURL from '~/components/crawler'
-import getEmbeddingsFromContents from '~/components/embedding'
 import { env } from '~/env'
 import { BotSourceStatusEnum } from '~/model/bot-source-status'
 import { BotSourceTypeEnum } from '~/model/bot-source-type'
 import { db } from '~/server/db'
 import * as schema from '~/server/db/migration/schema'
+import scrapeURL from '~/server/gateway/firecrawl'
+import getEmbeddingsFromContents from '~/server/gateway/openai/embedding'
+import { chunkMarkdown } from '~/server/lib/chunking/markdown'
 import { createTRPCRouter, protectedProcedure } from '../trpc'
 
 export const botSourceRouter = createTRPCRouter({
@@ -38,54 +39,14 @@ function deleteByIdHandler() {
       }),
     )
     .mutation(async ({ input }) => {
-      const childSources = await db
-        .select({ id: schema.botSources.id })
-        .from(schema.botSources)
-        .where(eq(schema.botSources.parentId, input.botSourceId))
-      const childSourceIDs = childSources.map((r) => r.id)
-
-      // Delete extracted data vector
-      await db.delete(schema.botSourceExtractedDataVector).where(
-        inArray(
-          schema.botSourceExtractedDataVector.botSourceExtractedDataId,
-          db
-            .select({
-              id: schema.botSourceExtractedData.id,
-            })
-            .from(schema.botSourceExtractedData)
-            .where(
-              or(
-                eq(
-                  schema.botSourceExtractedData.botSourceId,
-                  input.botSourceId,
-                ),
-                inArray(
-                  schema.botSourceExtractedData.botSourceId,
-                  childSourceIDs,
-                ),
-              ),
-            ),
-        ),
-      )
-
-      // Delete extracted data
-      await db
-        .delete(schema.botSourceExtractedData)
-        .where(
-          or(
-            eq(schema.botSourceExtractedData.botSourceId, input.botSourceId),
-            inArray(schema.botSourceExtractedData.botSourceId, childSourceIDs),
-          ),
-        )
-
-      // Delete source
-      await db
-        .delete(schema.botSources)
-        .where(inArray(schema.botSources.id, childSourceIDs))
-
-      await db
-        .delete(schema.botSources)
-        .where(eq(schema.botSources.id, input.botSourceId))
+      await db.transaction(async (trx) => {
+        console.log('Deleting bot source... ', input.botSourceId)
+        await cleanBotSourceData(input.botSourceId, trx)
+        console.log('Bot source data cleaned... ', input.botSourceId)
+        await trx
+          .delete(schema.botSources)
+          .where(eq(schema.botSources.id, input.botSourceId))
+      })
     })
 }
 
@@ -216,7 +177,7 @@ function syncBotSourceHandler() {
         throw new Error('Bot source not found')
       }
 
-      await cleanOldBotSourceData(bsId)
+      await cleanBotSourceData(bsId)
       await syncBotSource(bsId)
       return null
     })
@@ -294,10 +255,10 @@ function createLinkBotSourceBulkHandler() {
     })
 }
 
-async function cleanOldBotSourceData(bsId: string) {
-  console.log('Cleaning old bot source data...')
+async function cleanBotSourceData(bsId: string, repo = db) {
+  console.log('Cleaning old source data...')
   // Find child bot sources
-  const rows = await db
+  const rows = await repo
     .select({
       id: schema.botSources.id,
     })
@@ -309,7 +270,7 @@ async function cleanOldBotSourceData(bsId: string) {
 
   // Add F2 children to the list
   if (childSourceIDs.length > 0) {
-    const f2ChildSourceRows = await db
+    const f2ChildSourceRows = await repo
       .select({
         id: schema.botSources.id,
       })
@@ -320,43 +281,43 @@ async function cleanOldBotSourceData(bsId: string) {
   }
 
   // Delete extracted data vector
-  if (childSourceIDs.length > 0) {
-    const extractedDataIDs = await db
-      .select({
-        id: schema.botSourceExtractedData.id,
-      })
-      .from(schema.botSourceExtractedData)
-      .where(
-        inArray(schema.botSourceExtractedData.botSourceId, [
-          ...childSourceIDs,
-          bsId,
-        ]),
-      )
-    await db.delete(schema.botSourceExtractedDataVector).where(
-      inArray(
-        schema.botSourceExtractedDataVector.botSourceExtractedDataId,
-        extractedDataIDs.map((r) => r.id),
-      ),
+  const extractedDataIDs = await repo
+    .select({
+      id: schema.botSourceExtractedData.id,
+    })
+    .from(schema.botSourceExtractedData)
+    .where(
+      inArray(schema.botSourceExtractedData.botSourceId, [
+        ...childSourceIDs,
+        bsId,
+      ]),
+    )
+  await repo.delete(schema.botSourceExtractedDataVector).where(
+    inArray(
+      schema.botSourceExtractedDataVector.botSourceExtractedDataId,
+      extractedDataIDs.map((r) => r.id),
+    ),
+  )
+
+  // Delete extracted data
+  await repo
+    .delete(schema.botSourceExtractedData)
+    .where(
+      inArray(schema.botSourceExtractedData.botSourceId, [
+        ...childSourceIDs,
+        bsId,
+      ]),
     )
 
-    // Delete extracted data
-    await db
-      .delete(schema.botSourceExtractedData)
-      .where(
-        inArray(schema.botSourceExtractedData.botSourceId, [
-          ...childSourceIDs,
-          bsId,
-        ]),
-      )
-
+  if (childSourceIDs.length > 0) {
     // Delete child bot sources
-    await db
+    await repo
       .delete(schema.botSources)
       .where(inArray(schema.botSources.id, childSourceIDs))
   }
 
   // Reset status
-  await db
+  await repo
     .update(schema.botSources)
     .set({ statusId: BotSourceStatusEnum.Created })
     .where(eq(schema.botSources.id, bsId))
@@ -723,7 +684,10 @@ async function crawBotSourceUrl(url: string | null) {
   if (!url) {
     throw new Error('URL is required')
   }
-  return await crawURL(url)
+
+  const res = await scrapeURL(url)
+  const chunks = await chunkMarkdown(res.data.markdown)
+  return chunks
 }
 
 async function saveEmbeddings(

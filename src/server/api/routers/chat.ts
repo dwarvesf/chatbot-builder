@@ -2,13 +2,13 @@ import { and, desc, eq, gte, sql } from 'drizzle-orm'
 import OpenAI from 'openai'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
-import getEmbeddingsFromContents from '~/components/embedding'
 import { env } from '~/env'
 import { BotModelEnum } from '~/model/bot-model'
 import { ChatRoleEnum } from '~/model/chat'
 import { UsageLimitTypeEnum } from '~/model/usage-limit-type'
 import { db } from '~/server/db'
 import * as schema from '~/server/db/migration/schema'
+import getEmbeddingsFromContents from '~/server/gateway/openai/embedding'
 import { type Nullable } from '~/utils/types'
 import { createTRPCRouter, integrationProcedure } from '../trpc'
 
@@ -189,7 +189,7 @@ async function buildPrompt(botId: string, msg: string) {
     .select({
       content: schema.botSourceExtractedDataVector.content,
       // vectors: schema.botSourceExtractedDataVector.vector,
-      similarity: sql`vector <=> ${'[' + msgEmbeddings.join(', ') + ']'} as similarity`,
+      distance: sql`vector <=> ${'[' + msgEmbeddings.join(', ') + ']'} as distance`,
     })
     .from(schema.botSourceExtractedDataVector)
     .innerJoin(
@@ -207,10 +207,14 @@ async function buildPrompt(botId: string, msg: string) {
       and(
         eq(schema.botSources.botId, botId),
         eq(schema.botSources.visible, true),
+        sql`vector <=> ${'[' + msgEmbeddings.join(', ') + ']'} < 0.7`, // Could adjust this threshold
       ),
     )
-    .orderBy(sql`similarity DESC`)
-    .limit(5)
+    .orderBy(sql`distance ASC`)
+    .limit(Number(env.CLOSEST_CHUNKS_COUNT_FOR_CHAT_CONTEXT))
+
+  // console.log('Similar sources:', rows)
+  // TODO: Handle if no context found
 
   const contents = rows.map((row) => row.content).filter((c) => !!c)
 
