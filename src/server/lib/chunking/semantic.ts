@@ -1,4 +1,7 @@
-export async function semanticChunkingData(data: string): Promise<string[]> {
+export async function semanticChunkingData(
+  data: string,
+  bufferSize: number,
+): Promise<string[]> {
   const sentences = data
     .replace(/[\r\n]+/g, ' ')
     .trim()
@@ -8,17 +11,17 @@ export async function semanticChunkingData(data: string): Promise<string[]> {
   for (let i = 0; i < sentences.length; i++) {
     let combined_sentence = ''
 
-    for (let j = i - 1; j < i; j++) {
-      if (j >= 0) {
-        combined_sentence += sentences[j] + ' '
+    for (let bIndex = i - bufferSize; bIndex < i; bIndex++) {
+      if (bIndex >= 0) {
+        combined_sentence += sentences[bIndex] + ' '
       }
     }
 
     combined_sentence += sentences[i]
 
-    for (let j = i + 1; j <= i + 1; j++) {
-      if (j < sentences.length) {
-        combined_sentence += ' ' + sentences[j]
+    for (let aIndex = i + 1; aIndex <= i + bufferSize; aIndex++) {
+      if (aIndex < sentences.length) {
+        combined_sentence += ' ' + sentences[aIndex]
       }
     }
     results.push(combined_sentence)
