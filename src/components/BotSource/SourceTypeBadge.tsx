@@ -12,6 +12,7 @@ const getTypeLabel = (typeId: number) => {
       return 'Link'
     case BotSourceTypeEnum.Sitemap:
       return 'Sitemap'
+    case BotSourceTypeEnum.SitemapFile:
     case BotSourceTypeEnum.File:
       return 'File'
     default:
