@@ -29,7 +29,7 @@ import { SourceTypeBadge } from './SourceTypeBadge'
 type BotSource = RouterOutputs['botSource']['create']['0']
 
 export const SourceTable = () => {
-  const { id } = useParams()
+  const { id } = useParams() ?? {}
   const { isOpen, onOpenChange, onOpen } = useDisclosure()
   const [activeSource, setActiveSource] = useState<BotSource>()
   const [deleteSource, setDeleteSource] = useState<BotSource>()

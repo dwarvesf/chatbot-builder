@@ -53,7 +53,7 @@ const ChatThread = (props: {
 }
 
 const BotDetail: NextPage = () => {
-  const { id } = useParams()
+  const { id } = useParams() ?? {}
   const { data } = useSession()
   const botQuery = api.bot.getById.useQuery(id as string)
   const { data: botIntegration } = api.botIntegrationRouter.get.useQuery({

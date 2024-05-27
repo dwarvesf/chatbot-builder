@@ -6,7 +6,7 @@ import { api } from '~/utils/api'
 import SourceFileUploader from './SourceFileUploader'
 
 export function FileDocSource() {
-  const { id } = useParams()
+  const { id } = useParams() ?? {}
   const botId = id as string
 
   const { mutate: createSource } = api.botSource.create.useMutation()

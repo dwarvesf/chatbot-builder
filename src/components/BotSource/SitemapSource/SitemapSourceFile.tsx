@@ -12,7 +12,7 @@ import { api } from '~/utils/api'
 import { formatFileSize, getFileExtension } from '~/utils/file'
 
 export function SitemapSourceFile() {
-  const { id } = useParams()
+  const { id } = useParams() ?? {}
   const botId = id as string
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null)

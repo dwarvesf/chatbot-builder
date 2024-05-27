@@ -36,7 +36,7 @@ interface LinksFormValues {
 }
 
 export function LinkSource() {
-  const { id } = useParams()
+  const { id } = useParams() ?? {}
   const botId = id as string
 
   const { isOpen, onOpenChange, onOpen } = useDisclosure()
