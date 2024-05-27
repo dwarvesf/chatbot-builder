@@ -27,7 +27,7 @@ const schema = z.object({
 })
 
 export function SitemapSourceLink() {
-  const { id } = useParams()
+  const { id } = useParams() ?? {}
   const botId = id as string
 
   const { handleSubmit, control, reset, formState } = useForm<{

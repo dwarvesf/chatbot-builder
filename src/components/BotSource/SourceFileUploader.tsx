@@ -17,7 +17,7 @@ const SourceFileUploader = (props: Props) => {
   const { onSuccess } = props
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
-  const { id } = useParams()
+  const { id } = useParams() ?? {}
   const { toast } = useToast()
   const botId = id as string
 

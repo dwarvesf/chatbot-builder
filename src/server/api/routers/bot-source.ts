@@ -1,9 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
 import * as asyncLib from 'async'
 import { and, eq, inArray, sql, type InferSelectModel } from 'drizzle-orm'
-import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import { XMLParser } from 'fast-xml-parser'
-import { uniq } from 'lodash'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
 import { env } from '~/env'
@@ -11,9 +9,7 @@ import { BotSourceStatusEnum } from '~/model/bot-source-status'
 import { BotSourceTypeEnum } from '~/model/bot-source-type'
 import { db } from '~/server/db'
 import * as schema from '~/server/db/migration/schema'
-import scrapeURL from '~/server/gateway/firecrawl'
-import getEmbeddingsFromContents from '~/server/gateway/openai/embedding'
-import { chunkMarkdown } from '~/server/lib/chunking/markdown'
+import { submitSyncBotSource } from '~/server/gateway/cronjob/sync-bot-source'
 import { createTRPCRouter, protectedProcedure } from '../trpc'
 
 export const botSourceRouter = createTRPCRouter({
@@ -178,7 +174,10 @@ function syncBotSourceHandler() {
       }
 
       await cleanBotSourceData(bsId)
-      await syncBotSource(bsId)
+      // await syncBotSource(bsId)
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      submitSyncBotSource(bsId)
+
       return null
     })
 }
@@ -208,7 +207,10 @@ function createBotSourceHandler() {
       // Sync the bot source
       if (botSources.length) {
         for (const bs of botSources) {
-          await syncBotSource(bs.id)
+          // await syncBotSource(bs.id)
+
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          submitSyncBotSource(bs.id)
         }
       }
 
@@ -246,7 +248,8 @@ function createLinkBotSourceBulkHandler() {
         botSources,
         parallelCount,
         async (bs: InferSelectModel<typeof schema.botSources>) => {
-          await syncBotSource(bs.id)
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          submitSyncBotSource(bs.id)
           return bs.id
         },
       )
@@ -292,12 +295,15 @@ async function cleanBotSourceData(bsId: string, repo = db) {
         bsId,
       ]),
     )
-  await repo.delete(schema.botSourceExtractedDataVector).where(
-    inArray(
-      schema.botSourceExtractedDataVector.botSourceExtractedDataId,
-      extractedDataIDs.map((r) => r.id),
-    ),
-  )
+
+  if (extractedDataIDs.length > 0) {
+    await repo.delete(schema.botSourceExtractedDataVector).where(
+      inArray(
+        schema.botSourceExtractedDataVector.botSourceExtractedDataId,
+        extractedDataIDs.map((r) => r.id),
+      ),
+    )
+  }
 
   // Delete extracted data
   await repo
@@ -321,136 +327,6 @@ async function cleanBotSourceData(bsId: string, repo = db) {
     .update(schema.botSources)
     .set({ statusId: BotSourceStatusEnum.Created })
     .where(eq(schema.botSources.id, bsId))
-}
-
-async function syncBotSource(bsId: string) {
-  const bs = await db.query.botSources.findFirst({
-    where: eq(schema.botSources.id, bsId),
-  })
-  if (!bs) {
-    throw new Error('Bot source not found')
-  }
-
-  switch (bs.typeId) {
-    case BotSourceTypeEnum.Link:
-      return syncBotSourceURL(bs)
-    case BotSourceTypeEnum.Sitemap:
-      return syncBotSourceSitemap(bs)
-    case BotSourceTypeEnum.SitemapChildUrl:
-      return syncBotSourceURL(bs)
-    case BotSourceTypeEnum.SitemapFile:
-      return syncBotSourceSitemapFile(bs)
-  }
-}
-
-// Sitemap file contain list of URL of site
-async function syncBotSourceSitemapFile(
-  bs: InferSelectModel<typeof schema.botSources>,
-) {
-  if (!bs.url) {
-    throw new Error('URL is required')
-  }
-
-  try {
-    await db
-      .update(schema.botSources)
-      .set({ statusId: BotSourceStatusEnum.Crawling })
-      .where(eq(schema.botSources.id, bs.id))
-
-    const fileURL = bs.url
-    // Fetch file content
-    const res = await fetch(fileURL)
-    const content = await res.text()
-    const siteMapUrls = content.split('\n').filter((url) => url.trim() !== '')
-
-    // Create child bot sources
-    const asyncCount = Number(env.ASYNC_EMBEDDING_COUNT) || 1
-    await asyncLib.mapLimit(siteMapUrls, asyncCount, async (url: string) => {
-      const childBotSourceId = uuidv7()
-      await db.insert(schema.botSources).values({
-        id: childBotSourceId,
-        parentId: bs.id,
-        botId: bs.botId,
-        typeId: BotSourceTypeEnum.SitemapChildUrl,
-        url,
-        statusId: BotSourceStatusEnum.Created,
-        createdAt: new Date(),
-        createdBy: bs.createdBy,
-      })
-
-      await syncBotSource(childBotSourceId)
-      return childBotSourceId
-    })
-
-    // Update to completed
-    await db
-      .update(schema.botSources)
-      .set({ statusId: BotSourceStatusEnum.Completed })
-      .where(eq(schema.botSources.id, bs.id))
-  } catch (error) {
-    console.error('Error while crawling bot source ', error)
-    await db
-      .update(schema.botSources)
-      .set({ statusId: BotSourceStatusEnum.Failed })
-      .where(eq(schema.botSources.id, bs.id))
-  }
-}
-
-async function syncBotSourceSitemap(
-  bs: InferSelectModel<typeof schema.botSources>,
-) {
-  console.log('Syncing bot source sitemap... ', bs.id)
-  if (!bs.url) {
-    throw new Error('URL is required')
-  }
-
-  // Update bot source status to crawling
-  await db
-    .update(schema.botSources)
-    .set({ statusId: BotSourceStatusEnum.Crawling })
-    .where(eq(schema.botSources.id, bs.id))
-
-  try {
-    // get site map
-    // Extract all unique urls from sitemap
-    const urls = await getURLsFromSitemap(bs.url)
-    console.log('Found urls: ', urls.length)
-    // Each url, crawl data => create child bot source + extracted data
-    const asyncCount = Number(env.ASYNC_EMBEDDING_COUNT) || 1
-    await asyncLib.mapLimit(urls, asyncCount, async (url: string) => {
-      const childBotSourceId = uuidv7()
-      await db.insert(schema.botSources).values({
-        id: childBotSourceId,
-        parentId: bs.id,
-        botId: bs.botId,
-        typeId: BotSourceTypeEnum.SitemapChildUrl,
-        url,
-        statusId: BotSourceStatusEnum.Created,
-        createdAt: new Date(),
-        createdBy: bs.createdBy,
-      })
-
-      try {
-        await syncBotSource(childBotSourceId)
-      } catch (error) {
-        console.error('Error while crawling child bot source ', error)
-      }
-
-      return childBotSourceId
-    })
-    console.log('All urls are crawled and embedded')
-
-    // Update bot source status to completed
-    await db
-      .update(schema.botSources)
-      .set({ statusId: BotSourceStatusEnum.Completed })
-      .where(eq(schema.botSources.id, bs.id))
-  } catch (error) {
-    await db
-      .update(schema.botSources)
-      .set({ statusId: BotSourceStatusEnum.Failed })
-      .where(eq(schema.botSources.id, bs.id))
-  }
 }
 
 function getSiteMaps() {
@@ -495,10 +371,7 @@ function validateSitemapUrl() {
     })
 }
 
-export function extractSiteMapURLs(
-  robotsTxt: string,
-  websiteUrl: string,
-): string[] {
+function extractSiteMapURLs(robotsTxt: string, websiteUrl: string): string[] {
   const sitemapUrls: string[] = []
   const lines = robotsTxt.split('\n')
 
@@ -517,7 +390,7 @@ export function extractSiteMapURLs(
   return sitemapUrls
 }
 
-export async function isValidSitemapUrl(url: string): Promise<boolean> {
+async function isValidSitemapUrl(url: string): Promise<boolean> {
   try {
     const parsedUrl = new URL(url)
 
@@ -548,30 +421,6 @@ export async function isValidSitemapUrl(url: string): Promise<boolean> {
   }
 }
 
-export async function getURLsFromSitemap(url: string) {
-  const siteMapURLsQueue = [url]
-  const pageURLs: string[] = []
-  const usedURLs = new Set<string>()
-
-  while (siteMapURLsQueue.length) {
-    const url = siteMapURLsQueue.pop()
-    if (!url) {
-      continue
-    }
-
-    if (usedURLs.has(url)) {
-      continue
-    }
-    usedURLs.add(url)
-
-    const { urls, siteMapUrls } = await fetchSitemap(url)
-    pageURLs.push(...urls)
-    siteMapURLsQueue.push(...siteMapUrls)
-  }
-
-  return uniq(pageURLs)
-}
-
 interface ISitemapStructure {
   sitemapindex: {
     sitemap: {
@@ -588,123 +437,4 @@ interface ISitemapStructure {
       priority: string
     }[]
   }
-}
-
-async function fetchSitemap(url: string) {
-  const urls = []
-  const siteMapUrls = []
-
-  // Fetch the sitemap
-  const res = await fetch(url)
-  const raw = await res.text()
-
-  const parser = new XMLParser()
-  const s = parser.parse(raw) as ISitemapStructure
-
-  if (s?.sitemapindex?.sitemap) {
-    for (const { loc } of s.sitemapindex.sitemap) {
-      siteMapUrls.push(loc)
-    }
-  }
-
-  if (s?.urlset?.url?.length > 0) {
-    for (const { loc } of s.urlset.url) {
-      urls.push(loc)
-    }
-  }
-
-  return { urls, siteMapUrls }
-}
-
-async function syncBotSourceURL(
-  bs: InferSelectModel<typeof schema.botSources>,
-) {
-  console.log('Syncing bot source URL... ', bs.id, ' - ', bs.url)
-  const bsId = bs.id
-
-  try {
-    if (
-      bs.statusId !== BotSourceStatusEnum.Created &&
-      bs.statusId !== BotSourceStatusEnum.Failed
-    ) {
-      throw new Error('Invalid bot source status')
-    }
-
-    // Update status to crawling
-    await db
-      .update(schema.botSources)
-      .set({ statusId: BotSourceStatusEnum.Crawling })
-      .where(eq(schema.botSources.id, bsId))
-
-    // Crawl the bot source
-    console.log('Crawling bot source URL... ', bs.url)
-    const contents = await crawBotSourceUrl(bs.url)
-
-    const bsDataId = uuidv7()
-    await db.insert(schema.botSourceExtractedData).values({
-      id: bsDataId,
-      botSourceId: bsId,
-      data: JSON.stringify(contents),
-    })
-
-    // Update status to embedding
-    console.log('Embedding bot source URL... ', bs.url)
-    await db
-      .update(schema.botSources)
-      .set({ statusId: BotSourceStatusEnum.Embedding })
-      .where(eq(schema.botSources.id, bsId))
-
-    // Embed the bot source
-    for (const { content, embeddings } of await getEmbeddingsFromContents(
-      contents,
-    )) {
-      // Store data to DB
-      await saveEmbeddings(db, bsDataId, content, embeddings)
-    }
-
-    // Update status to completed
-    await db
-      .update(schema.botSources)
-      .set({
-        statusId: BotSourceStatusEnum.Completed,
-      })
-      .where(eq(schema.botSources.id, bsId))
-  } catch (error) {
-    // Set status to failed
-    console.error('Error while crawling bot source ', error)
-
-    // Update status to failed
-    await db
-      .update(schema.botSources)
-      .set({
-        statusId: BotSourceStatusEnum.Failed,
-      })
-      .where(eq(schema.botSources.id, bsId))
-
-    throw error
-  }
-}
-
-async function crawBotSourceUrl(url: string | null) {
-  if (!url) {
-    throw new Error('URL is required')
-  }
-
-  const res = await scrapeURL(url)
-  const chunks = await chunkMarkdown(res.data.markdown)
-  return chunks
-}
-
-async function saveEmbeddings(
-  client: PostgresJsDatabase<typeof schema>,
-  bsDataId: string,
-  content: string,
-  embeddings: number[],
-) {
-  await client.insert(schema.botSourceExtractedDataVector).values({
-    id: uuidv7(),
-    botSourceExtractedDataId: bsDataId,
-    content,
-    vector: embeddings,
-  })
 }
