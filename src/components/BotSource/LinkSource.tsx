@@ -74,6 +74,7 @@ export function LinkSource() {
 
   const { refetch: refreshSourceTable } = api.botSource.getByBotId.useQuery({
     botId,
+    limit: 100,
   })
 
   useAsyncEffect(async () => {
