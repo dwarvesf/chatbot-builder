@@ -140,11 +140,10 @@ const SourceParentList = ({
 }
 
 const SourceChunkList = ({ sourceId }: { sourceId: string }) => {
-  const { data, isPending } = api.botSourceExtractedDataRouter.getList.useQuery(
-    {
+  const { data, isPending } =
+    api.botSourceExtractedDataRouter.getVectorContents.useQuery({
       botSourceId: sourceId,
-    },
-  )
+    })
   const bsData = data?.data ?? []
 
   return (
@@ -159,7 +158,7 @@ const SourceChunkList = ({ sourceId }: { sourceId: string }) => {
             className="!bg-background-level1 overflow-auto max-h-[400px]"
             key={item.id}
           >
-            {item?.data as string}
+            {item?.content}
           </Card>
         ))
       )}
