@@ -86,7 +86,9 @@ export const SourceTable = () => {
                 const { url, typeId, name } = props.row.original
                 if (
                   (typeId === BotSourceTypeEnum.Link ||
-                    typeId === BotSourceTypeEnum.Sitemap) &&
+                    typeId === BotSourceTypeEnum.Sitemap ||
+                    typeId === BotSourceTypeEnum.File ||
+                    typeId === BotSourceTypeEnum.SitemapFile) &&
                   url
                 ) {
                   return (
@@ -96,7 +98,12 @@ export const SourceTable = () => {
                       asChild
                     >
                       <a href={url} target="_blank" rel="noopener noreferrer">
-                        <span className="truncate">{url}</span>
+                        <span className="truncate">
+                          {typeId === BotSourceTypeEnum.File ||
+                          typeId === BotSourceTypeEnum.SitemapFile
+                            ? name ?? url
+                            : url}
+                        </span>
                       </a>
                     </Button>
                   )

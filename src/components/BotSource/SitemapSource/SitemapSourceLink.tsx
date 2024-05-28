@@ -50,6 +50,7 @@ export function SitemapSourceLink() {
 
   const { refetch: refreshSourceTable } = api.botSource.getByBotId.useQuery({
     botId,
+    limit: 100,
   })
 
   useAsyncEffect(async () => {

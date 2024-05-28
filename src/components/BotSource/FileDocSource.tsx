@@ -14,6 +14,7 @@ export function FileDocSource() {
   const { isSuccess, isError, error } = api.botSource.createBulk.useMutation()
   const { refetch: refreshSourceTable } = api.botSource.getByBotId.useQuery({
     botId,
+    limit: 100,
   })
 
   useAsyncEffect(async () => {
