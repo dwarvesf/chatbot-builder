@@ -19,6 +19,8 @@ export const maxDuration = Number(env.MAX_CRON_DURATION) // This function can ru
 export const dynamic = 'force-dynamic' // static by default, unless reading the request
 
 export async function POST(req: Request) {
+  console.log('maxDuration ', maxDuration)
+
   const cronJobSecret = req.headers.get('x-cron-secret')
   if (!cronJobSecret || cronJobSecret !== env.CRON_JOB_SECRET) {
     return new Response('Unauthorized', { status: 401 })
