@@ -11,7 +11,8 @@ interface Props {
 }
 
 export const BotCompanyLogo = ({ companyLogoAttachmentId }: Props) => {
-  const { control, setValue } = useFormContext<BotAppearance>()
+  const { control, setValue, reset } = useFormContext<BotAppearance>()
+
   const {
     mutate: createBlobURL,
     error,
@@ -20,36 +21,35 @@ export const BotCompanyLogo = ({ companyLogoAttachmentId }: Props) => {
     data,
   } = api.attachments.createBlobURL.useMutation()
 
-  const [id, setId] = useState(companyLogoAttachmentId ?? data?.attachmentId)
-
-  const { data: sources, refetch: refetch } =
-    api.attachments.getById.useQuery(id)
+  const { data: sources, refetch: refetch } = api.attachments.getById.useQuery(
+    companyLogoAttachmentId,
+  )
 
   const [avatar, setAvatar] = useState(sources?.cloudPath ?? '')
 
+  useEffect(() => {
+    if (sources) {
+      setAvatar(sources.cloudPath ?? '')
+    } else {
+      setAvatar('')
+    }
+  }, [sources, reset])
+
   useAsyncEffect(async () => {
     if (isSuccess) {
-      setId(data?.attachmentId)
+      if (data) {
+        companyLogoAttachmentId = data.attachmentId
+        setValue('companyLogoAttachmentId', data.attachmentId, {
+          shouldDirty: true,
+          shouldValidate: true,
+        })
+      }
       await refetch()
     }
     if (isError) {
       console.error(error)
     }
   }, [isSuccess, isError, error])
-
-  useEffect(() => {
-    if (sources) {
-      setAvatar(sources.cloudPath!)
-      setValue('companyLogoAttachmentId', sources.id, {
-        shouldDirty: true,
-        shouldValidate: true,
-      })
-    }
-  }, [sources])
-
-  useEffect(() => {
-    setId(companyLogoAttachmentId)
-  }, [companyLogoAttachmentId])
 
   return (
     <Controller

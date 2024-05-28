@@ -11,7 +11,7 @@ interface Props {
 }
 
 export const BotAvatarWidget = ({ botAvatarAttachmentId }: Props) => {
-  const { control, setValue } = useFormContext<BotAppearance>()
+  const { control, setValue, reset } = useFormContext<BotAppearance>()
 
   const {
     mutate: createBlobURL,
@@ -21,34 +21,35 @@ export const BotAvatarWidget = ({ botAvatarAttachmentId }: Props) => {
     data,
   } = api.attachments.createBlobURL.useMutation()
 
-  const [id, setId] = useState(botAvatarAttachmentId ?? data?.attachmentId)
-
-  const { data: sources } = api.attachments.getById.useQuery(id)
+  const { data: sources, refetch: refetch } = api.attachments.getById.useQuery(
+    botAvatarAttachmentId,
+  )
 
   const [avatar, setAvatar] = useState(sources?.cloudPath ?? '')
 
+  useEffect(() => {
+    if (sources) {
+      setAvatar(sources.cloudPath ?? '')
+    } else {
+      setAvatar('')
+    }
+  }, [sources, reset])
+
   useAsyncEffect(async () => {
     if (isSuccess) {
-      setId(data?.attachmentId)
+      if (data) {
+        botAvatarAttachmentId = data.attachmentId
+        setValue('botAvatarAttachmentId', data.attachmentId, {
+          shouldDirty: true,
+          shouldValidate: true,
+        })
+      }
+      await refetch()
     }
     if (isError) {
       console.error(error)
     }
   }, [isSuccess, isError, error])
-
-  useEffect(() => {
-    if (sources) {
-      setAvatar(sources.cloudPath!)
-      setValue('botAvatarAttachmentId', sources.id, {
-        shouldDirty: true,
-        shouldValidate: true,
-      })
-    }
-  }, [sources])
-
-  useEffect(() => {
-    setId(botAvatarAttachmentId)
-  }, [botAvatarAttachmentId])
 
   return (
     <Controller
@@ -57,19 +58,16 @@ export const BotAvatarWidget = ({ botAvatarAttachmentId }: Props) => {
       render={({ field, fieldState }) => (
         <FormControl error={!!fieldState.error} hideHelperTextOnError>
           <FormLabel>Bot Avatar Logo</FormLabel>
-          <div>
-            <AvatarUploader
-              description="Support jpeg, jpg, png format. Max 5MB"
-              maxSizeInMB={5}
-              fileTypes={['jpeg', 'jpg', 'png']}
-              image={avatar}
-              onSuccess={(blob) => {
-                createBlobURL({ cloudPath: blob.url })
-              }}
-              {...field}
-            />
-          </div>
-
+          <AvatarUploader
+            description="Support jpeg, jpg, png format. Max 5MB"
+            maxSizeInMB={5}
+            fileTypes={['jpeg', 'jpg', 'png']}
+            image={avatar}
+            onSuccess={(blob) => {
+              createBlobURL({ cloudPath: blob.url })
+            }}
+            {...field}
+          />
           <FormErrorMessage>{fieldState.error?.message}</FormErrorMessage>
         </FormControl>
       )}

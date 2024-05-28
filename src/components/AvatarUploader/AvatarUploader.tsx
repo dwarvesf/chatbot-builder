@@ -11,7 +11,7 @@ interface AvatarUploaderProps {
   fileTypes: string[]
   maxSizeInMB: number
   description: string
-  image?: string
+  image: string
 }
 
 export const AvatarUploader = (props: AvatarUploaderProps) => {
@@ -23,10 +23,7 @@ export const AvatarUploader = (props: AvatarUploaderProps) => {
     description,
   } = props
   const { toast } = useToast()
-  const [avatar, setAvatar] = useState(
-    avatarProp ??
-      'https://source.boringavatars.com/beam/120/?colors=665c52,74b3a7,a3ccaf,E6E1CF,CC5B14',
-  )
+  const [avatar, setAvatar] = useState(avatarProp)
   const [isLoading, setIsLoading] = useState(false)
   const inputFileRef = useRef<HTMLInputElement>(null)
   const id = useId()
@@ -34,6 +31,8 @@ export const AvatarUploader = (props: AvatarUploaderProps) => {
   useEffect(() => {
     if (avatarProp) {
       setAvatar(avatarProp)
+    } else {
+      setAvatar('')
     }
   }, [avatarProp])
 
@@ -44,7 +43,12 @@ export const AvatarUploader = (props: AvatarUploaderProps) => {
       return
     }
 
-    const file = event.target.files[0]!
+    const file = event.target.files[0] ?? null
+
+    if (!file) {
+      return
+    }
+
     const newAvatar = URL.createObjectURL(file)
 
     if (file) {

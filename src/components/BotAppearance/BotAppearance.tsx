@@ -1,16 +1,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useAsyncEffect } from '@dwarvesf/react-hooks'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Skeleton, useToast } from '@mochi-ui/core'
+import {
+  FormControl,
+  FormErrorMessage,
+  FormLabel,
+  Skeleton,
+  useToast,
+} from '@mochi-ui/core'
 import { useParams } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { FormProvider, useForm } from 'react-hook-form'
+import { Controller, FormProvider, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { api } from '~/utils/api'
+import { ColorPicker } from '../common/ColorPicker'
 import { SaveBar } from '../SaveBar'
 import { BotAvatarWidget } from './BotAvatarWidget'
 import { BotCompanyLogo } from './BotCompanyLogo'
-import { ColorPicker } from './ColorPicker'
 import { WidgetMessage } from './WidgetMessage'
 import { WidgetName } from './WidgetName'
 
@@ -27,8 +33,8 @@ export interface BotAppearance {
 
 const schema = z.object({
   botId: z.string(),
-  companyLogoAttachmentId: z.string(),
-  botAvatarAttachmentId: z.string(),
+  companyLogoAttachmentId: z.string().nullable(),
+  botAvatarAttachmentId: z.string().nullable(),
   widgetName: z
     .string()
     .min(1, 'Required')
@@ -43,7 +49,8 @@ export const BotAppearancePage = () => {
   const id = useParams()?.id
   const isInitialData = useRef(false)
   const { toast } = useToast()
-  const [isFetchingData, setIsFetchingData] = useState<boolean>(false)
+  const [isFetchingData, setIsFetchingData] = useState(false)
+
   const {
     mutate: updateBotAppearance,
     error,
@@ -63,6 +70,7 @@ export const BotAppearancePage = () => {
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { isSubmitting, isDirty },
   } = form
 
@@ -85,19 +93,17 @@ export const BotAppearancePage = () => {
     if (sources && !isInitialData.current) {
       isInitialData.current = true
 
-      if (sources.accentColour == null) {
-        sources.accentColour = '#ffffff'
-      }
-
       reset({
         botId: id as string,
-        companyLogoAttachmentId: sources.companyLogoAttachmentId!,
-        botAvatarAttachmentId: sources.botAvatarAttachmentId!,
-        widgetName: sources.widgetName!,
-        widgetSubheading: sources.widgetSubheading!,
-        widgetPlaceholder: sources.widgetPlaceholder!,
-        widgetWelcomeMsg: sources.widgetWelcomeMsg!,
-        accentColour: sources.accentColour,
+        companyLogoAttachmentId: sources.companyLogoAttachmentId ?? '',
+        botAvatarAttachmentId: sources.botAvatarAttachmentId ?? '',
+        widgetName: sources.widgetName ?? 'Dwarves Bot',
+        widgetSubheading:
+          sources.widgetSubheading ?? 'Our bot answers instantly',
+        widgetPlaceholder: sources.widgetPlaceholder ?? 'Send a message...',
+        widgetWelcomeMsg:
+          sources.widgetWelcomeMsg ?? 'Hey there, how can I help you',
+        accentColour: sources.accentColour ?? '#ffffff',
       })
       setIsFetchingData(true)
     }
@@ -122,17 +128,9 @@ export const BotAppearancePage = () => {
 
   const onSubmit = (props: BotAppearance) => {
     const payload: BotAppearance = {
+      ...props,
       botId: id as string,
-      companyLogoAttachmentId: props.companyLogoAttachmentId,
-      botAvatarAttachmentId: props.botAvatarAttachmentId,
-      widgetName: props.widgetName,
-      widgetSubheading: props.widgetSubheading,
-      widgetPlaceholder: props.widgetPlaceholder,
-      widgetWelcomeMsg: props.widgetWelcomeMsg,
-      accentColour: props.accentColour,
     }
-
-    console.log(payload)
     try {
       updateBotAppearance(payload)
     } catch (error: any) {
@@ -156,7 +154,23 @@ export const BotAppearancePage = () => {
                 companyLogoAttachmentId={companyLogoAttachmentId}
               />
               <BotAvatarWidget botAvatarAttachmentId={botAvatarAttachmentId} />
-              <ColorPicker defaultColor={color} />
+              <Controller
+                name="accentColour"
+                render={({ fieldState }) => (
+                  <FormControl error={!!fieldState.error} hideHelperTextOnError>
+                    <FormLabel>Color</FormLabel>
+                    <ColorPicker
+                      defaultColor={color}
+                      onChange={(color) =>
+                        setValue('accentColour', color, { shouldDirty: true })
+                      }
+                    />
+                    <FormErrorMessage>
+                      {fieldState.error?.message}
+                    </FormErrorMessage>
+                  </FormControl>
+                )}
+              />
             </div>
 
             <WidgetMessage />

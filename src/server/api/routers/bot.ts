@@ -131,8 +131,8 @@ export const botRouter = createTRPCRouter({
   updateBotAppearance: protectedProcedure
     .input(
       z.object({
-        companyLogoAttachmentId: z.string(),
-        botAvatarAttachmentId: z.string(),
+        companyLogoAttachmentId: z.string().nullable(),
+        botAvatarAttachmentId: z.string().nullable(),
         botId: z.string(),
         widgetName: z.string().min(1).max(50),
         widgetSubheading: z.string(),
@@ -142,6 +142,13 @@ export const botRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      if (input.companyLogoAttachmentId === '') {
+        input.companyLogoAttachmentId = null
+      }
+      if (input.botAvatarAttachmentId === '') {
+        input.botAvatarAttachmentId = null
+      }
+
       const bot = await db
         .update(schema.bots)
         .set({
