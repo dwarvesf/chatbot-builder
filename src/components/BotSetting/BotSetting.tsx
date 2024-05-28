@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useAsyncEffect } from '@dwarvesf/react-hooks'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Typography, useToast } from '@mochi-ui/core'
+import { Skeleton, Typography, useToast } from '@mochi-ui/core'
 import { useParams } from 'next/navigation'
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { BotModelEnum } from '~/model/bot-model'
@@ -30,7 +30,7 @@ export interface BotSettingData {
 const schema = z.object({
   botId: z.string(),
   name: z.string().min(1, 'Required').max(50, 'Max length is 50 characters.'),
-  description: z.string().max(500, 'Max length is 500 characters.').optional(),
+  description: z.string().max(500, 'Max length is 500 characters.'),
   noSourceWarningMsg: z.string().max(100, 'Max length is 100 characters.'),
   serverErrorMsg: z.string().max(100, 'Max length is 100 characters.'),
   userLimitWarningMsg: z.string().max(100, 'Max length is 100 characters.'),
@@ -42,6 +42,7 @@ const schema = z.object({
 export const BotSetting = () => {
   const id = useParams()?.id
   const isInitialData = useRef(false)
+  const [isFetchingData, setIsFetchingData] = useState(false)
   const { toast } = useToast()
 
   const {
@@ -63,7 +64,6 @@ export const BotSetting = () => {
   const {
     handleSubmit,
     reset,
-    getValues,
     formState: { isSubmitting, isDirty },
   } = form
 
@@ -83,15 +83,22 @@ export const BotSetting = () => {
       isInitialData.current = true
       reset({
         botId: id as string,
-        name: sources.name!,
-        description: sources.description!,
-        noSourceWarningMsg: sources.noSourceWarningMsg!,
-        serverErrorMsg: sources.serverErrorMsg!,
-        userLimitWarningMsg: sources.userLimitWarningMsg!,
-        modelId: sources.modelId,
-        usageLimitPerUser: sources.usageLimitPerUser!,
-        usageLimitPerUserType: sources.usageLimitPerUserType!,
+        name: sources.name ?? 'Dwarves Bot',
+        description: sources.description ?? '',
+        noSourceWarningMsg:
+          sources.noSourceWarningMsg ??
+          'The bot still needs to be trained, so please add the data and train it.',
+        serverErrorMsg:
+          sources.serverErrorMsg ??
+          'Apologies, there seems to be a server error.',
+        userLimitWarningMsg:
+          sources.userLimitWarningMsg ?? "You've reached the message limit.",
+        modelId: sources.modelId ?? BotModelEnum.GPT3,
+        usageLimitPerUser: sources.usageLimitPerUser ?? 50,
+        usageLimitPerUserType:
+          sources.usageLimitPerUserType ?? UsageLimitTypeEnum.PerDay,
       })
+      setIsFetchingData(true)
     }
   }, [sources])
 
@@ -114,15 +121,8 @@ export const BotSetting = () => {
 
   const onSubmit = async (props: BotSettingData) => {
     const payload: BotSettingData = {
+      ...props,
       botId: id as string,
-      name: props.name,
-      description: props.description,
-      noSourceWarningMsg: props.noSourceWarningMsg,
-      serverErrorMsg: props.serverErrorMsg,
-      userLimitWarningMsg: props.userLimitWarningMsg,
-      modelId: props.modelId,
-      usageLimitPerUser: props.usageLimitPerUser,
-      usageLimitPerUserType: props.usageLimitPerUserType,
     }
 
     try {
@@ -137,37 +137,91 @@ export const BotSetting = () => {
   }
 
   return (
-    <FormProvider {...form}>
-      <form onSubmit={handleSubmit(onSubmit)} />
-      <div className="space-y-4 sm:max-w-[600px] min-h-screen">
-        <div className="space-y-4 sm:max-w-[300px]">
-          <Typography level="h6" fontWeight="lg">
-            General
-          </Typography>
-          <BotDescription />
+    <div>
+      {isFetchingData ? (
+        <FormProvider {...form}>
+          <form onSubmit={handleSubmit(onSubmit)} />
+          <div className="space-y-4 sm:max-w-[600px] min-h-screen">
+            <div className="space-y-4 sm:max-w-[300px]">
+              <Typography level="h6" fontWeight="lg">
+                General
+              </Typography>
+              <BotDescription />
 
-          <Typography level="h6" fontWeight="lg">
-            Model
-          </Typography>
-          <BotModel />
+              <Typography level="h6" fontWeight="lg">
+                Model
+              </Typography>
+              <BotModel />
+            </div>
+
+            <Typography level="h6" fontWeight="lg">
+              Messages
+            </Typography>
+            <BotMessages />
+
+            <Typography level="h6" fontWeight="lg">
+              Usage Limit
+            </Typography>
+            <BotLimit />
+          </div>
+          <SaveBar
+            open={isDirty || isPending || isError}
+            isLoading={isSubmitting || isPending}
+            onConfirm={handleSubmit(onSubmit)}
+            onCancel={() => reset()}
+          />
+        </FormProvider>
+      ) : (
+        <div className="min-h-screen max-w-[400px] space-y-8 animate-pulse">
+          <div className="flex flex-col w-full relative items-stretch overflow-hidden rounded gap-12">
+            <div className="flex flex-col w-full gap-4">
+              <Skeleton className="w-1/5 h-6 rounded-lg" />
+            </div>
+            <div className="flex flex-col w-full gap-4">
+              <Skeleton className="w-2/5 h-4 rounded-lg" />
+              <Skeleton className="w-full h-6 rounded-lg" />
+            </div>
+
+            <div className="flex flex-col w-full gap-4">
+              <Skeleton className="w-2/5 h-4 rounded-lg" />
+              <Skeleton className="w-full h-6 rounded-lg" />
+            </div>
+          </div>
+          <div className="flex flex-col w-full gap-4">
+            <Skeleton className="w-1/5 h-4 rounded-lg" />
+          </div>
+          <div className="flex flex-col w-full gap-4">
+            <Skeleton className="w-2/5 h-6 rounded-lg" />
+          </div>
+          <div className="flex flex-col w-full gap-4">
+            <Skeleton className="w-1/5 h-4 rounded-lg" />
+          </div>
+          <div className="flex flex-col w-full gap-4">
+            <Skeleton className="w-3/5 h-4 rounded-lg" />
+          </div>
+          <div className="flex flex-col w-full gap-4">
+            <Skeleton className="w-full h-6 rounded-lg" />
+          </div>
+          <div className="flex flex-col w-full gap-4">
+            <Skeleton className="w-3/5 h-4 rounded-lg" />
+          </div>
+          <div className="flex flex-col w-full gap-4">
+            <Skeleton className="w-full h-6 rounded-lg" />
+          </div>
+          <div className="flex flex-col w-full gap-4">
+            <Skeleton className="w-3/5 h-4 rounded-lg" />
+          </div>
+          <div className="flex flex-col w-full gap-4">
+            <Skeleton className="w-full h-6 rounded-lg" />
+          </div>
+          <div className="flex flex-col w-full gap-4">
+            <Skeleton className="w-3/5 h-4 rounded-lg" />
+          </div>
+          <div className="flex flex-col w-full gap-4">
+            <Skeleton className="w-full h-6 rounded-lg" />
+          </div>
         </div>
-
-        <Typography level="h6" fontWeight="lg">
-          Messages
-        </Typography>
-        <BotMessages />
-
-        <Typography level="h6" fontWeight="lg">
-          Usage Limit
-        </Typography>
-        <BotLimit />
-      </div>
-      <SaveBar
-        open={isDirty || isPending || isError}
-        isLoading={isSubmitting || isPending}
-        onConfirm={handleSubmit(onSubmit)}
-        onCancel={() => reset()}
-      />
-    </FormProvider>
+      )}
+    </div>
   )
 }
