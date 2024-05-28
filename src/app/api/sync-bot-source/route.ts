@@ -96,6 +96,12 @@ async function syncBotSourceSitemapFile(
 
     // Create child bot sources
     const asyncCount = Number(env.ASYNC_EMBEDDING_COUNT) || 1
+    console.log(
+      'siteMapUrls: ',
+      siteMapUrls.length,
+      ' asyncCount: ',
+      asyncCount,
+    )
     await asyncLib.mapLimit(siteMapUrls, asyncCount, async (url: string) => {
       const childBotSourceId = uuidv7()
       await db.insert(schema.botSources).values({
@@ -145,9 +151,9 @@ async function syncBotSourceSitemap(
     // get site map
     // Extract all unique urls from sitemap
     const urls = await getURLsFromSitemap(bs.url)
-    console.log('Found urls: ', urls.length)
     // Each url, crawl data => create child bot source + extracted data
     const asyncCount = Number(env.ASYNC_EMBEDDING_COUNT) || 1
+    console.log('Found urls: ', urls.length, ' asyncCount: ', asyncCount)
     await asyncLib.mapLimit(urls, asyncCount, async (url: string) => {
       const childBotSourceId = uuidv7()
       await db.insert(schema.botSources).values({

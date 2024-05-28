@@ -214,6 +214,8 @@ function createBotSourceHandler() {
         }
       }
 
+      console.log('Bot sources created: ', botSources.length)
+
       return botSources
     })
 }
