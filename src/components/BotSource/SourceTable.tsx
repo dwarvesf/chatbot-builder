@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
-import { useAsyncEffect, useDisclosure } from '@dwarvesf/react-hooks'
+import { useDisclosure } from '@dwarvesf/react-hooks'
 import {
   Button,
   Card,
@@ -48,27 +48,20 @@ export const SourceTable = () => {
     onOpen: onDeleteOpen,
   } = useDisclosure()
 
-  const {
-    mutate: deleteSourceById,
-    isPending: isDeletingSource,
-    isSuccess: isDeleteSuccess,
-    isError: isDeleteError,
-    error: deleteError,
-  } = api.botSource.deleteById.useMutation()
-
-  useAsyncEffect(async () => {
-    if (isDeleteSuccess) {
-      await refreshSources()
-      onDeleteOpenChange(false)
-    }
-    if (isDeleteError) {
-      toast({
-        description: 'Failed to delete source',
-        scheme: 'danger',
-      })
-      console.error(deleteError)
-    }
-  }, [isDeleteSuccess, isDeleteError, deleteError])
+  const { mutate: deleteSourceById, isPending: isDeletingSource } =
+    api.botSource.deleteById.useMutation({
+      onSuccess: async () => {
+        await refreshSources()
+        onDeleteOpenChange(false)
+      },
+      onError: (error) => {
+        toast({
+          description: 'Failed to delete source',
+          scheme: 'danger',
+        })
+        console.error(error)
+      },
+    })
 
   return (
     <div className="mt-10">

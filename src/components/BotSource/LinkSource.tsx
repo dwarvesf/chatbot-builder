@@ -1,4 +1,4 @@
-import { useAsyncEffect, useDisclosure } from '@dwarvesf/react-hooks'
+import { useDisclosure } from '@dwarvesf/react-hooks'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   Button,
@@ -67,33 +67,29 @@ export function LinkSource() {
   const {
     mutate: createBotSource,
     isPending,
-    isSuccess,
-    isError,
     error,
-  } = api.botSource.createBulk.useMutation()
-
-  const { refetch: refreshSourceTable } = api.botSource.getByBotId.useQuery({
-    botId,
-    limit: 100,
-  })
-
-  useAsyncEffect(async () => {
-    if (isSuccess) {
+  } = api.botSource.createBulk.useMutation({
+    onSuccess: async () => {
       toast({
         description: 'Created source from links successfully',
         scheme: 'success',
       })
       await refreshSourceTable()
       clearLinks()
-    }
-    if (isError) {
+    },
+    onError: () => {
       toast({
         description: 'Failed to import links',
         scheme: 'danger',
       })
       console.error(error)
-    }
-  }, [isSuccess, isError, error])
+    },
+  })
+
+  const { refetch: refreshSourceTable } = api.botSource.getByBotId.useQuery({
+    botId,
+    limit: 100,
+  })
 
   const submitBotSource = async () => {
     const urls = [...new Set(getValues().links)]
