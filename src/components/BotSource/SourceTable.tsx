@@ -17,7 +17,8 @@ import {
 } from '@mochi-ui/core'
 import { EyeShowSolid, ThreeDotLine, TrashBinSolid } from '@mochi-ui/icons'
 import { useParams } from 'next/navigation'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { useDebouncedCallback } from 'use-debounce'
 import { BotSourceTypeEnum } from '~/model/bot-source-type'
 import { api, type RouterOutputs } from '~/utils/api'
 import { formatDatetime } from '~/utils/utils'
@@ -160,7 +161,12 @@ export const SourceTable = () => {
               width: 200,
               cell: (props) => {
                 const { visible } = props.row.original
-                return <Switch checked={visible ?? false} />
+                return (
+                  <VisibilitySwitch
+                    defaultValue={Boolean(visible)}
+                    data={props.row.original}
+                  />
+                )
               },
             },
             {
@@ -253,5 +259,38 @@ export const SourceTable = () => {
         />
       </Card>
     </div>
+  )
+}
+
+const VisibilitySwitch = ({
+  defaultValue,
+  data,
+}: {
+  defaultValue: boolean
+  data: BotSource
+}) => {
+  const storedChecked = useRef(defaultValue)
+  const [checked, setChecked] = useState(defaultValue)
+  const { mutate: setVisibility } = api.botSource.setVisibility.useMutation({
+    onError: () => {
+      storedChecked.current = !storedChecked.current
+      setChecked(storedChecked.current)
+    },
+  })
+  const setDebouncedAPICheck = useDebouncedCallback((newChecked: boolean) => {
+    if (storedChecked.current !== newChecked) {
+      setVisibility({ botSourceId: data.id, visible: newChecked })
+      storedChecked.current = newChecked
+    }
+  }, 500)
+
+  return (
+    <Switch
+      checked={checked}
+      onCheckedChange={(value) => {
+        setChecked(value)
+        setDebouncedAPICheck(value)
+      }}
+    />
   )
 }
