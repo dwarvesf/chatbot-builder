@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useAsyncEffect } from '@dwarvesf/react-hooks'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   Button,
@@ -46,13 +45,23 @@ export const CreateBotModal = ({ isOpen, onSuccess, onOpenChange }: Props) => {
     mode: 'onChange',
   })
   const { toast } = useToast()
-  const {
-    mutate: createBot,
-    error,
-    isSuccess,
-    isError,
-    isPending,
-  } = api.bot.create.useMutation()
+  const { mutate: createBot, isPending } = api.bot.create.useMutation({
+    onSuccess: async () => {
+      toast({
+        description: 'Created Bot successfully',
+        scheme: 'success',
+      })
+      await onSuccess?.()
+      onOpenChange(false)
+    },
+    onError: (error) => {
+      toast({
+        description: 'Failed to create Bot',
+        scheme: 'danger',
+      })
+      console.error(error)
+    },
+  })
 
   useEffect(() => {
     if (!isOpen) {
@@ -62,24 +71,6 @@ export const CreateBotModal = ({ isOpen, onSuccess, onOpenChange }: Props) => {
       }, 400)
     }
   }, [isOpen, reset])
-
-  useAsyncEffect(async () => {
-    if (isSuccess) {
-      toast({
-        description: 'Created Bot successfully',
-        scheme: 'success',
-      })
-      await onSuccess?.()
-      onOpenChange(false)
-    }
-    if (isError) {
-      toast({
-        description: 'Failed to create Bot',
-        scheme: 'danger',
-      })
-      console.error(error)
-    }
-  }, [isSuccess, isError, error])
 
   async function onCreateBot(data: { botName: string }) {
     try {

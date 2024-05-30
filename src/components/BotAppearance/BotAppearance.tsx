@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useAsyncEffect } from '@dwarvesf/react-hooks'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   FormControl,
@@ -13,8 +12,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Controller, FormProvider, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { api } from '~/utils/api'
-import { ColorPicker } from '../common/ColorPicker'
 import { SaveBar } from '../SaveBar'
+import { ColorPicker } from '../common/ColorPicker'
 import { BotAvatarWidget } from './BotAvatarWidget'
 import { BotCompanyLogo } from './BotCompanyLogo'
 import { WidgetMessage } from './WidgetMessage'
@@ -54,10 +53,24 @@ export const BotAppearancePage = () => {
   const {
     mutate: updateBotAppearance,
     error,
-    isSuccess,
     isError,
     isPending,
-  } = api.bot.updateBotAppearance.useMutation()
+  } = api.bot.updateBotAppearance.useMutation({
+    onSuccess: async () => {
+      toast({
+        description: 'Update settings successfully',
+        scheme: 'success',
+      })
+      await refetchBotAppearance()
+    },
+    onError: () => {
+      toast({
+        description: 'Failed to update settings',
+        scheme: 'danger',
+      })
+      console.error(error)
+    },
+  })
 
   const { data: sources, refetch: refetchBotAppearance } =
     api.bot.getById.useQuery(id as string)
@@ -108,23 +121,6 @@ export const BotAppearancePage = () => {
       setIsFetchingData(true)
     }
   }, [sources])
-
-  useAsyncEffect(async () => {
-    if (isSuccess) {
-      toast({
-        description: 'Update settings successfully',
-        scheme: 'success',
-      })
-      await refetchBotAppearance()
-    }
-    if (isError) {
-      toast({
-        description: 'Failed to update settings',
-        scheme: 'danger',
-      })
-      console.error(error)
-    }
-  }, [isSuccess, isError, error])
 
   const onSubmit = (props: BotAppearance) => {
     const payload: BotAppearance = {

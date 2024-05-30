@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useAsyncEffect } from '@dwarvesf/react-hooks'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Skeleton, useToast } from '@mochi-ui/core'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -27,15 +26,28 @@ export const ProfilePage = () => {
   const [isFetchingData, setIsFetchingData] = useState<boolean>(false)
   const { toast } = useToast()
 
+  const { data: sources, refetch: refetchProfile } = api.user.getUser.useQuery()
+
   const {
     mutate: updateProfile,
-    error,
-    isSuccess,
     isError,
     isPending,
-  } = api.user.updateProfile.useMutation()
-
-  const { data: sources, refetch: refetchProfile } = api.user.getUser.useQuery()
+  } = api.user.updateProfile.useMutation({
+    onSuccess: async () => {
+      toast({
+        description: 'Update information successfully',
+        scheme: 'success',
+      })
+      await refetchProfile()
+    },
+    onError: (error) => {
+      toast({
+        description: 'Failed to update information',
+        scheme: 'danger',
+      })
+      console.error(error)
+    },
+  })
 
   const form = useForm<Profile>({
     resolver: zodResolver(schema),
@@ -70,23 +82,6 @@ export const ProfilePage = () => {
       setIsFetchingData(true)
     }
   }, [sources])
-
-  useAsyncEffect(async () => {
-    if (isSuccess) {
-      toast({
-        description: 'Update information successfully',
-        scheme: 'success',
-      })
-      await refetchProfile()
-    }
-    if (isError) {
-      toast({
-        description: 'Failed to update information',
-        scheme: 'danger',
-      })
-      console.error(error)
-    }
-  }, [isSuccess, isError, error])
 
   const onSubmit = (props: Profile) => {
     const payload: Profile = {

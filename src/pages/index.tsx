@@ -1,4 +1,4 @@
-import { useAsyncEffect, useDisclosure } from '@dwarvesf/react-hooks'
+import { useDisclosure } from '@dwarvesf/react-hooks'
 import {
   Avatar,
   Button,
@@ -46,31 +46,24 @@ const Index: NextPage = () => {
   } = useDisclosure()
   const [activeBot, setActiveBot] = useState<Bot>()
 
-  const {
-    mutate: deleteBot,
-    isPending: isDeletingBot,
-    isSuccess: isDeleteSuccess,
-    isError: isDeleteError,
-    error: deleteError,
-  } = api.bot.archive.useMutation()
-
-  useAsyncEffect(async () => {
-    if (isDeleteSuccess) {
-      toast({
-        description: 'Deleted Bot successfully',
-        scheme: 'success',
-      })
-      await botsQuery?.refetch()
-      onDeleteOpenChange(false)
-    }
-    if (isDeleteError) {
-      toast({
-        description: 'Failed to delete Bot',
-        scheme: 'danger',
-      })
-      console.error(deleteError)
-    }
-  }, [isDeleteSuccess, isDeleteError, deleteError])
+  const { mutate: deleteBot, isPending: isDeletingBot } =
+    api.bot.archive.useMutation({
+      onSuccess: async () => {
+        toast({
+          description: 'Deleted Bot successfully',
+          scheme: 'success',
+        })
+        await botsQuery?.refetch()
+        onDeleteOpenChange(false)
+      },
+      onError: (error) => {
+        toast({
+          description: 'Failed to delete Bot',
+          scheme: 'danger',
+        })
+        console.error(error)
+      },
+    })
 
   return (
     <>

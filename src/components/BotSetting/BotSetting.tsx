@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useAsyncEffect } from '@dwarvesf/react-hooks'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Typography, useToast } from '@mochi-ui/core'
 import { useParams } from 'next/navigation'
@@ -52,10 +51,24 @@ const BotSettingForm = ({ defaultValues, onSuccess }: BotSettingFormProps) => {
   const {
     mutate: updateBotSettings,
     error,
-    isSuccess,
     isError,
     isPending,
-  } = api.bot.updateBotSettings.useMutation()
+  } = api.bot.updateBotSettings.useMutation({
+    onSuccess: async () => {
+      toast({
+        description: 'Update settings successfully',
+        scheme: 'success',
+      })
+      await onSuccess?.()
+    },
+    onError: () => {
+      toast({
+        description: 'Failed to update settings',
+        scheme: 'danger',
+      })
+      console.error(error)
+    },
+  })
 
   const form = useForm<BotSettingData>({
     resolver: zodResolver(schema),
@@ -79,23 +92,6 @@ const BotSettingForm = ({ defaultValues, onSuccess }: BotSettingFormProps) => {
 
     [reset],
   )
-
-  useAsyncEffect(async () => {
-    if (isSuccess) {
-      toast({
-        description: 'Update settings successfully',
-        scheme: 'success',
-      })
-      await onSuccess?.()
-    }
-    if (isError) {
-      toast({
-        description: 'Failed to update settings',
-        scheme: 'danger',
-      })
-      console.error(error)
-    }
-  }, [isSuccess, isError, error])
 
   const onSubmit = async (props: BotSettingData) => {
     const payload: BotSettingData = {

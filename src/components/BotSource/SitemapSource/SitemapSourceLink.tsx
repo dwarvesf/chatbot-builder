@@ -1,4 +1,3 @@
-import { useAsyncEffect } from '@dwarvesf/react-hooks'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   Button,
@@ -43,33 +42,29 @@ export function SitemapSourceLink() {
   const {
     mutate: createBotSource,
     isPending,
-    isSuccess,
-    isError,
     error,
-  } = api.botSource.create.useMutation()
-
-  const { refetch: refreshSourceTable } = api.botSource.getByBotId.useQuery({
-    botId,
-    limit: 100,
-  })
-
-  useAsyncEffect(async () => {
-    if (isSuccess) {
+  } = api.botSource.create.useMutation({
+    onSuccess: async () => {
       toast({
         description: 'Created source from sitemap successfully',
         scheme: 'success',
       })
       await refreshSourceTable()
       reset()
-    }
-    if (isError) {
+    },
+    onError: () => {
       toast({
         description: 'Failed to import sitemap',
         scheme: 'danger',
       })
       console.error(error)
-    }
-  }, [isSuccess, isError, error])
+    },
+  })
+
+  const { refetch: refreshSourceTable } = api.botSource.getByBotId.useQuery({
+    botId,
+    limit: 100,
+  })
 
   return (
     <Card className="mx-auto space-y-4 shadow-input">
