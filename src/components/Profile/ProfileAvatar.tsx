@@ -16,7 +16,7 @@ export const ProfileAvatar = () => {
           <FormLabel>Avatar</FormLabel>
           <AvatarUploader
             description="Support jpeg, jpg, png format. Max 5MB"
-            maxSize={5}
+            maxSizeInMB={5}
             fileTypes={['jpeg', 'jpg', 'png']}
             image={avatar}
             onSuccess={(blob) => {

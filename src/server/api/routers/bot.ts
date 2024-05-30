@@ -1,7 +1,6 @@
 import { and, eq } from 'drizzle-orm'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
-import { WidgetName } from '~/components/BotAppearance/WidgetName'
 import { BotStatusEnum } from '~/model/bot'
 import { BotModelEnum } from '~/model/bot-model'
 import { UsageLimitTypeEnum } from '~/model/usage-limit-type'
@@ -129,24 +128,37 @@ export const botRouter = createTRPCRouter({
       return bot
     }),
 
-  updateBotApearance: protectedProcedure
+  updateBotAppearance: protectedProcedure
     .input(
       z.object({
+        companyLogoAttachmentId: z.string().nullable(),
+        botAvatarAttachmentId: z.string().nullable(),
         botId: z.string(),
         widgetName: z.string().min(1).max(50),
         widgetSubheading: z.string(),
         widgetPlaceholder: z.string(),
         widgetWelcomeMsg: z.string(),
+        accentColour: z.string(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      if (input.companyLogoAttachmentId === '') {
+        input.companyLogoAttachmentId = null
+      }
+      if (input.botAvatarAttachmentId === '') {
+        input.botAvatarAttachmentId = null
+      }
+
       const bot = await db
         .update(schema.bots)
         .set({
+          companyLogoAttachmentId: input.companyLogoAttachmentId,
+          botAvatarAttachmentId: input.botAvatarAttachmentId,
           widgetName: input.widgetName,
           widgetSubheading: input.widgetSubheading,
           widgetPlaceholder: input.widgetPlaceholder,
           widgetWelcomeMsg: input.widgetWelcomeMsg,
+          accentColour: input.accentColour,
           updatedAt: new Date(),
           updatedBy: ctx.session.user.id,
         })
