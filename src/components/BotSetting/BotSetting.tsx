@@ -3,13 +3,14 @@ import { useAsyncEffect } from '@dwarvesf/react-hooks'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Typography, useToast } from '@mochi-ui/core'
 import { useParams } from 'next/navigation'
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useMemo } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { BotModelEnum } from '~/model/bot-model'
 import { UsageLimitTypeEnum } from '~/model/usage-limit-type'
 import { api } from '~/utils/api'
 import { SaveBar } from '../SaveBar'
+import { FormSkeleton } from '../common/FormSkeleton'
 import { BotDescription } from './BotDescription'
 import { BotLimit } from './BotLimit'
 import { BotMessages } from './BotMessages'
@@ -30,7 +31,7 @@ export interface BotSettingData {
 const schema = z.object({
   botId: z.string(),
   name: z.string().min(1, 'Required').max(50, 'Max length is 50 characters.'),
-  description: z.string().max(500, 'Max length is 500 characters.').optional(),
+  description: z.string().max(500, 'Max length is 500 characters.'),
   noSourceWarningMsg: z.string().max(100, 'Max length is 100 characters.'),
   serverErrorMsg: z.string().max(100, 'Max length is 100 characters.'),
   userLimitWarningMsg: z.string().max(100, 'Max length is 100 characters.'),
@@ -39,9 +40,13 @@ const schema = z.object({
   usageLimitPerUserType: z.nativeEnum(UsageLimitTypeEnum),
 })
 
-export const BotSetting = () => {
+interface BotSettingFormProps {
+  defaultValues: BotSettingData
+  onSuccess?: () => Promise<any>
+}
+
+const BotSettingForm = ({ defaultValues, onSuccess }: BotSettingFormProps) => {
   const id = useParams()?.id
-  const isInitialData = useRef(false)
   const { toast } = useToast()
 
   const {
@@ -52,18 +57,15 @@ export const BotSetting = () => {
     isPending,
   } = api.bot.updateBotSettings.useMutation()
 
-  const { data: sources, refetch: refetchBotSettings } =
-    api.bot.getById.useQuery(id as string)
-
   const form = useForm<BotSettingData>({
     resolver: zodResolver(schema),
     mode: 'all',
+    defaultValues,
   })
 
   const {
     handleSubmit,
     reset,
-    getValues,
     formState: { isSubmitting, isDirty },
   } = form
 
@@ -78,30 +80,13 @@ export const BotSetting = () => {
     [reset],
   )
 
-  useEffect(() => {
-    if (sources && !isInitialData.current) {
-      isInitialData.current = true
-      reset({
-        botId: id as string,
-        name: sources.name!,
-        description: sources.description!,
-        noSourceWarningMsg: sources.noSourceWarningMsg!,
-        serverErrorMsg: sources.serverErrorMsg!,
-        userLimitWarningMsg: sources.userLimitWarningMsg!,
-        modelId: sources.modelId,
-        usageLimitPerUser: sources.usageLimitPerUser!,
-        usageLimitPerUserType: sources.usageLimitPerUserType!,
-      })
-    }
-  }, [sources])
-
   useAsyncEffect(async () => {
     if (isSuccess) {
       toast({
         description: 'Update settings successfully',
         scheme: 'success',
       })
-      await refetchBotSettings()
+      await onSuccess?.()
     }
     if (isError) {
       toast({
@@ -114,15 +99,8 @@ export const BotSetting = () => {
 
   const onSubmit = async (props: BotSettingData) => {
     const payload: BotSettingData = {
+      ...props,
       botId: id as string,
-      name: props.name,
-      description: props.description,
-      noSourceWarningMsg: props.noSourceWarningMsg,
-      serverErrorMsg: props.serverErrorMsg,
-      userLimitWarningMsg: props.userLimitWarningMsg,
-      modelId: props.modelId,
-      usageLimitPerUser: props.usageLimitPerUser,
-      usageLimitPerUserType: props.usageLimitPerUserType,
     }
 
     try {
@@ -169,5 +147,49 @@ export const BotSetting = () => {
         onCancel={() => reset()}
       />
     </FormProvider>
+  )
+}
+
+export const BotSetting = () => {
+  const id = useParams()?.id
+  const {
+    data: sources,
+    refetch: refetchBotSettings,
+    isPending,
+  } = api.bot.getById.useQuery(id as string)
+
+  const formDefaultValues = useMemo<BotSettingData | null>(() => {
+    if (!sources) {
+      return null
+    }
+
+    return {
+      botId: id as string,
+      name: sources.name ?? 'Dwarves Bot',
+      description: sources.description ?? '',
+      noSourceWarningMsg:
+        sources.noSourceWarningMsg ??
+        'The bot still needs to be trained, so please add the data and train it.',
+      serverErrorMsg:
+        sources.serverErrorMsg ??
+        'Apologies, there seems to be a server error.',
+      userLimitWarningMsg:
+        sources.userLimitWarningMsg ?? "You've reached the message limit.",
+      modelId: sources.modelId ?? BotModelEnum.GPT3,
+      usageLimitPerUser: sources.usageLimitPerUser ?? 50,
+      usageLimitPerUserType:
+        sources.usageLimitPerUserType ?? UsageLimitTypeEnum.PerDay,
+    }
+  }, [id, sources])
+
+  if (isPending || formDefaultValues === null) {
+    return <FormSkeleton />
+  }
+
+  return (
+    <BotSettingForm
+      defaultValues={formDefaultValues}
+      onSuccess={refetchBotSettings}
+    />
   )
 }
