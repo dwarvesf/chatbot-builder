@@ -86,6 +86,10 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
   const botQuery = api.bot.getById.useQuery(botId, {
     enabled: isBotPath,
   })
+
+  const { data: botLogo } = api.attachments.getById.useQuery(
+    botQuery?.data?.botAvatarAttachmentId as string,
+  )
   const profile = api.user.getUser.useQuery()
 
   const navItems = useMemo(
@@ -166,7 +170,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
                 href={ROUTES.BOT_DETAIL(botId)}
                 className="border-b px-8 h-[80px] flex items-center space-x-4"
               >
-                <Avatar src="" />
+                <Avatar src={botLogo?.cloudPath ?? ''} />
                 <Typography component="b" className="truncate">
                   {botQuery?.data?.name}
                 </Typography>

@@ -11,7 +11,7 @@ export const threadRouter = createTRPCRouter({
     .input(
       z.object({
         title: z.string().min(1).max(200),
-        firstMessage: z.string().default('Hey there! How can I help you?'),
+        firstMessage: z.string(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
