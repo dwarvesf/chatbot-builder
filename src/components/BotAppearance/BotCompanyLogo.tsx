@@ -1,4 +1,3 @@
-import { useAsyncEffect } from '@dwarvesf/react-hooks'
 import { FormControl, FormErrorMessage, FormLabel } from '@mochi-ui/core'
 import { useEffect, useState } from 'react'
 import { Controller, useFormContext } from 'react-hook-form'
@@ -13,43 +12,36 @@ interface Props {
 export const BotCompanyLogo = ({ companyLogoAttachmentId }: Props) => {
   const { control, setValue, reset } = useFormContext<BotAppearance>()
 
-  const {
-    mutate: createBlobURL,
-    error,
-    isSuccess,
-    isError,
-    data,
-  } = api.attachments.createBlobURL.useMutation()
-
-  const { data: sources, refetch: refetch } = api.attachments.getById.useQuery(
+  const { data: sources } = api.attachments.getById.useQuery(
     companyLogoAttachmentId,
+    {
+      enabled: companyLogoAttachmentId !== '',
+    },
   )
+
+  const { mutate: createBlobURL, error } =
+    api.attachments.createBlobURL.useMutation({
+      onSuccess: async (data) => {
+        if (data) {
+          companyLogoAttachmentId = data.attachmentId
+          setValue('companyLogoAttachmentId', data.attachmentId, {
+            shouldDirty: true,
+            shouldValidate: true,
+          })
+        }
+      },
+      onError: () => {
+        setValue('botAvatarAttachmentId', '')
+        setAvatar('')
+        console.log(error)
+      },
+    })
 
   const [avatar, setAvatar] = useState(sources?.cloudPath ?? '')
 
   useEffect(() => {
-    if (sources) {
-      setAvatar(sources.cloudPath ?? '')
-    } else {
-      setAvatar('')
-    }
+    sources ? setAvatar(sources.cloudPath ?? '') : setAvatar('')
   }, [sources, reset])
-
-  useAsyncEffect(async () => {
-    if (isSuccess) {
-      if (data) {
-        companyLogoAttachmentId = data.attachmentId
-        setValue('companyLogoAttachmentId', data.attachmentId, {
-          shouldDirty: true,
-          shouldValidate: true,
-        })
-      }
-      await refetch()
-    }
-    if (isError) {
-      console.error(error)
-    }
-  }, [isSuccess, isError, error])
 
   return (
     <Controller
@@ -58,19 +50,16 @@ export const BotCompanyLogo = ({ companyLogoAttachmentId }: Props) => {
       render={({ field, fieldState }) => (
         <FormControl error={!!fieldState.error} hideHelperTextOnError>
           <FormLabel>Bot Branding Logo</FormLabel>
-          <div>
-            <AvatarUploader
-              {...field}
-              description="Support jpeg, jpg, png format. Max 5MB"
-              maxSizeInMB={5}
-              fileTypes={['jpeg', 'jpg', 'png']}
-              image={avatar}
-              onSuccess={(blob) => {
-                createBlobURL({ cloudPath: blob.url })
-              }}
-              {...field}
-            />
-          </div>
+          <AvatarUploader
+            description="Support jpeg, jpg, png format. Max 5MB"
+            maxSizeInMB={5}
+            fileTypes={['jpeg', 'jpg', 'png']}
+            image={avatar}
+            onSuccess={(blob) => {
+              createBlobURL({ cloudPath: blob.url })
+            }}
+            {...field}
+          />
           <FormErrorMessage>{fieldState.error?.message}</FormErrorMessage>
         </FormControl>
       )}
