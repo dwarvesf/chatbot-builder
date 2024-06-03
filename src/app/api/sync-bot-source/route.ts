@@ -382,6 +382,7 @@ async function syncBotSourceFile(
 
     const fileURL = bs.url
 
+    console.log('Crawling bot source URL... ', bs.url)
     // Fetch file content
     const res = await fetch(fileURL)
     const sourcesText = await res.blob()
@@ -394,6 +395,8 @@ async function syncBotSourceFile(
 
     const docs = await loader.load()
     const splitter = new RecursiveCharacterTextSplitter({
+      chunkSize: 512,
+      chunkOverlap: 64,
       separators: [
         '\n\n',
         '\n',
