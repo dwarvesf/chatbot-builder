@@ -9,7 +9,6 @@ import {
 import { PaperplaneSolid, Spinner } from '@mochi-ui/icons'
 import clsx from 'clsx'
 import type { GetServerSideProps, NextPage } from 'next'
-import { useSession } from 'next-auth/react'
 import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
@@ -54,8 +53,14 @@ const ChatThread = (props: {
 
 const BotDetail: NextPage = () => {
   const { id } = useParams() ?? {}
-  const { data } = useSession()
-  const botQuery = api.bot.getById.useQuery(id as string)
+  const { data: profile } = api.user.getUser.useQuery()
+  const { data: sources } = api.bot.getById.useQuery(id as string)
+
+  /* eslint-disable  @typescript-eslint/no-non-null-assertion */
+  const { data: botLogoSources } = api.attachments.getById.useQuery(
+    sources?.botAvatarAttachmentId ?? '',
+  )
+
   const { data: botIntegration } = api.botIntegrationRouter.get.useQuery({
     botId: id as string,
   })
@@ -91,6 +96,8 @@ const BotDetail: NextPage = () => {
     if (!serverThread && apiToken) {
       createNewThread({
         title: 'Preview',
+        firstMessage:
+          sources?.widgetWelcomeMsg ?? 'Hey there! How can I help you?',
         apiToken: apiToken,
       })
     }
@@ -136,21 +143,27 @@ const BotDetail: NextPage = () => {
         <div className="border rounded-lg min-h-[calc(100dvh-240px)] bg-white relative">
           <div className="absolute top-0 flex items-center inset-x-0 border-b h-20 px-4">
             <div className="flex space-x-4">
-              <Avatar src="" />
+              <Avatar src={botLogoSources?.cloudPath ?? ''} />
               <div>
-                <Typography component="b">{botQuery.data?.name}</Typography>
-                <Typography level="p5">Bot description</Typography>
+                <Typography component="b">{sources?.widgetName}</Typography>
+                <Typography level="p5">{sources?.widgetSubheading}</Typography>
               </div>
             </div>
           </div>
           <div className="absolute inset-x-0 top-20 bottom-20 overflow-y-auto p-4 space-y-4">
             {!initialThreadPending && serverThread?.chat?.msg ? (
-              <ChatThread avatar="">{serverThread?.chat?.msg}</ChatThread>
+              <ChatThread avatar={botLogoSources?.cloudPath ?? ''}>
+                {serverThread?.chat?.msg}
+              </ChatThread>
             ) : null}
             {thread.map((item, index) => (
               <ChatThread
                 key={index}
-                avatar={item.isYou ? data?.user.image ?? '' : ''}
+                avatar={
+                  item.isYou
+                    ? profile?.image ?? ''
+                    : botLogoSources?.cloudPath ?? ''
+                }
                 isRight={item.isYou}
                 isError={item.isError}
               >
@@ -158,7 +171,7 @@ const BotDetail: NextPage = () => {
               </ChatThread>
             ))}
             {isPending || initialThreadPending || !serverThread ? (
-              <ChatThread avatar="">
+              <ChatThread avatar={botLogoSources?.cloudPath ?? ''}>
                 <Spinner className="mx-2" />
               </ChatThread>
             ) : null}
@@ -170,7 +183,7 @@ const BotDetail: NextPage = () => {
                 control={control}
                 render={({ field }) => (
                   <input
-                    placeholder="Send a message..."
+                    placeholder={sources?.widgetPlaceholder ?? ''}
                     className="h-20 w-full px-6 outline-none pr-10"
                     {...field}
                   />
