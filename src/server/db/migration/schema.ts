@@ -358,6 +358,7 @@ export const chats = createTable(
       .references(() => botModels.id),
     chatUserId: uuid('chat_user_id').references(() => users.id),
     parentChatId: uuid('parent_chat_id'),
+    prompt: text('prompt'),
     promptTokens: integer('promt_tokens'),
     completionTokens: integer('completion_tokens'),
     totalTokens: integer('total_tokens'),

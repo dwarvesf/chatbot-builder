@@ -110,8 +110,13 @@ function createChatHandler() {
         .returning()
 
       // Ask bot
-      const botRes = await askAI(bot, msg.message)
-      const resChoices = botRes?.choices?.filter(
+      const res = await askAI(bot, msg.message)
+      if (!res) {
+        throw new Error('Failed to ask AI')
+      }
+
+      const { prompt, completion } = res
+      const resChoices = completion?.choices?.filter(
         (c) => c?.message?.role === 'assistant',
       )
 
@@ -131,11 +136,12 @@ function createChatHandler() {
               parentChatId: chatId,
               threadId,
               msg: res.message.content,
-              promptTokens: isLastMsg ? botRes?.usage?.prompt_tokens : 0,
+              prompt,
+              promptTokens: isLastMsg ? completion?.usage?.prompt_tokens : 0,
               completionTokens: isLastMsg
-                ? botRes?.usage?.completion_tokens
+                ? completion?.usage?.completion_tokens
                 : 0,
-              totalTokens: isLastMsg ? botRes?.usage?.total_tokens : 0,
+              totalTokens: isLastMsg ? completion?.usage?.total_tokens : 0,
             })
             .returning()
           assistantMsgs.push(m)
@@ -145,7 +151,7 @@ function createChatHandler() {
       return {
         chat: c,
         assistants: assistantMsgs,
-        res: botRes,
+        res: completion,
       }
     })
 }
@@ -160,7 +166,7 @@ async function askAI(bot: { id: string; modelId: BotModelEnum }, msg: string) {
   console.log('Prompt:', prompt)
 
   // Ask gpt
-  const chatCompletion = await openai.chat.completions.create({
+  const completion = await openai.chat.completions.create({
     messages: [
       {
         role: 'user',
@@ -170,7 +176,7 @@ async function askAI(bot: { id: string; modelId: BotModelEnum }, msg: string) {
     model: getAIModel(bot.modelId),
   })
 
-  return chatCompletion
+  return { prompt, completion }
 }
 
 async function buildPrompt(botId: string, msg: string) {
