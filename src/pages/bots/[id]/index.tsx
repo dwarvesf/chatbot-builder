@@ -145,8 +145,8 @@ const BotDetail: NextPage = () => {
             <div className="flex space-x-4">
               <Avatar src={botLogoSources?.cloudPath ?? ''} />
               <div>
-                <Typography component="b">{sources?.name}</Typography>
-                <Typography level="p5">{sources?.description}</Typography>
+                <Typography component="b">{sources?.widgetName}</Typography>
+                <Typography level="p5">{sources?.widgetSubheading}</Typography>
               </div>
             </div>
           </div>
