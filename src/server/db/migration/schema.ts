@@ -193,6 +193,7 @@ export const bots = createTable(
     customization: text('customization'),
     noSourceWarningMsg: text('no_source_warning_message'),
     serverErrorMsg: text('server_error_message'),
+    noRelevantContextMsg: text('no_relevant_context_message'),
     usageLimitPerUser: integer('usage_limit_per_user'),
     usageLimitPerUserType: integer('usage_limit_per_user_type'),
     userLimitWarningMsg: text('user_limit_warning_msg'),

@@ -94,12 +94,13 @@ export const botRouter = createTRPCRouter({
         botId: z.string(),
         name: z.string().min(1),
         description: z.string(),
-        modelId: z.nativeEnum(BotModelEnum),
         noSourceWarningMsg: z.string(),
         serverErrorMsg: z.string(),
+        userLimitWarningMsg: z.string(),
+        noRelevantContextMsg: z.string(),
         usageLimitPerUser: z.number(),
         usageLimitPerUserType: z.nativeEnum(UsageLimitTypeEnum),
-        userLimitWarningMsg: z.string(),
+        modelId: z.nativeEnum(BotModelEnum),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -112,6 +113,7 @@ export const botRouter = createTRPCRouter({
           noSourceWarningMsg: input.noSourceWarningMsg,
           serverErrorMsg: input.serverErrorMsg,
           userLimitWarningMsg: input.userLimitWarningMsg,
+          noRelevantContextMsg: input.noRelevantContextMsg,
           usageLimitPerUser: input.usageLimitPerUser,
           usageLimitPerUserType: input.usageLimitPerUserType,
           updatedAt: new Date(),

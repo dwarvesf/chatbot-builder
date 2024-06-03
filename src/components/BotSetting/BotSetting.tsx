@@ -22,8 +22,9 @@ export interface BotSettingData {
   noSourceWarningMsg: string
   serverErrorMsg: string
   userLimitWarningMsg: string
-  modelId: BotModelEnum
+  noRelevantContextMsg: string
   usageLimitPerUser: number
+  modelId: BotModelEnum
   usageLimitPerUserType: UsageLimitTypeEnum
 }
 
@@ -34,6 +35,7 @@ const schema = z.object({
   noSourceWarningMsg: z.string().max(100, 'Max length is 100 characters.'),
   serverErrorMsg: z.string().max(100, 'Max length is 100 characters.'),
   userLimitWarningMsg: z.string().max(100, 'Max length is 100 characters.'),
+  noRelevantContextMsg: z.string().max(100, 'Max length is 100 characters.'),
   modelId: z.nativeEnum(BotModelEnum),
   usageLimitPerUser: z.coerce.number(),
   usageLimitPerUserType: z.nativeEnum(UsageLimitTypeEnum),
@@ -171,6 +173,8 @@ export const BotSetting = () => {
         'Apologies, there seems to be a server error.',
       userLimitWarningMsg:
         sources.userLimitWarningMsg ?? "You've reached the message limit.",
+      noRelevantContextMsg:
+        sources.noRelevantContextMsg ?? 'Feel free to ask again.',
       modelId: sources.modelId ?? BotModelEnum.GPT3,
       usageLimitPerUser: sources.usageLimitPerUser ?? 50,
       usageLimitPerUserType:
