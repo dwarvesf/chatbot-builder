@@ -29,69 +29,54 @@ export const AvatarUploader = (props: AvatarUploaderProps) => {
   const id = useId()
 
   useEffect(() => {
-    if (avatarProp) {
-      setAvatar(avatarProp)
-    } else {
-      setAvatar('')
-    }
+    avatarProp ? setAvatar(avatarProp) : setAvatar('')
   }, [avatarProp])
+
+  const validateFile = (file: File): string | null => {
+    if (file.size > 1024 * 1024 * maxSizeInMB) {
+      return `File size must be less than or equals to ${maxSizeInMB}MB`
+    }
+
+    const fileType = file.type.replace('image/', '')
+    if (!fileTypes.includes(fileType)) {
+      return `Only support file ${fileTypes.join(', ')}`
+    }
+
+    return null
+  }
 
   const handleImageChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    if (!event.target.files) {
-      return
-    }
+    const file = event.target.files?.[0]
+    if (!file) return
 
-    const file = event.target.files[0] ?? null
-
-    if (!file) {
+    const validationError = validateFile(file)
+    if (validationError) {
+      toast({ description: validationError, scheme: 'danger' })
       return
     }
 
     const newAvatar = URL.createObjectURL(file)
+    setIsLoading(true)
+    setAvatar(newAvatar)
 
-    if (file) {
-      if (file.size > 1024 * 1024 * maxSizeInMB) {
-        toast({
-          description: `File size must be less than or equals to ${maxSizeInMB}MB`,
-          scheme: 'danger',
-        })
-        return
+    try {
+      const newBlob = await upload(file.name, file, {
+        access: 'public',
+        handleUploadUrl: '/api/upload-file',
+      })
+
+      onSuccess(newBlob)
+    } catch (error: any) {
+      if (error instanceof BlobAccessError) {
+        setAvatar('')
+        toast({ description: 'Exceed file size limit', scheme: 'danger' })
+      } else {
+        setAvatar('')
+        toast({ description: error?.message ?? '', scheme: 'danger' })
       }
-
-      const fileType = file.type.replace('image/', '')
-
-      if (!fileTypes.includes(fileType)) {
-        toast({
-          description: `Only support file ${fileTypes.join(', ')}`,
-          scheme: 'danger',
-        })
-        return
-      }
-
-      setIsLoading(true)
-      setAvatar(newAvatar)
-
-      try {
-        const newBlob = await upload(file.name, file, {
-          access: 'public',
-          handleUploadUrl: '/api/upload-file',
-        })
-        onSuccess(newBlob)
-      } catch (error: any) {
-        if (error instanceof BlobAccessError) {
-          toast({
-            description: 'Exceed file size limit',
-            scheme: 'danger',
-          })
-        } else {
-          toast({
-            description: error?.message ?? '',
-            scheme: 'danger',
-          })
-        }
-      }
+    } finally {
       setIsLoading(false)
     }
   }

@@ -1,4 +1,3 @@
-import { useAsyncEffect } from '@dwarvesf/react-hooks'
 import { FormControl, FormErrorMessage, FormLabel } from '@mochi-ui/core'
 import { useEffect, useState } from 'react'
 import { Controller, useFormContext } from 'react-hook-form'
@@ -12,44 +11,36 @@ interface Props {
 
 export const BotAvatarWidget = ({ botAvatarAttachmentId }: Props) => {
   const { control, setValue, reset } = useFormContext<BotAppearance>()
-
-  const {
-    mutate: createBlobURL,
-    error,
-    isSuccess,
-    isError,
-    data,
-  } = api.attachments.createBlobURL.useMutation()
-
-  const { data: sources, refetch: refetch } = api.attachments.getById.useQuery(
+  const { data: sources } = api.attachments.getById.useQuery(
     botAvatarAttachmentId,
+    {
+      enabled: botAvatarAttachmentId !== '',
+    },
   )
+
+  const { mutate: createBlobURL, error } =
+    api.attachments.createBlobURL.useMutation({
+      onSuccess: async (data) => {
+        if (data) {
+          botAvatarAttachmentId = data.attachmentId
+          setValue('botAvatarAttachmentId', data.attachmentId, {
+            shouldDirty: true,
+            shouldValidate: true,
+          })
+        }
+      },
+      onError: () => {
+        setValue('botAvatarAttachmentId', '')
+        setAvatar('')
+        console.log(error)
+      },
+    })
 
   const [avatar, setAvatar] = useState(sources?.cloudPath ?? '')
 
   useEffect(() => {
-    if (sources) {
-      setAvatar(sources.cloudPath ?? '')
-    } else {
-      setAvatar('')
-    }
+    sources ? setAvatar(sources.cloudPath ?? '') : setAvatar('')
   }, [sources, reset])
-
-  useAsyncEffect(async () => {
-    if (isSuccess) {
-      if (data) {
-        botAvatarAttachmentId = data.attachmentId
-        setValue('botAvatarAttachmentId', data.attachmentId, {
-          shouldDirty: true,
-          shouldValidate: true,
-        })
-      }
-      await refetch()
-    }
-    if (isError) {
-      console.error(error)
-    }
-  }, [isSuccess, isError, error])
 
   return (
     <Controller
