@@ -1,12 +1,12 @@
 import {
   FormControl,
   FormErrorMessage,
+  FormLabel,
   TextFieldInput,
   TextFieldRoot,
-  FormLabel,
 } from '@mochi-ui/core'
-import { type BotSettingData } from './BotSetting'
 import { Controller, useFormContext } from 'react-hook-form'
+import { type BotSettingData } from './BotSetting'
 
 export const BotMessages = () => {
   const { control } = useFormContext<BotSettingData>()
@@ -32,6 +32,19 @@ export const BotMessages = () => {
         render={({ field, fieldState }) => (
           <FormControl error={!!fieldState.error} hideHelperTextOnError>
             <FormLabel>Message shown when there is a Server Error</FormLabel>
+            <TextFieldRoot>
+              <TextFieldInput {...field} />
+            </TextFieldRoot>
+            <FormErrorMessage>{fieldState.error?.message}</FormErrorMessage>
+          </FormControl>
+        )}
+      />
+      <Controller
+        name="noRelevantContextMsg"
+        control={control}
+        render={({ field, fieldState }) => (
+          <FormControl error={!!fieldState.error} hideHelperTextOnError>
+            <FormLabel>Message shown when there is no knowledge</FormLabel>
             <TextFieldRoot>
               <TextFieldInput {...field} />
             </TextFieldRoot>
