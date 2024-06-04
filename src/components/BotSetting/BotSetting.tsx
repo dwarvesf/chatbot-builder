@@ -174,7 +174,8 @@ export const BotSetting = () => {
       userLimitWarningMsg:
         sources.userLimitWarningMsg ?? "You've reached the message limit.",
       noRelevantContextMsg:
-        sources.noRelevantContextMsg ?? 'Feel free to ask again.',
+        sources.noRelevantContextMsg ??
+        'No context is relevant to your question. Feel free to ask again.',
       modelId: sources.modelId ?? BotModelEnum.GPT3,
       usageLimitPerUser: sources.usageLimitPerUser ?? 50,
       usageLimitPerUserType:
