@@ -66,6 +66,7 @@ function createChatHandler() {
         .select({
           id: schema.bots.id,
           modelId: schema.bots.modelId,
+          noRelevantContextMsg: schema.bots.noRelevantContextMsg,
           usageLimitPerUserType: schema.bots.usageLimitPerUserType,
           usageLimitPerUser: schema.bots.usageLimitPerUser,
         })
@@ -74,6 +75,11 @@ function createChatHandler() {
       const bot = rows.length ? rows[0] : null
       if (!bot) {
         throw new Error('Bot not found')
+      }
+
+      if (!bot.noRelevantContextMsg) {
+        bot.noRelevantContextMsg =
+          'No context is relevant to your question. Feel free to ask again.'
       }
 
       const thread = await db.query.threads.findFirst({
@@ -109,61 +115,95 @@ function createChatHandler() {
         })
         .returning()
 
-      // Ask bot
-      const res = await askAI(bot, msg.message)
-      if (!res) {
-        throw new Error('Failed to ask AI')
-      }
+      const context = await getRelatedContexts(bot.id, msg.message)
 
-      const { prompt, completion } = res
-      const resChoices = completion?.choices?.filter(
-        (c) => c?.message?.role === 'assistant',
-      )
-
-      // Save bot response
       const assistantMsgs = []
-      if (resChoices?.length) {
-        for (const res of resChoices) {
-          const isLastMsg = res === resChoices[resChoices.length - 1]
 
-          const resId = uuidv7()
-          const m = await db
-            .insert(schema.chats)
-            .values({
-              id: resId,
-              botModelId: bot.modelId,
-              roleId: ChatRoleEnum.Assistant,
-              parentChatId: chatId,
-              threadId,
-              msg: res.message.content,
-              prompt,
-              promptTokens: isLastMsg ? completion?.usage?.prompt_tokens : 0,
-              completionTokens: isLastMsg
-                ? completion?.usage?.completion_tokens
-                : 0,
-              totalTokens: isLastMsg ? completion?.usage?.total_tokens : 0,
-            })
-            .returning()
-          assistantMsgs.push(m)
+      if (context.length > 0) {
+        // Build prompt
+        const prompt = await buildPrompt(context, msg.message)
+        console.log('Prompt:', prompt)
+
+        // Ask bot
+        const res = await askAI(bot, msg.message)
+        if (!res) {
+          throw new Error('Failed to ask AI')
         }
-      }
 
-      return {
-        chat: c,
-        assistants: assistantMsgs,
-        res: completion,
+        const { completion } = res
+
+        const resChoices = completion?.choices?.filter(
+          (c) => c?.message?.role === 'assistant',
+        )
+
+        // Save bot response
+        if (resChoices?.length) {
+          for (const res of resChoices) {
+            const isLastMsg = res === resChoices[resChoices.length - 1]
+
+            const resId = uuidv7()
+            const m = await db
+              .insert(schema.chats)
+              .values({
+                id: resId,
+                botModelId: bot.modelId,
+                roleId: ChatRoleEnum.Assistant,
+                parentChatId: chatId,
+                threadId,
+                msg: res.message.content,
+                prompt,
+                promptTokens: isLastMsg ? completion?.usage?.prompt_tokens : 0,
+                completionTokens: isLastMsg
+                  ? completion?.usage?.completion_tokens
+                  : 0,
+                totalTokens: isLastMsg ? completion?.usage?.total_tokens : 0,
+              })
+              .returning()
+            assistantMsgs.push(m)
+          }
+        }
+
+        return {
+          chat: c,
+          assistants: assistantMsgs,
+          res: completion,
+        }
+      } else {
+        console.log('Context: No relevant context')
+        const resId = uuidv7()
+        const m = await db
+          .insert(schema.chats)
+          .values({
+            id: resId,
+            botModelId: bot.modelId,
+            roleId: ChatRoleEnum.Assistant,
+            parentChatId: chatId,
+            threadId,
+            msg: bot.noRelevantContextMsg,
+            prompt: null,
+            promptTokens: 0,
+            completionTokens: 0,
+            totalTokens: 0,
+          })
+          .returning()
+        assistantMsgs.push(m)
+
+        return {
+          chat: c,
+          assistants: assistantMsgs,
+          res: null,
+        }
       }
     })
 }
 
-async function askAI(bot: { id: string; modelId: BotModelEnum }, msg: string) {
-  if (!bot) {
+async function askAI(
+  bot: { id: string; modelId: BotModelEnum },
+  prompt: string,
+) {
+  if (!bot || !prompt) {
     return
   }
-
-  // Build prompt
-  const prompt = await buildPrompt(bot.id, msg)
-  console.log('Prompt:', prompt)
 
   // Ask gpt
   const completion = await openai.chat.completions.create({
@@ -176,10 +216,10 @@ async function askAI(bot: { id: string; modelId: BotModelEnum }, msg: string) {
     model: getAIModel(bot.modelId),
   })
 
-  return { prompt, completion }
+  return { completion }
 }
 
-async function buildPrompt(botId: string, msg: string) {
+async function getRelatedContexts(botId: string, msg: string) {
   const msgVectors = await getEmbeddingsFromContents([msg])
   if (!msgVectors?.length) {
     throw new Error('Failed to get embeddings')
@@ -191,7 +231,7 @@ async function buildPrompt(botId: string, msg: string) {
   }
 
   // Get similar sources
-  const rows = await db
+  const contexts = await db
     .select({
       content: schema.botSourceExtractedDataVector.content,
       // vectors: schema.botSourceExtractedDataVector.vector,
@@ -219,12 +259,19 @@ async function buildPrompt(botId: string, msg: string) {
     .orderBy(sql`distance ASC`)
     .limit(Number(env.CLOSEST_CHUNKS_COUNT_FOR_CHAT_CONTEXT))
 
-  // console.log('Similar sources:', rows)
-  // TODO: Handle if no context found
+  return contexts
+}
 
-  const contents = rows.map((row) => row.content).filter((c) => !!c)
+async function buildPrompt(
+  context: {
+    content: string | null
+    distance: unknown
+  }[],
+  message: string,
+) {
+  const contents = context.map((row) => row.content).filter((c) => !!c)
+  const prompt = `Question: ${message} \n\n Context: ${contents.join('\n')}`
 
-  const prompt = `Question: ${msg} \n\nContext: ${contents.join('\n')}`
   return prompt
 }
 
