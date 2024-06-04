@@ -56,9 +56,14 @@ const BotDetail: NextPage = () => {
   const { data: profile } = api.user.getUser.useQuery()
   const { data: sources } = api.bot.getById.useQuery(id as string)
 
-  /* eslint-disable  @typescript-eslint/no-non-null-assertion */
   const { data: botLogoSources } = api.attachments.getById.useQuery(
     sources?.botAvatarAttachmentId ?? '',
+    {
+      enabled:
+        sources?.botAvatarAttachmentId !== undefined &&
+        sources?.botAvatarAttachmentId !== null &&
+        sources?.botAvatarAttachmentId !== '',
+    },
   )
 
   const { data: botIntegration } = api.botIntegrationRouter.get.useQuery({
