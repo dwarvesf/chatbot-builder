@@ -394,22 +394,24 @@ async function syncBotSourceFile(
     }
 
     const docs = await loader.load()
+    const separators = [
+      ' ',
+      '\n',
+      ',',
+      '.',
+      '-',
+      '\u2022', // Bullet point
+      '\u200b', // Zero-width space
+      '\uff0c', // Fullwidth comma
+      '\u3001', // Ideographic comma
+      '\uff0e', // Fullwidth full stop
+      '\u3002', // Ideographic full stop
+    ]
+
     const splitter = new RecursiveCharacterTextSplitter({
       chunkSize: 512,
       chunkOverlap: 64,
-      separators: [
-        '\n\n',
-        '\n',
-        ' ',
-        '.',
-        ',',
-        '\u200b', // Zero-width space
-        '\uff0c', // Fullwidth comma
-        '\u3001', // Ideographic comma
-        '\uff0e', // Fullwidth full stop
-        '\u3002', // Ideographic full stop
-        '',
-      ],
+      separators: separators,
     })
 
     const contents = await splitter.splitDocuments(docs)
