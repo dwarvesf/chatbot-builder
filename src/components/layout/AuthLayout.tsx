@@ -90,7 +90,10 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
   const { data: botLogo } = api.attachments.getById.useQuery(
     botQuery?.data?.botAvatarAttachmentId as string,
     {
-      enabled: botQuery?.data?.botAvatarAttachmentId !== undefined,
+      enabled:
+        botQuery?.data?.botAvatarAttachmentId !== undefined &&
+        botQuery?.data?.botAvatarAttachmentId !== null &&
+        botQuery?.data?.botAvatarAttachmentId !== '',
     },
   )
   const profile = api.user.getUser.useQuery()
