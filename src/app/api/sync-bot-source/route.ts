@@ -19,7 +19,7 @@ import scrapeURL from '~/server/gateway/firecrawl'
 import getEmbeddingsFromContents from '~/server/gateway/openai/embedding'
 import { chunkMarkdown } from '~/server/lib/chunking/markdown'
 
-export const maxDuration = Number(env.MAX_CRON_DURATION) // This function can run for a maximum of 300 seconds
+export const maxDuration = 60 // This function can run for a maximum of 300 seconds on Pro plan, 60s on free plan
 export const dynamic = 'force-dynamic' // static by default, unless reading the request
 
 export async function POST(req: Request) {
