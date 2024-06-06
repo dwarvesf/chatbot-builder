@@ -1,10 +1,15 @@
 import { and, eq } from 'drizzle-orm'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
+import { type BotAppearance } from '~/components/BotAppearance'
 import { BotStatusEnum } from '~/model/bot'
 import { BotModelEnum } from '~/model/bot-model'
 import { UsageLimitTypeEnum } from '~/model/usage-limit-type'
-import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
+import {
+  createTRPCRouter,
+  integrationProcedure,
+  protectedProcedure,
+} from '~/server/api/trpc'
 import { db } from '~/server/db'
 import * as schema from '~/server/db/migration/schema'
 
@@ -186,6 +191,30 @@ export const botRouter = createTRPCRouter({
       })
       return bot
     }),
+
+  getBotAppearanceSettingByApiToken: integrationProcedure.query(
+    async ({ ctx }) => {
+      const sources = await db.query.bots.findFirst({
+        where: eq(schema.bots.id, ctx.session.botId),
+      })
+
+      const data: BotAppearance = {
+        botId: ctx.session.botId,
+        companyLogoAttachmentId: sources?.companyLogoAttachmentId ?? '',
+        botAvatarAttachmentId: sources?.botAvatarAttachmentId ?? '',
+        widgetName: sources?.widgetName ?? 'Dwarves Bot',
+        widgetSubheading:
+          sources?.widgetSubheading ?? 'Our bot answers instantly',
+        widgetPlaceholder: sources?.widgetPlaceholder ?? 'Send a message...',
+        widgetWelcomeMsg:
+          sources?.widgetWelcomeMsg ?? 'Hey there, how can I help you',
+        accentColour: sources?.accentColour ?? '#ffffff',
+      }
+      return {
+        data,
+      }
+    },
+  ),
 
   getList: protectedProcedure.query(async ({ ctx }) => {
     const bots = await db.query.bots.findMany({
