@@ -115,13 +115,13 @@ function createChatHandler() {
         })
         .returning()
 
-      const context = await getRelatedContexts(bot.id, msg.message)
+      const contexts = await getRelatedContexts(bot.id, msg.message)
 
       const assistantMsgs = []
 
-      if (context.length > 0) {
+      if (contexts.length > 0) {
         // Build prompt
-        const prompt = await buildPrompt(context, msg.message)
+        const prompt = await buildPrompt(contexts, msg.message)
         console.log('Prompt:', prompt)
 
         // Ask bot
