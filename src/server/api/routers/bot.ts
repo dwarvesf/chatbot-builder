@@ -195,6 +195,15 @@ export const botRouter = createTRPCRouter({
   getBotAppearanceSettingByApiToken: integrationProcedure.query(
     async ({ ctx }) => {
       const source = await db.query.bots.findFirst({
+        columns: {
+          companyLogoAttachmentId: true,
+          botAvatarAttachmentId: true,
+          widgetName: true,
+          widgetSubheading: true,
+          widgetPlaceholder: true,
+          widgetWelcomeMsg: true,
+          accentColour: true,
+        },
         where: eq(schema.bots.id, ctx.session.botId),
       })
 
