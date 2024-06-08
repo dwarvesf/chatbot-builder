@@ -1,7 +1,6 @@
 import { and, eq } from 'drizzle-orm'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
-import { type BotAppearance } from '~/components/BotAppearance'
 import { BotStatusEnum } from '~/model/bot'
 import { BotModelEnum } from '~/model/bot-model'
 import { UsageLimitTypeEnum } from '~/model/usage-limit-type'
@@ -207,20 +206,8 @@ export const botRouter = createTRPCRouter({
         where: eq(schema.bots.id, ctx.session.botId),
       })
 
-      const data: BotAppearance = {
-        botId: ctx.session.botId,
-        companyLogoAttachmentId: source?.companyLogoAttachmentId ?? '',
-        botAvatarAttachmentId: source?.botAvatarAttachmentId ?? '',
-        widgetName: source?.widgetName ?? 'Dwarves Bot',
-        widgetSubheading:
-          source?.widgetSubheading ?? 'Our bot answers instantly',
-        widgetPlaceholder: source?.widgetPlaceholder ?? 'Send a message...',
-        widgetWelcomeMsg:
-          source?.widgetWelcomeMsg ?? 'Hey there, how can I help you',
-        accentColour: source?.accentColour ?? '#ffffff',
-      }
       return {
-        data,
+        source,
       }
     },
   ),
