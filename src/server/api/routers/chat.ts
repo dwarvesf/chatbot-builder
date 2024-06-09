@@ -4,6 +4,7 @@ import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
 import { env } from '~/env'
 import { BotModelEnum } from '~/model/bot-model'
+import { BotSourceTypeEnum } from '~/model/bot-source-type'
 import { ChatRoleEnum } from '~/model/chat'
 import { UsageLimitTypeEnum } from '~/model/usage-limit-type'
 import { db } from '~/server/db'
@@ -134,13 +135,23 @@ function createChatHandler() {
           contexts.map((row) => row.referLinks),
         )
 
-        const referSourcesLinks: string[] = contexts
-          .map((row) => row.referLinks)
-          .filter((c): c is string => c !== null)
+        const sourceLinks: string[] = []
 
-        const formatSourcesLinks = referSourcesLinks
-          .filter((url) => !/\.(pdf|docx|txt)$/i.test(url)) // filter all the link have extension is file
-          .filter((value, index) => referSourcesLinks.indexOf(value) === index) // filter duplicate link
+        contexts.forEach((context) => {
+          if (context.sourceType === Number(BotSourceTypeEnum.File)) {
+            return
+          }
+
+          if (!context.referLinks) {
+            return
+          }
+
+          sourceLinks.push(context.referLinks)
+        })
+
+        const formatSourceLinks = sourceLinks.filter(
+          (value, index) => sourceLinks.indexOf(value) === index, // filter duplicate link
+        )
 
         const { completion } = res
 
@@ -178,7 +189,7 @@ function createChatHandler() {
         return {
           chat: c,
           assistants: assistantMsgs,
-          referSourceLinks: formatSourcesLinks,
+          referSourceLinks: formatSourceLinks,
           res: completion,
         }
       } else {
@@ -250,6 +261,7 @@ async function getRelatedContexts(botId: string, msg: string) {
     .select({
       content: schema.botSourceExtractedDataVector.content,
       referLinks: schema.botSources.url,
+      sourceType: schema.botSources.typeId,
       // vectors: schema.botSourceExtractedDataVector.vector,
       distance: sql`vector <=> ${'[' + msgEmbeddings.join(', ') + ']'} as distance`,
     })
