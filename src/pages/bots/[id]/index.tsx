@@ -60,6 +60,7 @@ const ChatThread = (props: {
                         className="text-blue-600 font-bold"
                         href={link ?? ''}
                         target="_blank"
+                        rel="noopener noreferrer"
                       >
                         {link}
                       </a>
