@@ -116,7 +116,7 @@ async function syncBotSourceSitemapFile(
         botId: bs.botId,
         typeId: BotSourceTypeEnum.SitemapChildUrl,
         url,
-        statusId: BotSourceStatusEnum.Created,
+        statusId: BotSourceStatusEnum.Pending,
         createdAt: new Date(),
         createdBy: bs.createdBy,
       })
@@ -168,7 +168,7 @@ async function syncBotSourceSitemap(
         botId: bs.botId,
         typeId: BotSourceTypeEnum.SitemapChildUrl,
         url,
-        statusId: BotSourceStatusEnum.Created,
+        statusId: BotSourceStatusEnum.Pending,
         createdAt: new Date(),
         createdBy: bs.createdBy,
       })
@@ -272,7 +272,7 @@ async function syncBotSourceURL(
 
   try {
     if (
-      bs.statusId !== BotSourceStatusEnum.Created &&
+      bs.statusId !== BotSourceStatusEnum.Pending &&
       bs.statusId !== BotSourceStatusEnum.Failed
     ) {
       throw new Error('Invalid bot source status')
@@ -364,7 +364,7 @@ async function saveEmbeddings(
 async function syncBotSourceFile(
   bs: InferSelectModel<typeof schema.botSources>,
 ) {
-  if (bs.statusId !== BotSourceStatusEnum.Created) {
+  if (bs.statusId !== BotSourceStatusEnum.Pending) {
     throw new Error('Invalid bot source status')
   }
 

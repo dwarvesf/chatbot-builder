@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm'
 import { db } from '~/server/db'
 import * as schema from './schema'
 
@@ -6,14 +7,19 @@ console.log('Seeding database...')
 await db
   .insert(schema.botSourceStatuses)
   .values([
-    { id: 1, name: 'Created', createdAt: new Date() },
+    { id: 1, name: 'Pending', createdAt: new Date() },
     { id: 2, name: 'In Progress', createdAt: new Date() },
     { id: 3, name: 'Completed', createdAt: new Date() },
     { id: 4, name: 'Failed', createdAt: new Date() },
     { id: 5, name: 'Crawling', createdAt: new Date() },
     { id: 6, name: 'Embedding', createdAt: new Date() },
   ])
-  .onConflictDoNothing()
+  .onConflictDoUpdate({
+    target: schema.botSourceStatuses.id,
+    set: {
+      name: sql`excluded.name`,
+    },
+  })
 
 await db
   .insert(schema.botSourceTypes)

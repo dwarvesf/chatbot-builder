@@ -199,7 +199,7 @@ function createBotSourceHandler() {
           ...input,
           id: uuidv7(),
           createdBy: ctx.session.user.id,
-          statusId: BotSourceStatusEnum.Created,
+          statusId: BotSourceStatusEnum.Pending,
           createdAt: new Date(),
         })
         .returning()
@@ -238,7 +238,7 @@ function createLinkBotSourceBulkHandler() {
             typeId: BotSourceTypeEnum.Link,
             url,
             createdBy: ctx.session.user.id,
-            statusId: BotSourceStatusEnum.Created,
+            statusId: BotSourceStatusEnum.Pending,
             createdAt: new Date(),
           })),
         )
@@ -327,7 +327,7 @@ async function cleanBotSourceData(bsId: string, repo = db) {
   // Reset status
   await repo
     .update(schema.botSources)
-    .set({ statusId: BotSourceStatusEnum.Created })
+    .set({ statusId: BotSourceStatusEnum.Pending })
     .where(eq(schema.botSources.id, bsId))
 }
 
