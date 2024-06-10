@@ -4,7 +4,11 @@ import { z } from 'zod'
 import { BotStatusEnum } from '~/model/bot'
 import { BotModelEnum } from '~/model/bot-model'
 import { UsageLimitTypeEnum } from '~/model/usage-limit-type'
-import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
+import {
+  createTRPCRouter,
+  integrationProcedure,
+  protectedProcedure,
+} from '~/server/api/trpc'
 import { db } from '~/server/db'
 import * as schema from '~/server/db/migration/schema'
 
@@ -186,6 +190,27 @@ export const botRouter = createTRPCRouter({
       })
       return bot
     }),
+
+  getBotAppearanceSettingByApiToken: integrationProcedure.query(
+    async ({ ctx }) => {
+      const source = await db.query.bots.findFirst({
+        columns: {
+          companyLogoAttachmentId: true,
+          botAvatarAttachmentId: true,
+          widgetName: true,
+          widgetSubheading: true,
+          widgetPlaceholder: true,
+          widgetWelcomeMsg: true,
+          accentColour: true,
+        },
+        where: eq(schema.bots.id, ctx.session.botId),
+      })
+
+      return {
+        source,
+      }
+    },
+  ),
 
   getList: protectedProcedure.query(async ({ ctx }) => {
     const bots = await db.query.bots.findMany({
