@@ -1,4 +1,5 @@
 import { and, desc, eq, gte, sql } from 'drizzle-orm'
+import lodash from 'lodash'
 import OpenAI from 'openai'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
@@ -149,9 +150,7 @@ function createChatHandler() {
           sourceLinks.push(context.referLinks)
         })
 
-        const formatSourceLinks = sourceLinks.filter(
-          (value, index) => sourceLinks.indexOf(value) === index, // filter duplicate link
-        )
+        const formatSourceLinks = lodash.uniq(sourceLinks) // filter duplicate link
 
         const { completion } = res
 
