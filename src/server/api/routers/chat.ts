@@ -1,9 +1,11 @@
 import { and, desc, eq, gte, sql } from 'drizzle-orm'
+import lodash from 'lodash'
 import OpenAI from 'openai'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
 import { env } from '~/env'
 import { BotModelEnum } from '~/model/bot-model'
+import { BotSourceTypeEnum } from '~/model/bot-source-type'
 import { ChatRoleEnum } from '~/model/chat'
 import { UsageLimitTypeEnum } from '~/model/usage-limit-type'
 import { db } from '~/server/db'
@@ -116,7 +118,6 @@ function createChatHandler() {
         .returning()
 
       const contexts = await getRelatedContexts(bot.id, msg.message)
-
       const assistantMsgs = []
 
       if (contexts.length > 0) {
@@ -129,6 +130,27 @@ function createChatHandler() {
         if (!res) {
           throw new Error('Failed to ask AI')
         }
+
+        console.log(
+          'Refer Links:',
+          contexts.map((row) => row.referLinks),
+        )
+
+        const sourceLinks: string[] = []
+
+        contexts.forEach((context) => {
+          if (context.sourceType === Number(BotSourceTypeEnum.File)) {
+            return
+          }
+
+          if (!context.referLinks) {
+            return
+          }
+
+          sourceLinks.push(context.referLinks)
+        })
+
+        const formatSourceLinks = lodash.uniq(sourceLinks) // filter duplicate link
 
         const { completion } = res
 
@@ -159,17 +181,19 @@ function createChatHandler() {
                 totalTokens: isLastMsg ? completion?.usage?.total_tokens : 0,
               })
               .returning()
+
             assistantMsgs.push(m)
           }
         }
-
         return {
           chat: c,
           assistants: assistantMsgs,
+          referSourceLinks: formatSourceLinks,
           res: completion,
         }
       } else {
         console.log('Context: No relevant context')
+
         const resId = uuidv7()
         const m = await db
           .insert(schema.chats)
@@ -191,6 +215,7 @@ function createChatHandler() {
         return {
           chat: c,
           assistants: assistantMsgs,
+          referSourceLinks: null,
           res: null,
         }
       }
@@ -234,6 +259,8 @@ async function getRelatedContexts(botId: string, msg: string) {
   const contexts = await db
     .select({
       content: schema.botSourceExtractedDataVector.content,
+      referLinks: schema.botSources.url,
+      sourceType: schema.botSources.typeId,
       // vectors: schema.botSourceExtractedDataVector.vector,
       distance: sql`vector <=> ${'[' + msgEmbeddings.join(', ') + ']'} as distance`,
     })

@@ -4,6 +4,7 @@ import {
   PageContent,
   PageHeader,
   PageHeaderTitle,
+  Separator,
   Typography,
 } from '@mochi-ui/core'
 import { PaperplaneSolid, Spinner } from '@mochi-ui/icons'
@@ -18,18 +19,20 @@ import { getServerAuthSession } from '~/server/auth'
 import { api } from '~/utils/api'
 
 interface ThreadItem {
+  sourcesLinks?: string[] | null
   message: string
   isYou: boolean
   isError?: boolean
 }
 
 const ChatThread = (props: {
+  sourcesLinks?: string[] | null
   avatar?: string
   children: React.ReactNode
   isRight?: boolean
   isError?: boolean
 }) => {
-  const { avatar, children, isRight, isError = false } = props
+  const { sourcesLinks, avatar, children, isRight, isError = false } = props
 
   return (
     <div className={clsx('flex', { 'justify-end': isRight })}>
@@ -45,6 +48,25 @@ const ChatThread = (props: {
           })}
         >
           {children}
+          <div>
+            {!isRight && sourcesLinks?.length && sourcesLinks !== null ? (
+              <>
+                <Separator className="my-4" />
+                Sources:
+                <ul className="list-disc px-8">
+                  {sourcesLinks?.map((link) => (
+                    <li key={link}>
+                      <a className="text-blue-600 font-bold" href={link ?? ''}>
+                        {link}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <></>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -93,8 +115,13 @@ const BotDetail: NextPage = () => {
 
   const [thread, setThread] = useState<ThreadItem[]>([])
 
-  const addNewMessage = (message: string, isYou = false, isError = false) => {
-    setThread((prev) => [...prev, { message, isYou, isError }])
+  const addNewMessage = (
+    sourcesLinks: string[] | null,
+    message: string,
+    isYou = false,
+    isError = false,
+  ) => {
+    setThread((prev) => [...prev, { sourcesLinks, message, isYou, isError }])
   }
 
   useEffect(() => {
@@ -110,13 +137,17 @@ const BotDetail: NextPage = () => {
 
   useEffect(() => {
     if (chatData) {
-      addNewMessage(chatData.assistants?.[0]?.[0]?.msg ?? '', false)
+      addNewMessage(
+        chatData.referSourceLinks ?? null,
+        chatData.assistants?.[0]?.[0]?.msg ?? '',
+        false,
+      )
     }
   }, [JSON.stringify(chatData)])
 
   useEffect(() => {
     if (chatError) {
-      addNewMessage(chatError.message, false, true)
+      addNewMessage(null, chatError.message, false, true)
     }
   }, [chatError])
 
@@ -131,7 +162,7 @@ const BotDetail: NextPage = () => {
         apiToken,
         threadId: serverThread?.thread?.id ?? '',
       })
-      addNewMessage(data.message, true)
+      addNewMessage(null, data.message, true)
       reset()
     } catch (error) {
       console.log(error)
@@ -171,6 +202,7 @@ const BotDetail: NextPage = () => {
                 }
                 isRight={item.isYou}
                 isError={item.isError}
+                sourcesLinks={item.sourcesLinks}
               >
                 {item.message}
               </ChatThread>
