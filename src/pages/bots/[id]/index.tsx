@@ -56,7 +56,11 @@ const ChatThread = (props: {
                 <ul className="list-disc px-8">
                   {sourcesLinks?.map((link) => (
                     <li key={link}>
-                      <a className="text-blue-600 font-bold" href={link ?? ''}>
+                      <a
+                        className="text-blue-600 font-bold"
+                        href={link ?? ''}
+                        target="_blank"
+                      >
                         {link}
                       </a>
                     </li>
