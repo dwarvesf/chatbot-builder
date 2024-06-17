@@ -379,6 +379,37 @@ export const chats = createTable(
   }),
 )
 
+export const chat_feedback = createTable(
+  'chat_feedback',
+  {
+    id: uuid('id').notNull().primaryKey(),
+    chatId: uuid('chat_id')
+      .notNull()
+      .references(() => chats.id),
+    typeId: integer('feedback_type').notNull(),
+    notes: text('notes'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    createdBy: uuid('created_by').references(() => users.id),
+    updatedAt: timestamp('updated_at'),
+    updatedBy: uuid('updated_by').references(() => users.id),
+  },
+  (chat_feedback) => ({
+    botIdIdx: index('chat_feedback_id_idx').on(chat_feedback.chatId),
+    typeIdIdx: index('feedback_type_id_idx').on(chat_feedback.typeId),
+  }),
+)
+
+export const feedback_type = createTable(
+  'feedback_type',
+  {
+    id: integer('id').notNull().primaryKey(),
+    name: text('name'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    createdBy: uuid('created_by').references(() => users.id),
+  },
+  (feedback_type) => ({}),
+)
+
 export const invoices = createTable(
   'invoice',
   {

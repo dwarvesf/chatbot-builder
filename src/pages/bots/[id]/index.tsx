@@ -6,8 +6,11 @@ import {
   PageHeaderTitle,
   Separator,
   Typography,
+  Tooltip,
 } from '@mochi-ui/core'
-import { PaperplaneSolid, Spinner } from '@mochi-ui/icons'
+import { PaperplaneSolid, Spinner, CloseLine } from '@mochi-ui/icons'
+import { FeedbackForm } from '~/components/FeedbackForm'
+import { DisLike } from '~/components/icons/svg'
 import clsx from 'clsx'
 import type { GetServerSideProps, NextPage } from 'next'
 import { useParams } from 'next/navigation'
@@ -19,6 +22,7 @@ import { getServerAuthSession } from '~/server/auth'
 import { api } from '~/utils/api'
 
 interface ThreadItem {
+  chatIdAssistant?: string
   sourcesLinks?: string[] | null
   message: string
   isYou: boolean
@@ -26,6 +30,7 @@ interface ThreadItem {
 }
 
 const ChatThread = (props: {
+  chatIdAssistant?: string
   sourcesLinks?: string[] | null
   avatar?: string
   children: React.ReactNode
@@ -82,7 +87,6 @@ const BotDetail: NextPage = () => {
   const { id } = useParams() ?? {}
   const { data: profile } = api.user.getUser.useQuery()
   const { data: sources } = api.bot.getById.useQuery(id as string)
-
   const { data: botLogoSources } = api.attachments.getById.useQuery(
     sources?.botAvatarAttachmentId ?? '',
     {
@@ -120,13 +124,34 @@ const BotDetail: NextPage = () => {
 
   const [thread, setThread] = useState<ThreadItem[]>([])
 
+  const [openId, setOpenId] = useState<string | null>(null)
+  const [showThankYou, setShowThankYou] = useState<string | null>(null)
+
+  const handleToggle = (chatIdAssistant: string) => {
+    setOpenId(openId === chatIdAssistant ? null : chatIdAssistant)
+    setShowThankYou(null)
+  }
+
+  const handleFeedbackSuccess = (chatIdAssistant: string) => {
+    setShowThankYou(chatIdAssistant)
+    setOpenId(null)
+
+    setTimeout(() => {
+      setShowThankYou(null)
+    }, 3000)
+  }
+
   const addNewMessage = (
+    chatIdAssistant: string,
     sourcesLinks: string[] | null,
     message: string,
     isYou = false,
     isError = false,
   ) => {
-    setThread((prev) => [...prev, { sourcesLinks, message, isYou, isError }])
+    setThread((prev) => [
+      ...prev,
+      { chatIdAssistant, sourcesLinks, message, isYou, isError },
+    ])
   }
 
   useEffect(() => {
@@ -143,6 +168,7 @@ const BotDetail: NextPage = () => {
   useEffect(() => {
     if (chatData) {
       addNewMessage(
+        chatData.chatIdAssistants ?? '',
         chatData.referSourceLinks ?? null,
         chatData.assistants?.[0]?.[0]?.msg ?? '',
         false,
@@ -152,7 +178,7 @@ const BotDetail: NextPage = () => {
 
   useEffect(() => {
     if (chatError) {
-      addNewMessage(null, chatError.message, false, true)
+      addNewMessage('', null, chatError.message, false, true)
     }
   }, [chatError])
 
@@ -167,7 +193,7 @@ const BotDetail: NextPage = () => {
         apiToken,
         threadId: serverThread?.thread?.id ?? '',
       })
-      addNewMessage(null, data.message, true)
+      addNewMessage('', null, data.message, true)
       reset()
     } catch (error) {
       console.log(error)
@@ -198,19 +224,74 @@ const BotDetail: NextPage = () => {
               </ChatThread>
             ) : null}
             {thread.map((item, index) => (
-              <ChatThread
-                key={index}
-                avatar={
-                  item.isYou
-                    ? profile?.image ?? ''
-                    : botLogoSources?.cloudPath ?? ''
-                }
-                isRight={item.isYou}
-                isError={item.isError}
-                sourcesLinks={item.sourcesLinks}
-              >
-                {item.message}
-              </ChatThread>
+              <>
+                <ChatThread
+                  key={index}
+                  avatar={
+                    item.isYou
+                      ? profile?.image ?? ''
+                      : botLogoSources?.cloudPath ?? ''
+                  }
+                  isRight={item.isYou}
+                  isError={item.isError}
+                  sourcesLinks={item.sourcesLinks}
+                >
+                  {item.message}
+                </ChatThread>
+
+                <div>
+                  {!item.isYou && (
+                    <div>
+                      <div className="flex flex-row ml-16 space-x-4 rounded-xl max-w-[80%]">
+                        <Tooltip arrow="bottom-center" content="Bad response">
+                          <IconButton
+                            asChild
+                            label="feedback"
+                            variant="link"
+                            className="rounded-none"
+                            onClick={() => {
+                              handleToggle(item.chatIdAssistant ?? '')
+                            }}
+                          >
+                            <DisLike className="w-4 h-4 cursor-pointer" />
+                          </IconButton>
+                        </Tooltip>
+                      </div>
+
+                      {openId === item.chatIdAssistant ? (
+                        <div className="w-full flex flex-col ml-14 mt-4 p-4 space-y-2 rounded-xl max-w-[50%] bg-background-level2">
+                          <div className="w-full flex flex-row justify-between">
+                            <Typography level="h7" fontWeight="md">
+                              Why did you choose this rating? (optional)
+                            </Typography>
+                            <CloseLine
+                              className="w-5 h-5 cursor-pointer"
+                              onClick={() =>
+                                handleToggle(item.chatIdAssistant ?? '')
+                              }
+                            />
+                          </div>
+                          <FeedbackForm
+                            apiToken={apiToken}
+                            chatId={item.chatIdAssistant ?? ''}
+                            onSuccess={() =>
+                              handleFeedbackSuccess(item.chatIdAssistant ?? '')
+                            }
+                          />
+                        </div>
+                      ) : (
+                        showThankYou === item.chatIdAssistant && (
+                          <div className="w-fit flex flex-col ml-14 mt-4 p-4 space-y-2 rounded-xl max-w-[50%] bg-background-level2">
+                            <Typography level="p4" fontWeight="md">
+                              Thank you for your feedback!
+                            </Typography>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  )}
+                </div>
+              </>
             ))}
             {isPending || initialThreadPending || !serverThread ? (
               <ChatThread avatar={botLogoSources?.cloudPath ?? ''}>

@@ -183,13 +183,15 @@ function createChatHandler() {
               .returning()
 
             assistantMsgs.push(m)
+
+            return {
+              chat: c,
+              chatIdAssistants: resId,
+              assistants: assistantMsgs,
+              referSourceLinks: formatSourceLinks,
+              res: completion,
+            }
           }
-        }
-        return {
-          chat: c,
-          assistants: assistantMsgs,
-          referSourceLinks: formatSourceLinks,
-          res: completion,
         }
       } else {
         console.log('Context: No relevant context')
@@ -214,6 +216,7 @@ function createChatHandler() {
 
         return {
           chat: c,
+          chatIdAssistants: resId,
           assistants: assistantMsgs,
           referSourceLinks: null,
           res: null,
