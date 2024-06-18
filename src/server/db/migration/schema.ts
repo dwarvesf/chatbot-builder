@@ -394,7 +394,7 @@ export const chat_feedback = createTable(
     updatedBy: uuid('updated_by').references(() => users.id),
   },
   (chat_feedback) => ({
-    botIdIdx: index('chat_feedback_id_idx').on(chat_feedback.chatId),
+    chatFeedbackIdIdx: index('chat_feedback_id_idx').on(chat_feedback.chatId),
     typeIdIdx: index('feedback_type_id_idx').on(chat_feedback.typeId),
   }),
 )

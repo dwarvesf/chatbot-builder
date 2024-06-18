@@ -9,7 +9,7 @@ import { botSourceExtractedDataRouter } from './routers/bot-source-extracted-dat
 import { chatRouter } from './routers/chat'
 import { threadRouter } from './routers/thread'
 import { userRouter } from './routers/user'
-import { feedbackRouter } from './routers/feedback'
+import { createFeedback } from './routers/feedback'
 
 /**
  * This is the primary router for your server.
@@ -27,7 +27,7 @@ export const appRouter = createTRPCRouter({
   post: postRouter,
   thread: threadRouter,
   attachments: attachmentRouter,
-  feedback: feedbackRouter,
+  feedback: createFeedback,
 })
 
 // export type definition of API

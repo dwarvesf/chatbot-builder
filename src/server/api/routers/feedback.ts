@@ -6,13 +6,13 @@ import { db } from '~/server/db'
 import { FeedbackTypeEnum } from '~/model/feedback'
 import { uuidv7 } from 'uuidv7'
 
-export const feedbackRouter = createTRPCRouter({
+export const createFeedback = createTRPCRouter({
   createRating: integrationProcedure
     .input(
       z.object({
         chatId: z.string(),
         feedbackType: z.nativeEnum(FeedbackTypeEnum),
-        notes: z.string(),
+        notes: z.string().optional(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
