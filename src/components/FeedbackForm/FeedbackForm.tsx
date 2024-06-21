@@ -1,4 +1,4 @@
-import { zodResolver } from '@hookform/resolvers/zod'
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Button,
   FormControl,
@@ -8,12 +8,14 @@ import {
   useToast,
   Typography,
 } from '@mochi-ui/core'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, FormProvider, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { FeedbackTypeEnum } from '~/model/feedback'
 import { api } from '~/utils/api'
+import { CloseLine } from '@mochi-ui/icons'
 
-export interface FeedbackForm {
+export interface FeedbackFormProps {
   chatId: string
   notes: string
   feedbackType: FeedbackTypeEnum
@@ -28,17 +30,19 @@ const schema = z.object({
 interface FeedbackFormProp {
   apiToken?: string
   chatId: string
+  isPositive: boolean
   onSuccess: () => void
 }
 
 export const FeedbackForm = ({
   apiToken,
   chatId,
+  isPositive,
   onSuccess,
 }: FeedbackFormProp) => {
   const { toast } = useToast()
 
-  const form = useForm<FeedbackForm>({
+  const form = useForm<FeedbackFormProps>({
     resolver: zodResolver(schema),
     defaultValues: {
       chatId: chatId,
@@ -66,48 +70,33 @@ export const FeedbackForm = ({
 
   const { handleSubmit } = form
 
-  const radios = [
-    {
-      name: 'Too long',
-      value: FeedbackTypeEnum.TooLong,
-    },
-    {
-      name: 'Too short',
-      value: FeedbackTypeEnum.TooShort,
-    },
-    {
-      name: 'Out of date',
-      value: FeedbackTypeEnum.OutOfDate,
-    },
-    {
-      name: 'Inaccurate',
-      value: FeedbackTypeEnum.Inaccurate,
-    },
+  const radiosPositive = [
+    { name: 'Correct', value: FeedbackTypeEnum.Correct },
+    { name: 'Easy to understand', value: FeedbackTypeEnum.EasyToUnderstand },
+    { name: 'Complete', value: FeedbackTypeEnum.Complete },
+  ]
+
+  const radiosNegative = [
+    { name: 'Too long', value: FeedbackTypeEnum.TooLong },
+    { name: 'Too short', value: FeedbackTypeEnum.TooShort },
+    { name: 'Out of date', value: FeedbackTypeEnum.OutOfDate },
+    { name: 'Inaccurate', value: FeedbackTypeEnum.Inaccurate },
     {
       name: 'Harmful or Offensive',
       value: FeedbackTypeEnum.HarmfulOrOffensive,
     },
-    {
-      name: 'Not Helpful',
-      value: FeedbackTypeEnum.NotHelpful,
-    },
-    {
-      name: 'Other',
-      value: FeedbackTypeEnum.Other,
-    },
+    { name: 'Not Helpful', value: FeedbackTypeEnum.NotHelpful },
+    { name: 'Other', value: FeedbackTypeEnum.Other },
   ]
 
-  const onSubmit = (props: FeedbackForm) => {
+  const onSubmit = (props: FeedbackFormProps) => {
     if (!apiToken) {
       return
     }
-    const payload: FeedbackForm = {
-      ...props,
-    }
+    const payload: FeedbackFormProps = { ...props }
 
-    /* eslint-disable @typescript-eslint/no-explicit-any */
     try {
-      createRating({ ...payload, apiToken: apiToken })
+      createRating({ ...payload, isLike: isPositive, apiToken: apiToken })
     } catch (error: any) {
       toast({
         description: error?.message ?? '',
@@ -115,6 +104,8 @@ export const FeedbackForm = ({
       })
     }
   }
+
+  const radios = isPositive ? radiosPositive : radiosNegative
 
   return (
     <FormProvider {...form}>
@@ -133,11 +124,9 @@ export const FeedbackForm = ({
                         type="radio"
                         id={item.name}
                         value={item.value}
-                        onChange={(e) => {
-                          field.onChange(Number(e.target.value))
-                        }}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
                       />
-                      <div className="w-fit p-2 cursor-pointer rounded-lg border bg-white shadow-sm  peer-checked:bg-gray-300">
+                      <div className="w-fit p-2 cursor-pointer rounded-lg border bg-white shadow-sm peer-checked:bg-gray-300">
                         <Typography level="p4" fontWeight="md" noWrap>
                           {item.name}
                         </Typography>
@@ -150,7 +139,6 @@ export const FeedbackForm = ({
             </FormControl>
           )}
         />
-
         <Controller
           name="notes"
           render={({ field, fieldState }) => (
@@ -168,9 +156,41 @@ export const FeedbackForm = ({
             </FormControl>
           )}
         />
-
         <Button type="submit">Submit</Button>
       </form>
     </FormProvider>
+  )
+}
+
+interface FeedbackFormWrapperProps {
+  apiToken?: string
+  chatId: string
+  isPositive: boolean
+  onSuccess: () => void
+  handleClose: () => void
+}
+
+export const FeedbackFormWrapper = ({
+  apiToken,
+  chatId,
+  isPositive,
+  onSuccess,
+  handleClose,
+}: FeedbackFormWrapperProps) => {
+  return (
+    <div className="w-full flex flex-col ml-14 mt-4 p-4 space-y-2 rounded-xl max-w-[50%] bg-background-level2">
+      <div className="w-full flex flex-row justify-between">
+        <Typography level="h7" fontWeight="md">
+          Why did you choose this rating? (optional)
+        </Typography>
+        <CloseLine className="w-5 h-5 cursor-pointer" onClick={handleClose} />
+      </div>
+      <FeedbackForm
+        apiToken={apiToken}
+        chatId={chatId}
+        onSuccess={onSuccess}
+        isPositive={isPositive}
+      />
+    </div>
   )
 }

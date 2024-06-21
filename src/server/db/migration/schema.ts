@@ -387,6 +387,7 @@ export const chat_feedback = createTable(
       .notNull()
       .references(() => chats.id),
     typeId: integer('feedback_type').notNull(),
+    isLike: boolean('isLike'),
     notes: text('notes'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),

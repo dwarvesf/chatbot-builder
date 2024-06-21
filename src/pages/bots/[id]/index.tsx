@@ -9,8 +9,8 @@ import {
   Tooltip,
 } from '@mochi-ui/core'
 import { PaperplaneSolid, Spinner, CloseLine } from '@mochi-ui/icons'
-import { FeedbackForm } from '~/components/FeedbackForm'
-import { DisLike } from '~/components/icons/svg'
+import { FeedbackForm, FeedbackFormWrapper } from '~/components/FeedbackForm'
+import { Like, DisLike } from '~/components/icons/svg'
 import clsx from 'clsx'
 import type { GetServerSideProps, NextPage } from 'next'
 import { useParams } from 'next/navigation'
@@ -73,9 +73,7 @@ const ChatThread = (props: {
                   ))}
                 </ul>
               </>
-            ) : (
-              <></>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
@@ -109,12 +107,23 @@ const BotDetail: NextPage = () => {
     isPending: initialThreadPending,
   } = api.thread.create.useMutation()
 
-  const {
-    mutate: createChat,
-    data: chatData,
-    isPending,
-    error: chatError,
-  } = api.chatRouter.create.useMutation()
+  const { mutate: createChat, isPending } = api.chatRouter.create.useMutation({
+    onSuccess: async (data) => {
+      if (!data) {
+        return
+      }
+      addNewMessage(
+        data.chatIdAssistants ?? '',
+        data.referSourceLinks ?? null,
+        data.assistants?.[0]?.[0]?.msg ?? '',
+        false,
+      )
+    },
+    onError: (error) => {
+      console.error(error)
+      addNewMessage('', null, error.message, false, true)
+    },
+  })
 
   const { handleSubmit, control, reset } = useForm<{
     message: string
@@ -126,9 +135,11 @@ const BotDetail: NextPage = () => {
 
   const [openId, setOpenId] = useState<string | null>(null)
   const [showThankYou, setShowThankYou] = useState<string | null>(null)
+  const [isPositiveFeedback, setIsPositiveFeedback] = useState(false)
 
-  const handleToggle = (chatIdAssistant: string) => {
+  const handleToggle = (chatIdAssistant: string, isPositive: boolean) => {
     setOpenId(openId === chatIdAssistant ? null : chatIdAssistant)
+    setIsPositiveFeedback(isPositive)
     setShowThankYou(null)
   }
 
@@ -164,23 +175,6 @@ const BotDetail: NextPage = () => {
       })
     }
   }, [createNewThread, serverThread, apiToken])
-
-  useEffect(() => {
-    if (chatData) {
-      addNewMessage(
-        chatData.chatIdAssistants ?? '',
-        chatData.referSourceLinks ?? null,
-        chatData.assistants?.[0]?.[0]?.msg ?? '',
-        false,
-      )
-    }
-  }, [JSON.stringify(chatData)])
-
-  useEffect(() => {
-    if (chatError) {
-      addNewMessage('', null, chatError.message, false, true)
-    }
-  }, [chatError])
 
   async function sendMessage(data: { message: string }) {
     const submittedMessage = data.message.trim()
@@ -242,15 +236,28 @@ const BotDetail: NextPage = () => {
                 <div>
                   {!item.isYou && (
                     <div>
-                      <div className="flex flex-row ml-16 space-x-4 rounded-xl max-w-[80%]">
+                      <div className="flex flex-row ml-16 space-x-2 rounded-xl max-w-[80%]">
+                        <Tooltip arrow="bottom-center" content="Good response">
+                          <IconButton
+                            asChild
+                            label="feedback-positive"
+                            variant="link"
+                            className="rounded-none hover:scale-110 text-black hover:text-green-600"
+                            onClick={() => {
+                              handleToggle(item.chatIdAssistant ?? '', true)
+                            }}
+                          >
+                            <Like className="w-4 h-4 cursor-pointer" />
+                          </IconButton>
+                        </Tooltip>
                         <Tooltip arrow="bottom-center" content="Bad response">
                           <IconButton
                             asChild
-                            label="feedback"
+                            label="feedback-negative"
                             variant="link"
-                            className="rounded-none"
+                            className="rounded-none hover:scale-110 text-black hover:text-red-500"
                             onClick={() => {
-                              handleToggle(item.chatIdAssistant ?? '')
+                              handleToggle(item.chatIdAssistant ?? '', false)
                             }}
                           >
                             <DisLike className="w-4 h-4 cursor-pointer" />
@@ -259,35 +266,27 @@ const BotDetail: NextPage = () => {
                       </div>
 
                       {openId === item.chatIdAssistant ? (
-                        <div className="w-full flex flex-col ml-14 mt-4 p-4 space-y-2 rounded-xl max-w-[50%] bg-background-level2">
-                          <div className="w-full flex flex-row justify-between">
-                            <Typography level="h7" fontWeight="md">
-                              Why did you choose this rating? (optional)
-                            </Typography>
-                            <CloseLine
-                              className="w-5 h-5 cursor-pointer"
-                              onClick={() =>
-                                handleToggle(item.chatIdAssistant ?? '')
-                              }
-                            />
-                          </div>
-                          <FeedbackForm
-                            apiToken={apiToken}
-                            chatId={item.chatIdAssistant ?? ''}
-                            onSuccess={() =>
-                              handleFeedbackSuccess(item.chatIdAssistant ?? '')
-                            }
-                          />
+                        <FeedbackFormWrapper
+                          apiToken={apiToken}
+                          chatId={item.chatIdAssistant ?? ''}
+                          isPositive={isPositiveFeedback}
+                          onSuccess={() =>
+                            handleFeedbackSuccess(item.chatIdAssistant ?? '')
+                          }
+                          handleClose={() =>
+                            handleToggle(
+                              item.chatIdAssistant ?? '',
+                              isPositiveFeedback,
+                            )
+                          }
+                        />
+                      ) : showThankYou === item.chatIdAssistant ? (
+                        <div className="w-fit bg-background-level2 border rounded-lg p-4 ml-16 mt-4">
+                          <Typography level="p4" fontWeight="md">
+                            Thank you for your feedback
+                          </Typography>
                         </div>
-                      ) : (
-                        showThankYou === item.chatIdAssistant && (
-                          <div className="w-fit flex flex-col ml-14 mt-4 p-4 space-y-2 rounded-xl max-w-[50%] bg-background-level2">
-                            <Typography level="p4" fontWeight="md">
-                              Thank you for your feedback!
-                            </Typography>
-                          </div>
-                        )
-                      )}
+                      ) : null}
                     </div>
                   )}
                 </div>
