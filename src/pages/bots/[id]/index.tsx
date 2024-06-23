@@ -8,8 +8,8 @@ import {
   Typography,
   Tooltip,
 } from '@mochi-ui/core'
-import { PaperplaneSolid, Spinner, CloseLine } from '@mochi-ui/icons'
-import { FeedbackForm, FeedbackFormWrapper } from '~/components/FeedbackForm'
+import { PaperplaneSolid, Spinner } from '@mochi-ui/icons'
+import { FeedbackFormWrapper } from '~/components/FeedbackForm'
 import { Like, DisLike } from '~/components/icons/svg'
 import clsx from 'clsx'
 import type { GetServerSideProps, NextPage } from 'next'
@@ -268,6 +268,7 @@ const BotDetail: NextPage = () => {
                       {openId === item.chatIdAssistant ? (
                         <FeedbackFormWrapper
                           apiToken={apiToken}
+                          threadId={serverThread?.thread?.id ?? ''}
                           chatId={item.chatIdAssistant ?? ''}
                           isPositive={isPositiveFeedback}
                           onSuccess={() =>

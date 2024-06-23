@@ -16,12 +16,14 @@ import { api } from '~/utils/api'
 import { CloseLine } from '@mochi-ui/icons'
 
 export interface FeedbackFormProps {
+  threadId: string
   chatId: string
   notes: string
   feedbackType: FeedbackTypeEnum
 }
 
 const schema = z.object({
+  threadId: z.string(),
   chatId: z.string(),
   notes: z.string(),
   feedbackType: z.nativeEnum(FeedbackTypeEnum),
@@ -29,6 +31,7 @@ const schema = z.object({
 
 interface FeedbackFormProp {
   apiToken?: string
+  threadId: string
   chatId: string
   isPositive: boolean
   onSuccess: () => void
@@ -36,6 +39,7 @@ interface FeedbackFormProp {
 
 export const FeedbackForm = ({
   apiToken,
+  threadId,
   chatId,
   isPositive,
   onSuccess,
@@ -45,6 +49,7 @@ export const FeedbackForm = ({
   const form = useForm<FeedbackFormProps>({
     resolver: zodResolver(schema),
     defaultValues: {
+      threadId: threadId,
       chatId: chatId,
       feedbackType: FeedbackTypeEnum.Other,
       notes: '',
@@ -164,6 +169,7 @@ export const FeedbackForm = ({
 
 interface FeedbackFormWrapperProps {
   apiToken?: string
+  threadId: string
   chatId: string
   isPositive: boolean
   onSuccess: () => void
@@ -172,6 +178,7 @@ interface FeedbackFormWrapperProps {
 
 export const FeedbackFormWrapper = ({
   apiToken,
+  threadId,
   chatId,
   isPositive,
   onSuccess,
@@ -187,6 +194,7 @@ export const FeedbackFormWrapper = ({
       </div>
       <FeedbackForm
         apiToken={apiToken}
+        threadId={threadId}
         chatId={chatId}
         onSuccess={onSuccess}
         isPositive={isPositive}

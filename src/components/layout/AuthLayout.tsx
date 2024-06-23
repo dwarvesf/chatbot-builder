@@ -24,6 +24,7 @@ import {
   InboxSolid,
   PlugSolid,
   UserSolid,
+  BellSolid,
 } from '@mochi-ui/icons'
 import { signOut } from 'next-auth/react'
 import Link from 'next/link'
@@ -75,6 +76,13 @@ const headerBotItems = (botId: string) =>
       as: Link,
       href: ROUTES.BOT_DETAIL_INTEGRATIONS(botId),
       Icon: PlugSolid,
+    },
+    {
+      title: 'Logs',
+      type: 'link',
+      as: Link,
+      href: ROUTES.BOT_DETAIL_LOGS(botId),
+      Icon: BellSolid,
     },
   ] as SidebarProps['headerItems']
 

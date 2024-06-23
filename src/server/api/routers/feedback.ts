@@ -5,11 +5,13 @@ import { createTRPCRouter, integrationProcedure } from '~/server/api/trpc'
 import { db } from '~/server/db'
 import { FeedbackTypeEnum } from '~/model/feedback'
 import { uuidv7 } from 'uuidv7'
+import { asc, eq, sql } from 'drizzle-orm'
 
 export const createFeedback = createTRPCRouter({
   createRating: integrationProcedure
     .input(
       z.object({
+        threadId: z.string(),
         chatId: z.string(),
         isLike: z.boolean(),
         feedbackType: z.nativeEnum(FeedbackTypeEnum),
@@ -22,6 +24,7 @@ export const createFeedback = createTRPCRouter({
         .insert(schema.chat_feedback)
         .values({
           id: feedbackId,
+          threadId: input.threadId,
           chatId: input.chatId,
           isLike: input.isLike,
           typeId: input.feedbackType,
@@ -29,5 +32,35 @@ export const createFeedback = createTRPCRouter({
           createdAt: new Date(),
         })
         .returning()
+    }),
+
+  getList: integrationProcedure
+    .input(
+      z.object({
+        threadId: z.string(),
+        limit: z.number().max(100).default(10),
+        offset: z.number().default(0),
+      }),
+    )
+    .query(async ({ input }) => {
+      const countRow = await db
+        .select({
+          count: sql<number>`COUNT(*)`,
+        })
+        .from(schema.chat_feedback)
+        .where(eq(schema.chat_feedback.threadId, input.threadId))
+      const count = Number(countRow[0]?.count) ?? 0
+
+      const chat_feedback = await db.query.chat_feedback.findMany({
+        where: eq(schema.chat_feedback.threadId, input.threadId),
+        orderBy: [asc(schema.chat_feedback.id)],
+        limit: input.limit,
+        offset: input.offset,
+      })
+
+      return {
+        chat_feedback,
+        pagination: { total: count, limit: input.limit, offset: input.offset },
+      }
     }),
 })

@@ -14,6 +14,7 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core'
 import { type AdapterAccount } from 'next-auth/adapters'
+import { threadId } from 'worker_threads'
 import { BotSourceStatusEnum } from '~/model/bot-source-status'
 import { vector } from '~/server/db/migration/vector'
 
@@ -383,6 +384,9 @@ export const chat_feedback = createTable(
   'chat_feedback',
   {
     id: uuid('id').notNull().primaryKey(),
+    threadId: uuid('thread_id')
+      .notNull()
+      .references(() => chats.id),
     chatId: uuid('chat_id')
       .notNull()
       .references(() => chats.id),
@@ -395,6 +399,9 @@ export const chat_feedback = createTable(
     updatedBy: uuid('updated_by').references(() => users.id),
   },
   (chat_feedback) => ({
+    threadIdFeedbackIdIdx: index('threadId_feedback_id_idx').on(
+      chat_feedback.threadId,
+    ),
     chatFeedbackIdIdx: index('chat_feedback_id_idx').on(chat_feedback.chatId),
     typeIdIdx: index('feedback_type_id_idx').on(chat_feedback.typeId),
   }),

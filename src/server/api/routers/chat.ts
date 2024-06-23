@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, sql } from 'drizzle-orm'
+import { and, asc, eq, gte, sql } from 'drizzle-orm'
 import lodash from 'lodash'
 import OpenAI from 'openai'
 import { uuidv7 } from 'uuidv7'
@@ -12,7 +12,7 @@ import { db } from '~/server/db'
 import * as schema from '~/server/db/migration/schema'
 import getEmbeddingsFromContents from '~/server/gateway/openai/embedding'
 import { type Nullable } from '~/utils/types'
-import { createTRPCRouter, integrationProcedure } from '../trpc'
+import { createTRPCRouter, integrationProcedure } from '~/server/api/trpc'
 
 const openai = new OpenAI({
   apiKey: env.OPENAI_API_KEY, // This is the default and can be omitted
@@ -43,7 +43,7 @@ function getListHandler() {
 
       const chats = await db.query.chats.findMany({
         where: eq(schema.chats.threadId, input.threadId),
-        orderBy: [desc(schema.chats.id)],
+        orderBy: [asc(schema.chats.id)],
         limit: input.limit,
         offset: input.offset,
       })
