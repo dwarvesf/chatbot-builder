@@ -386,7 +386,7 @@ export const chat_feedback = createTable(
     id: uuid('id').notNull().primaryKey(),
     threadId: uuid('thread_id')
       .notNull()
-      .references(() => chats.id),
+      .references(() => threads.id),
     chatId: uuid('chat_id')
       .notNull()
       .references(() => chats.id),
