@@ -21,6 +21,7 @@
     "@mochi-ui/icons": "^0.8.1",
     "@mochi-ui/theme": "^0.20.1",
     "@opendocsg/pdf2md": "^0.1.29",
+    "@svgr/webpack": "^8.1.0",
     "@t3-oss/env-nextjs": "^0.9.2",
     "@tanstack/react-query": "^5.25.0",
     "@trpc/client": "next",
