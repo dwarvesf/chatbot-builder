@@ -1,11 +1,15 @@
 import { z } from 'zod'
 import * as schema from '~/server/db/migration/schema'
 
-import { createTRPCRouter, integrationProcedure } from '~/server/api/trpc'
+import {
+  createTRPCRouter,
+  integrationProcedure,
+  protectedProcedure,
+} from '~/server/api/trpc'
 import { db } from '~/server/db'
 import { FeedbackTypeEnum } from '~/model/feedback'
 import { uuidv7 } from 'uuidv7'
-import { asc, eq, sql } from 'drizzle-orm'
+import { desc, eq, sql } from 'drizzle-orm'
 
 export const createFeedback = createTRPCRouter({
   createRating: integrationProcedure
@@ -32,7 +36,7 @@ export const createFeedback = createTRPCRouter({
         .returning()
     }),
 
-  getList: integrationProcedure
+  getList: protectedProcedure
     .input(
       z.object({
         threadId: z.string(),
@@ -51,7 +55,7 @@ export const createFeedback = createTRPCRouter({
 
       const chat_feedback = await db.query.chat_feedback.findMany({
         where: eq(schema.chat_feedback.threadId, input.threadId),
-        orderBy: [asc(schema.chat_feedback.id)],
+        orderBy: [desc(schema.chat_feedback.id)],
         limit: input.limit,
         offset: input.offset,
       })

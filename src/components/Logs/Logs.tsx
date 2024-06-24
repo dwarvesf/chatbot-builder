@@ -111,7 +111,6 @@ export const Logs = () => {
               width: 50,
               cell: (props) => {
                 const { data } = api.feedback.getList.useQuery({
-                  apiToken: apiToken,
                   threadId: props.row.original.id,
                 })
 

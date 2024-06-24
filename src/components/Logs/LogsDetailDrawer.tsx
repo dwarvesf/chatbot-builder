@@ -69,7 +69,6 @@ const SourceChunkList = ({
   })
 
   const { data: feedbackData } = api.feedback.getList.useQuery({
-    apiToken: apiToken,
     threadId: threadId,
   })
 
