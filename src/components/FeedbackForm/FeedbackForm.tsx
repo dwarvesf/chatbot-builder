@@ -51,7 +51,9 @@ export const FeedbackForm = ({
     defaultValues: {
       threadId: threadId,
       chatId: chatId,
-      feedbackType: FeedbackTypeEnum.Other,
+      feedbackType: isPositive
+        ? FeedbackTypeEnum.OtherPositive
+        : FeedbackTypeEnum.OtherNegative,
       notes: '',
     },
   })
@@ -79,6 +81,7 @@ export const FeedbackForm = ({
     { name: 'Correct', value: FeedbackTypeEnum.Correct },
     { name: 'Easy to understand', value: FeedbackTypeEnum.EasyToUnderstand },
     { name: 'Complete', value: FeedbackTypeEnum.Complete },
+    { name: 'Other', value: FeedbackTypeEnum.OtherPositive },
   ]
 
   const radiosNegative = [
@@ -91,7 +94,7 @@ export const FeedbackForm = ({
       value: FeedbackTypeEnum.HarmfulOrOffensive,
     },
     { name: 'Not Helpful', value: FeedbackTypeEnum.NotHelpful },
-    { name: 'Other', value: FeedbackTypeEnum.Other },
+    { name: 'Other', value: FeedbackTypeEnum.OtherNegative },
   ]
 
   const onSubmit = (props: FeedbackFormProps) => {
@@ -100,8 +103,10 @@ export const FeedbackForm = ({
     }
     const payload: FeedbackFormProps = { ...props }
 
+    console.log(payload)
+
     try {
-      createRating({ ...payload, isLike: isPositive, apiToken: apiToken })
+      createRating({ ...payload, apiToken: apiToken })
     } catch (error: any) {
       toast({
         description: error?.message ?? '',

@@ -13,7 +13,6 @@ export const createFeedback = createTRPCRouter({
       z.object({
         threadId: z.string(),
         chatId: z.string(),
-        isLike: z.boolean(),
         feedbackType: z.nativeEnum(FeedbackTypeEnum),
         notes: z.string().optional(),
       }),
@@ -26,7 +25,6 @@ export const createFeedback = createTRPCRouter({
           id: feedbackId,
           threadId: input.threadId,
           chatId: input.chatId,
-          isLike: input.isLike,
           typeId: input.feedbackType,
           notes: input.notes,
           createdAt: new Date(),

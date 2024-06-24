@@ -1,4 +1,4 @@
-import { type InferSelectModel, asc, eq, sql } from 'drizzle-orm'
+import { type InferSelectModel, desc, eq, sql } from 'drizzle-orm'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
 import { ChatRoleEnum } from '~/model/chat'
@@ -84,7 +84,7 @@ export const threadRouter = createTRPCRouter({
 
       const threads = await db.query.threads.findMany({
         where: eq(schema.threads.botId, ctx.session.botId),
-        orderBy: [asc(schema.threads.id)],
+        orderBy: [desc(schema.threads.id)],
         limit: input.limit,
         offset: input.offset,
       })

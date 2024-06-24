@@ -13,6 +13,7 @@ import { SpinnerLine } from '@mochi-ui/icons'
 import clsx from 'clsx'
 import { api, type RouterOutputs } from '~/utils/api'
 import { Like, DisLike } from '~/components/icons/svg'
+import { FeedbackTypeEnum } from '~/model/feedback'
 
 interface ChatDetailDrawerProps {
   onOpenChange: (open: boolean) => void
@@ -56,10 +57,27 @@ const SourceChunkList = ({
 
   const feedbackArray = feedbackData?.chat_feedback.map((data) => ({
     chatId: data.chatId,
-    isLike: data.isLike,
+    typeId: data.typeId,
   }))
 
   const chatData = data?.chats ?? []
+
+  const arrPositiveType = [
+    FeedbackTypeEnum.Correct,
+    FeedbackTypeEnum.EasyToUnderstand,
+    FeedbackTypeEnum.Complete,
+    FeedbackTypeEnum.OtherPositive,
+  ]
+
+  const arrNegativeType = [
+    FeedbackTypeEnum.TooLong,
+    FeedbackTypeEnum.TooShort,
+    FeedbackTypeEnum.OutOfDate,
+    FeedbackTypeEnum.Inaccurate,
+    FeedbackTypeEnum.HarmfulOrOffensive,
+    FeedbackTypeEnum.NotHelpful,
+    FeedbackTypeEnum.OtherNegative,
+  ]
 
   return (
     <>
@@ -96,7 +114,10 @@ const SourceChunkList = ({
                               label="positive"
                               variant="link"
                               className={clsx('rounded-none hover:scale-110 ', {
-                                'text-success-600': feedback?.isLike === true,
+                                'text-success-600': arrPositiveType.includes(
+                                  feedback?.typeId ??
+                                    FeedbackTypeEnum.OtherPositive,
+                                ),
                               })}
                             >
                               <Like className="w-4 h-4 cursor-pointer" />
@@ -111,7 +132,10 @@ const SourceChunkList = ({
                               label="negative"
                               variant="link"
                               className={clsx('rounded-none hover:scale-110 ', {
-                                'text-red-600': feedback?.isLike === false,
+                                'text-red-600': arrNegativeType.includes(
+                                  feedback?.typeId ??
+                                    FeedbackTypeEnum.OtherNegative,
+                                ),
                               })}
                             >
                               <DisLike className="w-4 h-4 cursor-pointer" />

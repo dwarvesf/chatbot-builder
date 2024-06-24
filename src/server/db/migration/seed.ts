@@ -55,7 +55,8 @@ await db
     { id: 7, name: 'Correct', createdAt: new Date() },
     { id: 8, name: 'Easy to understand', createdAt: new Date() },
     { id: 9, name: 'Complete', createdAt: new Date() },
-    { id: 10, name: 'Other', createdAt: new Date() },
+    { id: 10, name: 'Other positive', createdAt: new Date() },
+    { id: 11, name: 'Other negative', createdAt: new Date() },
   ])
   .onConflictDoNothing()
 

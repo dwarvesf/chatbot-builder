@@ -14,7 +14,6 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core'
 import { type AdapterAccount } from 'next-auth/adapters'
-import { threadId } from 'worker_threads'
 import { BotSourceStatusEnum } from '~/model/bot-source-status'
 import { vector } from '~/server/db/migration/vector'
 
@@ -391,7 +390,6 @@ export const chat_feedback = createTable(
       .notNull()
       .references(() => chats.id),
     typeId: integer('feedback_type').notNull(),
-    isLike: boolean('isLike'),
     notes: text('notes'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),

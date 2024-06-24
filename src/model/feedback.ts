@@ -8,5 +8,6 @@ export enum FeedbackTypeEnum {
   Correct = 7,
   EasyToUnderstand = 8,
   Complete = 9,
-  Other = 10,
+  OtherPositive = 10,
+  OtherNegative = 11,
 }
