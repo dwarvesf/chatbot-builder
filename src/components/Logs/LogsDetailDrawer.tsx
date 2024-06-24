@@ -37,6 +37,10 @@ export const ChatDetailDrawer = (props: ChatDetailDrawerProps) => {
       <DrawerPortal>
         <DrawerOverlay />
         <DrawerContent className="p-6 w-[600px]" showCloseBtn>
+          <Typography level="h8" fontWeight="lg">
+            Conversation ID: {id}
+          </Typography>
+
           <ScrollArea className="w-full h-full">
             <ScrollAreaViewport>
               <SourceChunkList threadId={id} apiToken={apiToken} />
@@ -113,84 +117,69 @@ const SourceChunkList = ({
           <SpinnerLine className="w-8 h-8 text-primary-plain-fg" />
         </div>
       ) : (
-        <div>
-          <Typography level="p5" fontWeight="lg">
-            Conversation ID: {threadId}
-          </Typography>
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4 space-y-4 flex flex-col-reverse">
+            {chatData.map((item) => {
+              const feedback = feedbackArray?.find(
+                (feedback) => feedback.chatId === item.id,
+              )
 
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-4 space-y-4 flex flex-col-reverse">
-              {chatData.map((item) => {
-                const feedback = feedbackArray?.find(
-                  (feedback) => feedback.chatId === item.id,
-                )
+              return (
+                <div
+                  ref={scrollRef}
+                  id={item.id}
+                  key={item.id}
+                  className="space-y-2"
+                >
+                  <ChatThread key={item.id} isRight={item.roleId}>
+                    {item.msg}
+                  </ChatThread>
 
-                return (
-                  <div
-                    ref={scrollRef}
-                    id={item.id}
-                    key={item.id}
-                    className="space-y-2"
-                  >
-                    <ChatThread key={item.id} isRight={item.roleId}>
-                      {item.msg}
-                    </ChatThread>
-
-                    <div>
-                      {item.roleId !== 1 && (
-                        <div>
-                          <div className="flex flex-row ml-16 space-x-2 rounded-xl max-w-[80%]">
-                            <Tooltip
-                              className="z-[100]"
-                              arrow="bottom-center"
-                              content="User Like"
+                  <div>
+                    {item.roleId !== 1 && (
+                      <div>
+                        <div className="flex flex-row ml-16 space-x-2 rounded-xl max-w-[80%]">
+                          <Tooltip
+                            className="z-[100]"
+                            arrow="bottom-center"
+                            content="User Like"
+                          >
+                            <IconButton
+                              label="positive"
+                              variant="link"
+                              className={clsx('rounded-none hover:scale-110 ', {
+                                'text-success-600': arrPositiveType.includes(
+                                  feedback?.typeId ?? NaN,
+                                ),
+                              })}
                             >
-                              <IconButton
-                                label="positive"
-                                variant="link"
-                                className={clsx(
-                                  'rounded-none hover:scale-110 ',
-                                  {
-                                    'text-success-600':
-                                      arrPositiveType.includes(
-                                        feedback?.typeId ??
-                                          FeedbackTypeEnum.OtherPositive,
-                                      ),
-                                  },
-                                )}
-                              >
-                                <Like className="w-4 h-4 cursor-pointer" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip
-                              className="z-[100]"
-                              arrow="bottom-center"
-                              content="User DisLike"
+                              <Like className="w-4 h-4 cursor-pointer" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip
+                            className="z-[100]"
+                            arrow="bottom-center"
+                            content="User DisLike"
+                          >
+                            <IconButton
+                              label="negative"
+                              variant="link"
+                              className={clsx('rounded-none hover:scale-110 ', {
+                                'text-red-600': arrNegativeType.includes(
+                                  feedback?.typeId ?? NaN,
+                                ),
+                              })}
                             >
-                              <IconButton
-                                label="negative"
-                                variant="link"
-                                className={clsx(
-                                  'rounded-none hover:scale-110 ',
-                                  {
-                                    'text-red-600': arrNegativeType.includes(
-                                      feedback?.typeId ??
-                                        FeedbackTypeEnum.OtherNegative,
-                                    ),
-                                  },
-                                )}
-                              >
-                                <DisLike className="w-4 h-4 cursor-pointer" />
-                              </IconButton>
-                            </Tooltip>
-                          </div>
+                              <DisLike className="w-4 h-4 cursor-pointer" />
+                            </IconButton>
+                          </Tooltip>
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
-                )
-              })}
-            </div>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
