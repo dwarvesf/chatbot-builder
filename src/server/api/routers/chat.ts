@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, sql } from 'drizzle-orm'
 import lodash from 'lodash'
 import OpenAI from 'openai'
 import { uuidv7 } from 'uuidv7'
@@ -28,7 +28,7 @@ function getListHandler() {
     .input(
       z.object({
         threadId: z.string().uuid(),
-        limit: z.number().max(20).default(10),
+        limit: z.number().max(50).default(10),
         offset: z.number().default(0),
       }),
     )
@@ -43,7 +43,7 @@ function getListHandler() {
 
       const chats = await db.query.chats.findMany({
         where: eq(schema.chats.threadId, input.threadId),
-        orderBy: [asc(schema.chats.id)],
+        orderBy: [desc(schema.chats.id)],
         limit: input.limit,
         offset: input.offset,
       })
