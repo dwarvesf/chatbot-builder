@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, sql } from 'drizzle-orm'
 import lodash from 'lodash'
 import OpenAI from 'openai'
 import { uuidv7 } from 'uuidv7'
@@ -12,7 +12,7 @@ import { db } from '~/server/db'
 import * as schema from '~/server/db/migration/schema'
 import getEmbeddingsFromContents from '~/server/gateway/openai/embedding'
 import { type Nullable } from '~/utils/types'
-import { createTRPCRouter, integrationProcedure } from '../trpc'
+import { createTRPCRouter, integrationProcedure } from '~/server/api/trpc'
 
 const openai = new OpenAI({
   apiKey: env.OPENAI_API_KEY, // This is the default and can be omitted
@@ -28,7 +28,7 @@ function getListHandler() {
     .input(
       z.object({
         threadId: z.string().uuid(),
-        limit: z.number().max(20).default(10),
+        limit: z.number().max(50).default(10),
         offset: z.number().default(0),
       }),
     )
@@ -183,13 +183,15 @@ function createChatHandler() {
               .returning()
 
             assistantMsgs.push(m)
+
+            return {
+              chat: c,
+              chatIdAssistants: resId,
+              assistants: assistantMsgs,
+              referSourceLinks: formatSourceLinks,
+              res: completion,
+            }
           }
-        }
-        return {
-          chat: c,
-          assistants: assistantMsgs,
-          referSourceLinks: formatSourceLinks,
-          res: completion,
         }
       } else {
         console.log('Context: No relevant context')
@@ -214,6 +216,7 @@ function createChatHandler() {
 
         return {
           chat: c,
+          chatIdAssistants: resId,
           assistants: assistantMsgs,
           referSourceLinks: null,
           res: null,

@@ -43,5 +43,22 @@ await db
   .values([{ id: 1, name: 'GPT-3.5 turbo', createdAt: new Date() }])
   .onConflictDoNothing()
 
+await db
+  .insert(schema.feedback_type)
+  .values([
+    { id: 1, name: 'Too long', createdAt: new Date() },
+    { id: 2, name: 'Too short', createdAt: new Date() },
+    { id: 3, name: 'Out of date', createdAt: new Date() },
+    { id: 4, name: 'Inaccurate', createdAt: new Date() },
+    { id: 5, name: 'Harmful or offensive', createdAt: new Date() },
+    { id: 6, name: 'Not helpful', createdAt: new Date() },
+    { id: 7, name: 'Correct', createdAt: new Date() },
+    { id: 8, name: 'Easy to understand', createdAt: new Date() },
+    { id: 9, name: 'Complete', createdAt: new Date() },
+    { id: 10, name: 'Other positive', createdAt: new Date() },
+    { id: 11, name: 'Other negative', createdAt: new Date() },
+  ])
+  .onConflictDoNothing()
+
 console.log('Database seeded successfully!')
 process.exit(0)

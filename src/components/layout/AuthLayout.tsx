@@ -24,6 +24,7 @@ import {
   InboxSolid,
   PlugSolid,
   UserSolid,
+  BellSolid,
 } from '@mochi-ui/icons'
 import { signOut } from 'next-auth/react'
 import Link from 'next/link'
@@ -75,6 +76,13 @@ const headerBotItems = (botId: string) =>
       as: Link,
       href: ROUTES.BOT_DETAIL_INTEGRATIONS(botId),
       Icon: PlugSolid,
+    },
+    {
+      title: 'Logs',
+      type: 'link',
+      as: Link,
+      href: ROUTES.BOT_DETAIL_LOGS(botId),
+      Icon: BellSolid,
     },
   ] as SidebarProps['headerItems']
 
@@ -174,7 +182,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
             return (
               <Link
                 href={ROUTES.BOT_DETAIL(botId)}
-                className="border-b px-8 h-[80px] flex items-center space-x-4"
+                className="border-b px-8 h-[65px] flex items-center space-x-4"
               >
                 <Avatar src={botLogo?.cloudPath ?? ''} />
                 <Typography component="b" className="truncate">
