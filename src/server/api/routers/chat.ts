@@ -91,7 +91,7 @@ function createChatHandler() {
           retrievalModel: schema.botSources.retrievalModel,
         })
         .from(schema.botSources)
-        .where(eq(schema.bots.id, ctx.session.botId))
+        .where(eq(schema.botSources.botId, ctx.session.botId))
 
       const bs = rowsBs.length ? rowsBs[0] : null
       if (!bs?.retrievalModel) {
