@@ -10,7 +10,8 @@ import { BotSourceTypeEnum } from '~/model/bot-source-type'
 import { db } from '~/server/db'
 import * as schema from '~/server/db/migration/schema'
 import { submitSyncBotSource } from '~/server/gateway/cronjob/sync-bot-source'
-import { createTRPCRouter, protectedProcedure } from '../trpc'
+import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
+import { SearchTypeEnum } from '~/model/search-type'
 
 export const botSourceRouter = createTRPCRouter({
   create: createBotSourceHandler(),
@@ -19,6 +20,9 @@ export const botSourceRouter = createTRPCRouter({
   sync: syncBotSourceHandler(),
 
   getByBotId: getByBotIdHandler(),
+
+  getRetrievalModelByBotSourceId: getRetrievalModelByBotIdHandler(),
+  setRetrievalModelBotSource: setRetrievalModelBotSource(),
 
   deleteById: deleteByIdHandler(),
   setVisibility: setVisibility(),
@@ -79,6 +83,70 @@ function setVisibility() {
           updatedBy: ctx.session.user.id,
         })
         .where(eq(schema.botSources.id, input.botSourceId))
+    })
+}
+
+function setRetrievalModelBotSource() {
+  return protectedProcedure
+    .input(
+      z.object({
+        botId: z.string(),
+        retrievalModel: z.object({
+          search_method: z.nativeEnum(SearchTypeEnum),
+          top_k: z.number(),
+          distance: z.number(),
+        }),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const retrival_model = await db
+        .select({
+          botId: schema.botSources.botId,
+          retrievalModel: schema.botSources.retrievalModel,
+        })
+        .from(schema.botSources)
+        .where(
+          and(
+            eq(schema.botSources.botId, input.botId),
+            eq(schema.botSources.createdBy, ctx.session.user.id),
+          ),
+        )
+
+      if (!retrival_model.length) {
+        throw new Error('BotId not found')
+      }
+
+      await db
+        .update(schema.botSources)
+        .set({
+          retrievalModel: sql`${input.retrievalModel}::jsonb`,
+          updatedAt: new Date(),
+          updatedBy: ctx.session.user.id,
+        })
+        .where(eq(schema.botSources.botId, input.botId))
+    })
+}
+
+function getRetrievalModelByBotIdHandler() {
+  return protectedProcedure
+    .input(
+      z.object({
+        botId: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const bs = await db.query.botSources.findFirst({
+        columns: {
+          retrievalModel: true,
+        },
+        where: eq(schema.botSources.botId, input.botId),
+      })
+
+      if (!bs?.retrievalModel) {
+        throw new Error('Retrieval model not found')
+      }
+
+      return bs.retrievalModel
     })
 }
 
@@ -188,6 +256,17 @@ function createBotSourceHandler() {
       z.object({
         botId: z.string(),
         typeId: z.nativeEnum(BotSourceTypeEnum),
+        retrievalModel: z
+          .object({
+            search_method: z.nativeEnum(SearchTypeEnum),
+            top_k: z.number(),
+            distance: z.number(),
+          })
+          .default({
+            search_method: SearchTypeEnum.Vector,
+            top_k: 2,
+            distance: 0.5,
+          }),
         url: z.string(),
         name: z.string().optional(),
       }),
@@ -198,6 +277,7 @@ function createBotSourceHandler() {
         .values({
           ...input,
           id: uuidv7(),
+          retrievalModel: sql`${input.retrievalModel}::jsonb`,
           createdBy: ctx.session.user.id,
           statusId: BotSourceStatusEnum.Pending,
           createdAt: new Date(),

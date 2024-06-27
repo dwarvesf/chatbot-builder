@@ -4,9 +4,9 @@ import { env } from '~/env'
 
 export default {
   schema: './src/server/db/migration/schema.ts',
-  driver: 'pg',
+  dialect: 'postgresql',
   dbCredentials: {
-    connectionString: env.DATABASE_URL,
+    url: env.DATABASE_URL,
   },
   // tablesFilter: ["chatbot-builder_*"],
   out: './src/server/db/migrations',
