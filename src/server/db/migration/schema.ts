@@ -224,13 +224,7 @@ export const botSources = createTable(
     statusId: integer('status_id').notNull(),
     url: text('url'),
     name: text('name'),
-    retrievalModel: jsonb('retrival_model')
-      .default({
-        search_method: SearchTypeEnum.Vector,
-        top_k: 2,
-        distance: 0.5,
-      })
-      .$type<RetrievalModel>(),
+    retrievalModel: jsonb('retrival_model').$type<RetrievalModel>(),
     extractedTokenLength: integer('extracted_token_length'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),

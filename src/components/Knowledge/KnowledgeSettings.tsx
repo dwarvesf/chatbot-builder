@@ -149,16 +149,12 @@ export const KnowledgeSettingsPage = () => {
   })
 
   const formDefaultValues = useMemo<RetrievalModelProps | null>(() => {
-    if (!sources) {
-      return null
-    }
-
     return {
       botId: id as string,
       retrievalModel: {
-        search_method: sources.search_method ?? SearchTypeEnum.Vector,
-        top_k: sources.top_k ?? 2,
-        distance: sources.distance ?? 0.5,
+        search_method: sources?.search_method ?? SearchTypeEnum.Vector,
+        top_k: sources?.top_k ?? 2,
+        distance: sources?.distance ?? 0.5,
       },
     }
   }, [sources])

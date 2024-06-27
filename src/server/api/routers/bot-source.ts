@@ -142,11 +142,7 @@ function getRetrievalModelByBotIdHandler() {
         where: eq(schema.botSources.botId, input.botId),
       })
 
-      if (!bs?.retrievalModel) {
-        throw new Error('Retrieval model not found')
-      }
-
-      return bs.retrievalModel
+      return bs?.retrievalModel
     })
 }
 
@@ -256,17 +252,6 @@ function createBotSourceHandler() {
       z.object({
         botId: z.string(),
         typeId: z.nativeEnum(BotSourceTypeEnum),
-        retrievalModel: z
-          .object({
-            search_method: z.nativeEnum(SearchTypeEnum),
-            top_k: z.number(),
-            distance: z.number(),
-          })
-          .default({
-            search_method: SearchTypeEnum.Vector,
-            top_k: 2,
-            distance: 0.5,
-          }),
         url: z.string(),
         name: z.string().optional(),
       }),
@@ -277,7 +262,6 @@ function createBotSourceHandler() {
         .values({
           ...input,
           id: uuidv7(),
-          retrievalModel: sql`${input.retrievalModel}::jsonb`,
           createdBy: ctx.session.user.id,
           statusId: BotSourceStatusEnum.Pending,
           createdAt: new Date(),

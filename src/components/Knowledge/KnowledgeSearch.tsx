@@ -9,6 +9,7 @@ import { SourceTypeBadge } from '../BotSource/SourceTypeBadge'
 import { useState } from 'react'
 import clsx from 'clsx'
 import { CardSkeleton } from '../common/FormSkeleton'
+import { SearchTypeEnum } from '~/model/search-type'
 
 export const KnowledgeSearch = () => {
   const { toast } = useToast()
@@ -41,10 +42,6 @@ export const KnowledgeSearch = () => {
   })
 
   async function sendMessage(data: { message: string }) {
-    if (!retrievalModels) {
-      return
-    }
-
     if (data.message.length > 200) {
       setError('message', {
         type: 'manual',
@@ -56,9 +53,9 @@ export const KnowledgeSearch = () => {
     try {
       searchRelatedContext({
         botId: id as string,
-        type: retrievalModels.search_method,
-        distance: retrievalModels.distance,
-        top_k: retrievalModels.top_k,
+        type: retrievalModels?.search_method ?? SearchTypeEnum.Vector,
+        top_k: retrievalModels?.top_k ?? 2,
+        distance: retrievalModels?.distance ?? 0.5,
         message: data.message,
       })
     } catch (error: any) {
