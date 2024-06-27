@@ -1,6 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
-import { Button, Card, Separator, Typography, useToast } from '@mochi-ui/core'
+import {
+  Button,
+  card,
+  Card,
+  Skeleton,
+  Typography,
+  useToast,
+} from '@mochi-ui/core'
 import { useParams } from 'next/navigation'
 import { Controller, useForm } from 'react-hook-form'
 import { BotSourceTypeEnum } from '~/model/bot-source-type'
@@ -8,6 +15,7 @@ import { api } from '~/utils/api'
 import { SourceTypeBadge } from '../BotSource/SourceTypeBadge'
 import { useState } from 'react'
 import clsx from 'clsx'
+import { CardSkeleton } from '../common/FormSkeleton'
 
 export const KnowledgeSearch = () => {
   const { toast } = useToast()
@@ -19,16 +27,19 @@ export const KnowledgeSearch = () => {
       botId: id as string,
     })
 
-  const { data: context, mutate: searchRelatedContext } =
-    api.retrieval.search.useMutation({
-      onError: (error) => {
-        toast({
-          description: 'Failed to search document',
-          scheme: 'danger',
-        })
-        console.error(error)
-      },
-    })
+  const {
+    data: context,
+    mutate: searchRelatedContext,
+    isPending,
+  } = api.retrieval.search.useMutation({
+    onError: (error) => {
+      toast({
+        description: 'Failed to search document',
+        scheme: 'danger',
+      })
+      console.error(error)
+    },
+  })
 
   const { handleSubmit, control, setError } = useForm<{
     message: string
@@ -116,32 +127,39 @@ export const KnowledgeSearch = () => {
           Retrieval Paragraph
         </Typography>
         <div className="flex-wrap space-y-4">
-          {context?.map((props, index) => {
-            return (
-              <Card
-                key={index}
-                className="flex flex-col space-y-4 drop-shadow-md"
-              >
-                <Typography>{props.content}</Typography>
-                <Separator />
-                <div className="flex flex-row space-x-4">
-                  <div className="flex items-center">
-                    <SourceTypeBadge typeId={props.sourceType} />
+          {isPending ? (
+            <>
+              <CardSkeleton />
+              <CardSkeleton />
+              <CardSkeleton />
+            </>
+          ) : (
+            context?.map((props, index) => {
+              return (
+                <Card
+                  key={index}
+                  className="flex flex-col space-y-4 drop-shadow-md"
+                >
+                  <Typography>{props.content}</Typography>
+                  <div className="flex flex-row space-x-4">
+                    <div className="flex items-center">
+                      <SourceTypeBadge typeId={props.sourceType} />
+                    </div>
+                    <a
+                      className="text-primary-700 font-semibold text-sm text-wrap"
+                      href={props.referLinks ?? ''}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {props.sourceType !== BotSourceTypeEnum.Link
+                        ? props.referName
+                        : props.referLinks}
+                    </a>
                   </div>
-                  <a
-                    className="text-primary-700 font-semibold text-sm text-wrap"
-                    href={props.referLinks ?? ''}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {props.sourceType !== BotSourceTypeEnum.Link
-                      ? props.referName
-                      : props.referLinks}
-                  </a>
-                </div>
-              </Card>
-            )
-          })}
+                </Card>
+              )
+            })
+          )}
 
           {context?.length === 0 && (
             <Card className="flex flex-col space-y-4 drop-shadow-md">
