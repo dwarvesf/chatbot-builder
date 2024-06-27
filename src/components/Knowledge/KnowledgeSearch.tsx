@@ -6,10 +6,13 @@ import { Controller, useForm } from 'react-hook-form'
 import { BotSourceTypeEnum } from '~/model/bot-source-type'
 import { api } from '~/utils/api'
 import { SourceTypeBadge } from '../BotSource/SourceTypeBadge'
+import { useState } from 'react'
+import clsx from 'clsx'
 
 export const KnowledgeSearch = () => {
   const { toast } = useToast()
   const { id } = useParams() ?? {}
+  const [textLength, setTextLength] = useState(0)
 
   const { data: retrievalModels } =
     api.botSource.getRetrievalModelByBotSourceId.useQuery({
@@ -27,7 +30,7 @@ export const KnowledgeSearch = () => {
       },
     })
 
-  const { handleSubmit, control } = useForm<{
+  const { handleSubmit, control, setError } = useForm<{
     message: string
   }>({
     defaultValues: { message: '' },
@@ -35,6 +38,14 @@ export const KnowledgeSearch = () => {
 
   async function sendMessage(data: { message: string }) {
     if (!retrievalModels) {
+      return
+    }
+
+    if (data.message.length > 200) {
+      setError('message', {
+        type: 'manual',
+        message: 'Message exceeds 200 characters limit',
+      })
       return
     }
 
@@ -50,8 +61,6 @@ export const KnowledgeSearch = () => {
       console.log(error)
     }
   }
-
-  console.log(retrievalModels)
 
   return (
     <div className="flex flex-row min-h-screen w-full space-x-4">
@@ -80,11 +89,19 @@ export const KnowledgeSearch = () => {
                   <textarea
                     className="p-4 appearance-none outline-none bg-transparent rounded shrink-0 py-2.5 caret-primary-outline-fg placeholder:text-text-disabled min-h-[300px] text-sm w-full resize-none"
                     {...field}
+                    onChange={(e) => {
+                      field.onChange(e)
+                      setTextLength(e.target.value.length)
+                    }}
                   />
                 )}
               />
               <div className="w-full flex flex-row justify-between items-baseline p-4">
-                <Typography>{`&{}/200`}</Typography>
+                <Typography
+                  level="p5"
+                  fontWeight="lg"
+                  className={clsx({ 'text-red-700': textLength > 200 })}
+                >{`${textLength}/200`}</Typography>
                 <Button type="submit" className="w-fit">
                   Testing
                 </Button>
