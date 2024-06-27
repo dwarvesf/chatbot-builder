@@ -1,7 +1,6 @@
-import { eq, isNull, sql } from 'drizzle-orm'
+import { sql } from 'drizzle-orm'
 import { db } from '~/server/db'
 import * as schema from './schema'
-import { SearchTypeEnum } from '~/model/search-type'
 
 console.log('Seeding database...')
 
