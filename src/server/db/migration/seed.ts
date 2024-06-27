@@ -22,19 +22,6 @@ await db
     },
   })
 
-// When new field "retrievalModel" is migrated, previous data may become null.
-// Update old data with default retrievalModel
-await db
-  .update(schema.botSources)
-  .set({
-    retrievalModel: sql`${{
-      search_method: SearchTypeEnum.Vector,
-      top_k: 2,
-      distance: 0.5,
-    }}::jsonb`,
-  })
-  .where(isNull(schema.botSources.retrievalModel))
-
 await db
   .insert(schema.botSourceTypes)
   .values([

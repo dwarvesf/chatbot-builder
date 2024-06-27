@@ -17,6 +17,7 @@ import { type AdapterAccount } from 'next-auth/adapters'
 import { BotSourceStatusEnum } from '~/model/bot-source-status'
 import { vector } from '~/server/db/migration/vector'
 import { type RetrievalModel } from '~/server/api/core/types/retrieval-model'
+import { SearchTypeEnum } from '~/model/search-type'
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
@@ -223,7 +224,13 @@ export const botSources = createTable(
     statusId: integer('status_id').notNull(),
     url: text('url'),
     name: text('name'),
-    retrievalModel: jsonb('retrival_model').$type<RetrievalModel>(),
+    retrievalModel: jsonb('retrival_model')
+      .default({
+        search_method: SearchTypeEnum.Vector,
+        top_k: 2,
+        distance: 0.5,
+      })
+      .$type<RetrievalModel>(),
     extractedTokenLength: integer('extracted_token_length'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
