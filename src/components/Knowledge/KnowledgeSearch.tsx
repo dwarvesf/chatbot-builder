@@ -1,13 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
-import {
-  Button,
-  card,
-  Card,
-  Skeleton,
-  Typography,
-  useToast,
-} from '@mochi-ui/core'
+import { Button, Card, Typography, useToast } from '@mochi-ui/core'
 import { useParams } from 'next/navigation'
 import { Controller, useForm } from 'react-hook-form'
 import { BotSourceTypeEnum } from '~/model/bot-source-type'
