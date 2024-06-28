@@ -1,13 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
-import { Button, Card, Typography, useToast } from '@mochi-ui/core'
+import { Badge, Button, Card, Typography, useToast } from '@mochi-ui/core'
 import { useParams } from 'next/navigation'
 import { Controller, useForm } from 'react-hook-form'
 import { BotSourceTypeEnum } from '~/model/bot-source-type'
 import { api } from '~/utils/api'
 import { SourceTypeBadge } from '../BotSource/SourceTypeBadge'
 import { useState } from 'react'
-import clsx from 'clsx'
 import { CardSkeleton } from '../common/FormSkeleton'
 import { SearchTypeEnum } from '~/model/search-type'
 
@@ -88,8 +87,9 @@ export const KnowledgeSearch = () => {
                 control={control}
                 render={({ field }) => (
                   <textarea
-                    className="p-4 appearance-none outline-none bg-transparent rounded shrink-0 py-2.5 caret-primary-outline-fg placeholder:text-text-disabled min-h-[300px] text-sm w-full resize-none"
+                    className="p-4 appearance-none outline-none bg-transparent rounded shrink-0 py-2.5 caret-primary-outline-fg placeholder:text-text-disabled min-h-[200px] text-sm w-full resize-none"
                     {...field}
+                    maxLength={200}
                     onChange={(e) => {
                       field.onChange(e)
                       setTextLength(e.target.value.length)
@@ -98,11 +98,12 @@ export const KnowledgeSearch = () => {
                 )}
               />
               <div className="w-full flex flex-row justify-between items-baseline p-4">
-                <Typography
-                  level="p5"
-                  fontWeight="lg"
-                  className={clsx({ 'text-red-700': textLength > 200 })}
-                >{`${textLength}/200`}</Typography>
+                <Badge appearance={textLength === 200 ? 'danger' : 'primary'}>
+                  <Typography level="p5" fontWeight="lg">
+                    {`${textLength}/200`}
+                  </Typography>
+                </Badge>
+
                 <Button type="submit" className="w-fit">
                   Testing
                 </Button>
