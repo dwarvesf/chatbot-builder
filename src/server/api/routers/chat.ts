@@ -93,16 +93,13 @@ function createChatHandler() {
         .from(schema.botSources)
         .where(eq(schema.botSources.botId, ctx.session.botId))
 
-      const bs = rowsBs.length ? rowsBs[0] : null
-      if (!bs?.retrievalModel) {
-        throw new Error('Retrieval model not found')
-      }
+      const bsRetrievalModel = rowsBs.length ? rowsBs[0] : null
 
       //Default config retrievalModel
       const searchMethod =
-        bs.retrievalModel.search_method ?? SearchTypeEnum.Vector
-      const top_k = bs.retrievalModel.top_k ?? 2
-      const distance = bs.retrievalModel.distance ?? 0.5
+        bsRetrievalModel?.retrievalModel?.search_method ?? SearchTypeEnum.Vector
+      const top_k = bsRetrievalModel?.retrievalModel?.top_k ?? 2
+      const distance = bsRetrievalModel?.retrievalModel?.distance ?? 0.5
 
       const thread = await db.query.threads.findFirst({
         where: and(
