@@ -49,7 +49,7 @@ export const RetrievalSearchCard = ({
           <div className="flex flex-col space-y-2">
             <div className="flex flex-row mb-4">
               <div className="flex flex-col">
-                <div className="flex flex-row items-stretch space-x-4">
+                <div className="flex flex-row items-stretch space-x-2">
                   <Typography level="h6" fontWeight="lg">
                     {searchName}
                   </Typography>
@@ -104,7 +104,7 @@ export const RetrievalSearchCard = ({
                             type="range"
                             defaultValue={1}
                             min={1}
-                            max={10}
+                            max={20}
                             step={1}
                             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                             value={field.value}
@@ -122,7 +122,7 @@ export const RetrievalSearchCard = ({
                   <div className="grid grid-col-1">
                     <div className="flex flex-row space-x-2">
                       <Typography level="h6" fontWeight="lg">
-                        Distance
+                        Score Threshold
                       </Typography>
                       <Tooltip
                         arrow="top-center"
@@ -135,7 +135,7 @@ export const RetrievalSearchCard = ({
 
                     <Controller
                       control={control}
-                      name="retrievalModel.distance"
+                      name="retrievalModel.similarity_threshold"
                       render={({ field }) => (
                         <FormControl hideHelperTextOnError>
                           <div className="flex flex-row space-x-4 items-baseline">

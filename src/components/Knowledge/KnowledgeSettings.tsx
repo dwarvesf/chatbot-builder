@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Typography, useToast } from '@mochi-ui/core'
-import { WebSolid, TwinkleSolid } from '@mochi-ui/icons'
+import { WebSolid, TwinkleSolid, GiftSolid } from '@mochi-ui/icons'
 import { useParams } from 'next/navigation'
 import { FormProvider, useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -16,7 +16,7 @@ export interface RetrievalModelProps {
   retrievalModel: {
     search_method: SearchTypeEnum
     top_k: number
-    distance: number
+    similarity_threshold: number
   }
 }
 
@@ -30,7 +30,7 @@ const schema = z.object({
   retrievalModel: z.object({
     search_method: z.nativeEnum(SearchTypeEnum),
     top_k: z.number(),
-    distance: z.number(),
+    similarity_threshold: z.number(),
   }),
 })
 
@@ -122,6 +122,14 @@ const KnowledgeSettings = ({
                   Icon={WebSolid}
                 />
 
+                <RetrievalSearchCard
+                  searchName="Hybrid Search"
+                  description="Execute full-text search and vector searches simultaneously, re-rank to select the best match for the user's query. Configuration of the Rerank model APIs necessary."
+                  searchMethod={SearchTypeEnum.Hybrid}
+                  recommended={true}
+                  Icon={GiftSolid}
+                />
+
                 <SaveBar
                   open={isDirty || isPending || isError}
                   isLoading={isSubmitting || isPending}
@@ -154,7 +162,7 @@ export const KnowledgeSettingsPage = () => {
       retrievalModel: {
         search_method: sources?.search_method ?? SearchTypeEnum.Vector,
         top_k: sources?.top_k ?? 2,
-        distance: sources?.distance ?? 0.5,
+        similarity_threshold: sources?.similarity_threshold ?? 0.5,
       },
     }
   }, [sources])

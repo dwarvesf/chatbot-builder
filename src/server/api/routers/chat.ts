@@ -99,7 +99,8 @@ function createChatHandler() {
       const searchMethod =
         bsRetrievalModel?.retrievalModel?.search_method ?? SearchTypeEnum.Vector
       const top_k = bsRetrievalModel?.retrievalModel?.top_k ?? 2
-      const distance = bsRetrievalModel?.retrievalModel?.distance ?? 0.5
+      const similarity_threshold =
+        bsRetrievalModel?.retrievalModel?.similarity_threshold ?? 0.5
 
       const thread = await db.query.threads.findFirst({
         where: and(
@@ -137,7 +138,7 @@ function createChatHandler() {
       const contexts = await Search(
         searchMethod,
         top_k,
-        distance,
+        similarity_threshold,
         bot.id,
         msg.message,
       )
@@ -145,8 +146,6 @@ function createChatHandler() {
       if (!contexts) {
         return
       }
-
-      console.log(contexts.map((row) => row.content))
 
       const assistantMsgs = []
 
@@ -156,7 +155,7 @@ function createChatHandler() {
         console.log('Prompt:', prompt)
 
         // Ask bot
-        const res = await askAI(bot, msg.message)
+        const res = await askAI(bot, prompt)
         if (!res) {
           throw new Error('Failed to ask AI')
         }

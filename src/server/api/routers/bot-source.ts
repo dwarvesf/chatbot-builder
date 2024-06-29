@@ -94,7 +94,7 @@ function setRetrievalModelBotSource() {
         retrievalModel: z.object({
           search_method: z.nativeEnum(SearchTypeEnum),
           top_k: z.number(),
-          distance: z.number(),
+          similarity_threshold: z.number(),
         }),
       }),
     )

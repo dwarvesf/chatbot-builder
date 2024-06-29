@@ -306,6 +306,7 @@ export const botSourceExtractedDataVector = createTable(
     contentSearchIndex: index(
       'bot_source_extracted_data_vector_content_search_idx',
     ).using('gin', sql`to_tsvector('english', ${vector.content})`),
+    vectorHnswIndex: sql`CREATE INDEX bot_source_extracted_data_vector_hnsw_idx ON bot_source_extracted_data_vector USING hnsw (vector vector_cosine_ops) WITH (m = 16, ef_construction = 64)`,
   }),
 )
 
