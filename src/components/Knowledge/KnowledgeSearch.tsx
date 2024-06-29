@@ -52,8 +52,8 @@ export const KnowledgeSearch = () => {
     try {
       searchRelatedContext({
         botId: id as string,
-        type: retrievalModels?.search_method ?? SearchTypeEnum.Hybrid,
-        top_k: retrievalModels?.top_k ?? 5,
+        type: retrievalModels?.search_method ?? SearchTypeEnum.Vector,
+        top_k: retrievalModels?.top_k ?? 2,
         distance: retrievalModels?.similarity_threshold ?? 0.5,
         message: data.message,
       })
