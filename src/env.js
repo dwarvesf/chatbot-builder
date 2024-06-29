@@ -30,7 +30,6 @@ export const env = createEnv({
     ASYNC_BULK_IMPORT_THREAD_LIMIT: z.string().optional().default('10'),
     FIRECRAWL_API_URL: z.string().url(),
     FIRECRAWL_SECRET_TOKEN: z.string(),
-    CLOSEST_CHUNKS_COUNT_FOR_CHAT_CONTEXT: z.string().optional().default('2'),
     CRON_SERVICE_URL: z.string().url(),
     CRON_JOB_SECRET: z.string(),
     MAX_CRON_DURATION: z.string().default('60'),
@@ -64,8 +63,6 @@ export const env = createEnv({
     ASYNC_BULK_IMPORT_THREAD_LIMIT: process.env.ASYNC_BULK_IMPORT_THREAD_LIMIT,
     FIRECRAWL_API_URL: process.env.FIRECRAWL_API_URL,
     FIRECRAWL_SECRET_TOKEN: process.env.FIRECRAWL_SECRET_TOKEN,
-    CLOSEST_CHUNKS_COUNT_FOR_CHAT_CONTEXT:
-      process.env.CLOSEST_CHUNKS_COUNT_FOR_CHAT_CONTEXT,
     CRON_SERVICE_URL: process.env.CRON_SERVICE_URL,
     CRON_JOB_SECRET: process.env.CRON_JOB_SECRET,
     MAX_CRON_DURATION: process.env.MAX_CRON_DURATION,

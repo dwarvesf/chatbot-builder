@@ -10,4 +10,5 @@ export const ROUTES = {
   BOT_DETAIL_APPEARANCE: (botId: string) => `/bots/${botId}/appearance`,
   BOT_DETAIL_INTEGRATIONS: (botId: string) => `/bots/${botId}/integrations`,
   BOT_DETAIL_LOGS: (botId: string) => `/bots/${botId}/logs`,
+  BOT_DETAIL_KNOWLEDGE: (botId: string) => `/bots/${botId}/knowledge`,
 }
