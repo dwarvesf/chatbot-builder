@@ -5,18 +5,18 @@ import {
   PageHeader,
   PageHeaderTitle,
   Separator,
-  Typography,
   Tooltip,
+  Typography,
 } from '@mochi-ui/core'
 import { PaperplaneSolid, Spinner } from '@mochi-ui/icons'
-import { FeedbackFormWrapper } from '~/components/FeedbackForm'
-import { Like, DisLike } from '~/components/icons/svg'
 import clsx from 'clsx'
 import type { GetServerSideProps, NextPage } from 'next'
 import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
+import { FeedbackFormWrapper } from '~/components/FeedbackForm'
 import { SeoHead } from '~/components/common/SeoHead'
+import { DisLike, Like } from '~/components/icons/svg'
 import { ROUTES } from '~/constants/routes'
 import { getServerAuthSession } from '~/server/auth'
 import { api } from '~/utils/api'
@@ -115,7 +115,7 @@ const BotDetail: NextPage = () => {
       addNewMessage(
         data.chatIdAssistants ?? '',
         data.referSourceLinks ?? null,
-        data.assistants?.[0]?.[0]?.msg ?? '',
+        data.assistants?.[0]?.toString() ?? '',
         false,
       )
     },
@@ -175,6 +175,23 @@ const BotDetail: NextPage = () => {
       })
     }
   }, [createNewThread, serverThread, apiToken])
+
+  // useEffect(() => {
+  //   if (chatData) {
+  //     addNewMessage(
+  //       chatData.referSourceLinks ?? null,
+  //       // chatData.assistants?.[0]?.[0]?.msg ?? '',
+  //       chatData.res ?? '',
+  //       false,
+  //     )
+  //   }
+  // }, [JSON.stringify(chatData)])
+
+  // useEffect(() => {
+  //   if (chatError) {
+  //     addNewMessage(null, chatError.message, false, true)
+  //   }
+  // }, [chatError])
 
   async function sendMessage(data: { message: string }) {
     const submittedMessage = data.message.trim()

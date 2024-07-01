@@ -58,7 +58,7 @@ export async function POST(req: Request) {
   return new Response(`Sync bot source from ${process.env.VERCEL_REGION} xxx`)
 }
 
-async function syncBotSource(bsId: string) {
+export async function syncBotSource(bsId: string) {
   const bs = await db.query.botSources.findFirst({
     where: eq(schema.botSources.id, bsId),
   })

@@ -300,6 +300,10 @@ export const botSourceExtractedDataVector = createTable(
     botSourceExtractedDataIdIdx: index(
       'bot_source_extracted_data_vector_bot_source_extracted_data_id_idx',
     ).on(vector.botSourceExtractedDataId),
+    vectorIdx: index('bot_source_extracted_data_vector_vector_idx').using(
+      'hnsw',
+      vector.vector.op('vector_cosine_ops'),
+    ),
   }),
 )
 

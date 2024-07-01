@@ -22,7 +22,7 @@ db-down-prune:
 	docker-compose -p chatbot_builder -f ./build/local/docker-compose.yml down --volumes
 
 db-migrate:
-	bun drizzle-kit push:pg
+	bun drizzle-kit push
 
 db-seed:
 	bun src/server/db/migration/seed.ts
