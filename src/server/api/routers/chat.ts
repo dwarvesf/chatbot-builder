@@ -1,18 +1,53 @@
-import { and, asc, desc, eq, gte, sql } from 'drizzle-orm'
-import lodash from 'lodash'
+import { PGVectorStore } from '@langchain/community/vectorstores/pgvector'
+import { type Document } from '@langchain/core/documents'
+import {
+  HumanMessageChunk,
+  type BaseMessage,
+  type MessageContentComplex,
+} from '@langchain/core/messages'
+import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai'
+import { and, desc, eq, gte, sql } from 'drizzle-orm'
 import OpenAI from 'openai'
+import pg from 'pg'
+import sharp from 'sharp'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
 import { env } from '~/env'
 import { BotModelEnum } from '~/model/bot-model'
-import { BotSourceTypeEnum } from '~/model/bot-source-type'
 import { ChatRoleEnum } from '~/model/chat'
 import { UsageLimitTypeEnum } from '~/model/usage-limit-type'
 import { db } from '~/server/db'
 import * as schema from '~/server/db/migration/schema'
 import getEmbeddingsFromContents from '~/server/gateway/openai/embedding'
 import { type Nullable } from '~/utils/types'
-import { createTRPCRouter, integrationProcedure } from '~/server/api/trpc'
+import { isBase64, isImageData } from '~/utils/utils'
+import { createTRPCRouter, integrationProcedure } from '../trpc'
+
+const reusablePool = new pg.Pool({
+  host: env.DATABASE_HOST,
+  port: env.DATABASE_PORT,
+  user: env.DATABASE_USER,
+  password: env.DATABASE_PASSWORD,
+  database: env.DATABASE_NAME,
+})
+
+const originalConfig = {
+  pool: reusablePool,
+  tableName: 'bot_source_extracted_data_vector',
+  columns: {
+    idColumnName: 'id',
+    vectorColumnName: 'vector',
+    contentColumnName: 'content',
+  },
+}
+
+const pgvectorStore = new PGVectorStore(
+  new OpenAIEmbeddings({
+    model: 'text-embedding-3-small',
+    dimensions: 1024,
+  }),
+  originalConfig,
+)
 
 const openai = new OpenAI({
   apiKey: env.OPENAI_API_KEY, // This is the default and can be omitted
@@ -117,81 +152,91 @@ function createChatHandler() {
         })
         .returning()
 
-      const contexts = await getRelatedContexts(bot.id, msg.message)
+      const retriever = pgvectorStore.asRetriever()
+      const contexts = await retriever.invoke(msg.message)
+
+      // const contexts = await getRelatedContexts(bot.id, msg.message)
       const assistantMsgs = []
 
       if (contexts.length > 0) {
         // Build prompt
-        const prompt = await buildPrompt(contexts, msg.message)
-        console.log('Prompt:', prompt)
+        // const prompt = await buildPrompt(contexts, msg.message)
+        const prompt = await buildPromptv2(contexts, msg.message)
+        // console.log('Prompt:', prompt)
 
         // Ask bot
-        const res = await askAI(bot, msg.message)
+        // const res = await askAI(bot, msg.message)
+        const res = await askAIv2(bot, prompt)
         if (!res) {
           throw new Error('Failed to ask AI')
         }
+        // console.log('AI Response:', res)
 
-        console.log(
-          'Refer Links:',
-          contexts.map((row) => row.referLinks),
-        )
+        // console.log(
+        //   'Refer Links:',
+        //   contexts.map((row) => row.referLinks),
+        // )
 
-        const sourceLinks: string[] = []
+        //const sourceLinks: string[] = []
 
-        contexts.forEach((context) => {
-          if (context.sourceType === Number(BotSourceTypeEnum.File)) {
-            return
-          }
+        // contexts.forEach((context) => {
+        //   if (context.sourceType === Number(BotSourceTypeEnum.File)) {
+        //     return
+        //   }
 
-          if (!context.referLinks) {
-            return
-          }
+        //   if (!context.referLinks) {
+        //     return
+        //   }
 
-          sourceLinks.push(context.referLinks)
-        })
+        //   sourceLinks.push(context.referLinks)
+        // })
 
-        const formatSourceLinks = lodash.uniq(sourceLinks) // filter duplicate link
+        // const formatSourceLinks = lodash.uniq(sourceLinks) // filter duplicate link
 
-        const { completion } = res
+        // const { completion } = res
 
-        const resChoices = completion?.choices?.filter(
-          (c) => c?.message?.role === 'assistant',
-        )
+        // const resChoices = completion?.choices?.filter(
+        //   (c) => c?.message?.role === 'assistant',
+        // )
 
         // Save bot response
-        if (resChoices?.length) {
-          for (const res of resChoices) {
-            const isLastMsg = res === resChoices[resChoices.length - 1]
+        // if (resChoices?.length) {
+        //   for (const res of resChoices) {
+        //     const isLastMsg = res === resChoices[resChoices.length - 1]
 
-            const resId = uuidv7()
-            const m = await db
-              .insert(schema.chats)
-              .values({
-                id: resId,
-                botModelId: bot.modelId,
-                roleId: ChatRoleEnum.Assistant,
-                parentChatId: chatId,
-                threadId,
-                msg: res.message.content,
-                prompt,
-                promptTokens: isLastMsg ? completion?.usage?.prompt_tokens : 0,
-                completionTokens: isLastMsg
-                  ? completion?.usage?.completion_tokens
-                  : 0,
-                totalTokens: isLastMsg ? completion?.usage?.total_tokens : 0,
-              })
-              .returning()
+        //     const resId = uuidv7()
+        //     const m = await db
+        //       .insert(schema.chats)
+        //       .values({
+        //         id: resId,
+        //         botModelId: bot.modelId,
+        //         roleId: ChatRoleEnum.Assistant,
+        //         parentChatId: chatId,
+        //         threadId,
+        //         msg: res.message.content,
+        //         prompt,
+        //         promptTokens: isLastMsg ? completion?.usage?.prompt_tokens : 0,
+        //         completionTokens: isLastMsg
+        //           ? completion?.usage?.completion_tokens
+        //           : 0,
+        //         totalTokens: isLastMsg ? completion?.usage?.total_tokens : 0,
+        //       })
+        //       .returning()
 
-            assistantMsgs.push(m)
-
-            return {
-              chat: c,
-              chatIdAssistants: resId,
-              assistants: assistantMsgs,
-              referSourceLinks: formatSourceLinks,
-              res: completion,
-            }
-          }
+        //     assistantMsgs.push(m)
+        //   }
+        // }
+        // return {
+        //   chat: c,
+        //   assistants: assistantMsgs,
+        //   referSourceLinks: formatSourceLinks,
+        //   res: completion,
+        // }
+        return {
+          chat: c,
+          assistants: prompt,
+          referSourceLinks: null,
+          res: res.content.toString(),
         }
       } else {
         console.log('Context: No relevant context')
@@ -245,6 +290,29 @@ async function askAI(
   })
 
   return { completion }
+}
+
+async function askAIv2(
+  bot: { id: string; modelId: BotModelEnum },
+  prompt: BaseMessage[],
+) {
+  if (!bot || !prompt) {
+    return
+  }
+
+  const model = new ChatOpenAI({
+    model: 'gpt-4o',
+    // model: getAIModel(bot.modelId),
+    maxTokens: 1024,
+    temperature: 0,
+  })
+  for (const p of prompt) {
+    console.log('Prompt:', p.content)
+  }
+
+  const result = await model.invoke(prompt)
+
+  return result
 }
 
 async function getRelatedContexts(botId: string, msg: string) {
@@ -305,10 +373,48 @@ async function buildPrompt(
   return prompt
 }
 
+async function buildPromptv2(context: Document[], question: string) {
+  const messages: MessageContentComplex[] = []
+  const textMessages = []
+  for (const r of context) {
+    if (isBase64(r.pageContent) && isImageData(r.pageContent)) {
+      // image data
+      const resizeImage = await resizeBase64Image(r.pageContent, [1300, 600])
+      messages.push({
+        type: 'image_url',
+        image_url: {
+          url: `data:image/jpeg;base64,${resizeImage}`,
+        },
+      })
+    } else {
+      // text, table
+      textMessages.push(r.pageContent)
+    }
+  }
+  const formattedTextMessages = textMessages.join('\n')
+  messages.push({
+    type: 'text',
+    text: `
+          You are AI assistant which is capable of answering questions.\n
+          You will be given a mixed of text, tables, and image(s) usually of charts or graphs.\n
+          Use this information to provide answer related to the user question but keep answer clean and understandable.\n
+          User-provided question: ${question}\n
+          Text and/or tables provided: \n
+          ${formattedTextMessages}
+          `,
+  })
+
+  const humanMessages: BaseMessage[] = [
+    new HumanMessageChunk({ content: messages }),
+  ]
+
+  return humanMessages
+}
+
 function getAIModel(modelID: BotModelEnum): string {
   switch (modelID) {
     case BotModelEnum.GPT3:
-      return 'gpt-3.5-turbo'
+      return 'gpt-4o'
     default:
       throw new Error('Invalid model')
   }
@@ -366,4 +472,20 @@ async function isUserUsageLimitValid(
     return false
   }
   return true
+}
+
+async function resizeBase64Image(
+  base64String: string,
+  size: [number, number] = [128, 128],
+): Promise<string> {
+  // Decode the Base64 string to a Buffer
+  const imgBuffer = Buffer.from(base64String, 'base64')
+
+  // Resize the image using sharp
+  const resizedImgBuffer = await sharp(imgBuffer)
+    .resize(...size)
+    .toBuffer()
+
+  // Encode the resized image to Base64
+  return resizedImgBuffer.toString('base64')
 }
