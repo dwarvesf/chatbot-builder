@@ -5,18 +5,18 @@ import {
   PageHeader,
   PageHeaderTitle,
   Separator,
-  Typography,
   Tooltip,
+  Typography,
 } from '@mochi-ui/core'
 import { PaperplaneSolid, Spinner } from '@mochi-ui/icons'
-import { FeedbackFormWrapper } from '~/components/FeedbackForm'
-import { Like, DisLike } from '~/components/icons/svg'
 import clsx from 'clsx'
 import type { GetServerSideProps, NextPage } from 'next'
 import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { SeoHead } from '~/components/common/SeoHead'
+import { FeedbackFormWrapper } from '~/components/FeedbackForm'
+import { DisLike, Like } from '~/components/icons/svg'
 import { ROUTES } from '~/constants/routes'
 import { getServerAuthSession } from '~/server/auth'
 import { api } from '~/utils/api'
@@ -29,41 +29,77 @@ interface ThreadItem {
   isError?: boolean
 }
 
-const ChatThread = (props: {
+interface ChatThreadProps {
+  openId: string | null
   chatIdAssistant?: string
-  sourcesLinks?: string[] | null
+  apiToken?: string
+  threadId?: string
   avatar?: string
-  children: React.ReactNode
   isRight?: boolean
   isError?: boolean
-}) => {
-  const { sourcesLinks, avatar, children, isRight, isError = false } = props
+  sourcesLinks?: string[] | null
+  onFeedback?: (isPositive: boolean) => void
+  showThankYou: string | null
+  handleFeedbackSuccess: (chatIdAssistant: string) => void
+  handleClose: () => void
+  isPositiveFeedback: boolean
+  isLatestMessage?: boolean
+  children: React.ReactNode
+}
+
+const ChatThread = ({
+  openId,
+  chatIdAssistant,
+  apiToken,
+  threadId,
+  sourcesLinks,
+  avatar,
+  children,
+  isRight,
+  isError = false,
+  onFeedback,
+  isLatestMessage,
+  showThankYou,
+  handleFeedbackSuccess,
+  handleClose,
+  isPositiveFeedback,
+}: ChatThreadProps) => {
+  const [isHovered, setIsHovered] = useState(false)
+
+  const showFeedbackButtons = isLatestMessage ?? isHovered
 
   return (
-    <div className={clsx('flex', { 'justify-end': isRight })}>
-      <div
-        className={clsx('flex flex-1 gap-4', { 'flex-row-reverse': isRight })}
-      >
-        <Avatar src={avatar ?? ''} />
+    <div
+      className={clsx('flex', { 'justify-end': isRight })}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className="flex flex-col w-full">
         <div
-          className={clsx('p-4 rounded-xl max-w-[80%]', {
-            'bg-secondary-100': isRight && !isError,
-            'bg-background-level2': !isRight && !isError,
-            'bg-danger-200': isError,
+          className={clsx('flex gap-4', {
+            'flex-row-reverse': isRight,
           })}
         >
-          {children}
-          <div>
-            {!isRight && sourcesLinks?.length && sourcesLinks !== null ? (
+          <Avatar src={avatar ?? ''} />
+          <div
+            className={clsx('p-4 rounded-xl max-w-[80%] relative', {
+              'bg-secondary-100': isRight && !isError,
+              'bg-background-level2': !isRight && !isError,
+              'bg-danger-200': isError,
+            })}
+          >
+            {children}
+
+            {!isRight && sourcesLinks?.length && sourcesLinks !== null && (
               <>
                 <Separator className="my-4" />
-                Sources:
+                <Typography level="p5">Sources:</Typography>
                 <ul className="list-disc px-8">
-                  {sourcesLinks?.map((link) => (
+                  {sourcesLinks.map((link) => (
                     <li key={link}>
                       <a
                         className="text-blue-600 font-bold"
-                        href={link ?? ''}
+                        href={link}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
@@ -73,8 +109,76 @@ const ChatThread = (props: {
                   ))}
                 </ul>
               </>
-            ) : null}
+            )}
           </div>
+        </div>
+
+        {!isRight && showFeedbackButtons && (
+          <div className={clsx('flex px-16 mt-2')}>
+            <Tooltip arrow="bottom-center" content="Good response">
+              <div className="p-2 hover:scale-110 rounded-md hover:bg-background-level3">
+                <IconButton
+                  asChild
+                  label="feedback-positive"
+                  variant="link"
+                  className="rounded-none text-gray-600"
+                  onClick={() => onFeedback && onFeedback(true)}
+                >
+                  <Like className="w-4 h-4 cursor-pointer" />
+                </IconButton>
+              </div>
+            </Tooltip>
+            <Tooltip arrow="bottom-center" content="Bad response">
+              <div className="p-2 hover:scale-110 rounded-md hover:bg-background-level3">
+                <IconButton
+                  asChild
+                  label="feedback-negative"
+                  variant="link"
+                  className="rounded-none text-gray-600"
+                  onClick={() => onFeedback && onFeedback(false)}
+                >
+                  <DisLike className="w-4 h-4 cursor-pointer" />
+                </IconButton>
+              </div>
+            </Tooltip>
+          </div>
+        )}
+
+        {openId === chatIdAssistant && (
+          <FeedbackFormWrapper
+            apiToken={apiToken}
+            threadId={threadId ?? ''}
+            chatId={chatIdAssistant ?? ''}
+            isPositive={isPositiveFeedback}
+            onSuccess={() => handleFeedbackSuccess(chatIdAssistant ?? '')}
+            handleClose={handleClose}
+          />
+        )}
+
+        {showThankYou === chatIdAssistant && (
+          <div className="w-fit bg-background-level2 border rounded-lg p-4 ml-16 mt-4">
+            <Typography level="p4" fontWeight="md">
+              Thank you for your feedback
+            </Typography>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+const ChatThreadTempAssistant = (props: {
+  avatar?: string
+  children: React.ReactNode
+}) => {
+  const { avatar, children } = props
+
+  return (
+    <div className="flex justify-end ">
+      <div className="flex flex-1 gap-4 ">
+        <Avatar src={avatar ?? ''} />
+        <div className="p-4 rounded-xl max-w-[80%] bg-background-level2">
+          {children}
         </div>
       </div>
     </div>
@@ -137,10 +241,9 @@ const BotDetail: NextPage = () => {
   const [showThankYou, setShowThankYou] = useState<string | null>(null)
   const [isPositiveFeedback, setIsPositiveFeedback] = useState(false)
 
-  const handleToggle = (chatIdAssistant: string, isPositive: boolean) => {
-    setOpenId(openId === chatIdAssistant ? null : chatIdAssistant)
+  const handleFeedback = (chatIdAssistant: string, isPositive: boolean) => {
+    setOpenId(chatIdAssistant)
     setIsPositiveFeedback(isPositive)
-    setShowThankYou(null)
   }
 
   const handleFeedbackSuccess = (chatIdAssistant: string) => {
@@ -213,90 +316,46 @@ const BotDetail: NextPage = () => {
           </div>
           <div className="absolute inset-x-0 top-20 bottom-20 overflow-y-auto p-4 space-y-4">
             {!initialThreadPending && serverThread?.chat?.msg ? (
-              <ChatThread avatar={botLogoSources?.cloudPath ?? ''}>
+              <ChatThreadTempAssistant avatar={botLogoSources?.cloudPath ?? ''}>
                 {serverThread?.chat?.msg}
-              </ChatThread>
+              </ChatThreadTempAssistant>
             ) : null}
-            {thread.map((item, index) => (
-              <>
-                <ChatThread
-                  key={index}
-                  avatar={
-                    item.isYou
-                      ? profile?.image ?? ''
-                      : botLogoSources?.cloudPath ?? ''
-                  }
-                  isRight={item.isYou}
-                  isError={item.isError}
-                  sourcesLinks={item.sourcesLinks}
-                >
-                  {item.message}
-                </ChatThread>
-
-                <div>
-                  {!item.isYou && (
-                    <div>
-                      <div className="flex flex-row ml-16 space-x-2 rounded-xl max-w-[80%]">
-                        <Tooltip arrow="bottom-center" content="Good response">
-                          <IconButton
-                            asChild
-                            label="feedback-positive"
-                            variant="link"
-                            className="rounded-none hover:scale-110 text-black hover:text-green-600"
-                            onClick={() => {
-                              handleToggle(item.chatIdAssistant ?? '', true)
-                            }}
-                          >
-                            <Like className="w-4 h-4 cursor-pointer" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip arrow="bottom-center" content="Bad response">
-                          <IconButton
-                            asChild
-                            label="feedback-negative"
-                            variant="link"
-                            className="rounded-none hover:scale-110 text-black hover:text-red-500"
-                            onClick={() => {
-                              handleToggle(item.chatIdAssistant ?? '', false)
-                            }}
-                          >
-                            <DisLike className="w-4 h-4 cursor-pointer" />
-                          </IconButton>
-                        </Tooltip>
-                      </div>
-
-                      {openId === item.chatIdAssistant ? (
-                        <FeedbackFormWrapper
-                          apiToken={apiToken}
-                          threadId={serverThread?.thread?.id ?? ''}
-                          chatId={item.chatIdAssistant ?? ''}
-                          isPositive={isPositiveFeedback}
-                          onSuccess={() =>
-                            handleFeedbackSuccess(item.chatIdAssistant ?? '')
-                          }
-                          handleClose={() =>
-                            handleToggle(
-                              item.chatIdAssistant ?? '',
-                              isPositiveFeedback,
-                            )
-                          }
-                        />
-                      ) : showThankYou === item.chatIdAssistant ? (
-                        <div className="w-fit bg-background-level2 border rounded-lg p-4 ml-16 mt-4">
-                          <Typography level="p4" fontWeight="md">
-                            Thank you for your feedback
-                          </Typography>
-                        </div>
-                      ) : null}
-                    </div>
-                  )}
-                </div>
-              </>
+            {thread.map((item) => (
+              <ChatThread
+                key={item.chatIdAssistant}
+                openId={openId}
+                apiToken={apiToken}
+                threadId={serverThread?.thread?.id ?? ''}
+                chatIdAssistant={item.chatIdAssistant}
+                isRight={item.isYou}
+                isError={item.isError}
+                avatar={
+                  item.isYou
+                    ? profile?.image ?? ''
+                    : botLogoSources?.cloudPath ?? ''
+                }
+                sourcesLinks={item.sourcesLinks}
+                isPositiveFeedback={isPositiveFeedback}
+                onFeedback={
+                  !item.isYou
+                    ? (isPositive) =>
+                        handleFeedback(item.chatIdAssistant ?? '', isPositive)
+                    : undefined
+                }
+                handleClose={() => setOpenId(null)}
+                showThankYou={showThankYou}
+                handleFeedbackSuccess={handleFeedbackSuccess}
+                isLatestMessage={
+                  thread.at(-1)?.chatIdAssistant === item.chatIdAssistant
+                }
+              >
+                {item.message}
+              </ChatThread>
             ))}
             {isPending || initialThreadPending || !serverThread ? (
-              <ChatThread avatar={botLogoSources?.cloudPath ?? ''}>
+              <ChatThreadTempAssistant avatar={botLogoSources?.cloudPath ?? ''}>
                 <Spinner className="mx-2" />
-              </ChatThread>
+              </ChatThreadTempAssistant>
             ) : null}
           </div>
           <div className="absolute bottom-0 inset-x-0 border-t">
