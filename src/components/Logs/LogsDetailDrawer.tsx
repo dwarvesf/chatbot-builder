@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+/* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
 import {
   Avatar,
   Drawer,
@@ -13,6 +14,7 @@ import {
   ScrollAreaThumb,
   ScrollAreaCorner,
   ScrollAreaViewport,
+  Badge,
 } from '@mochi-ui/core'
 import { SpinnerLine } from '@mochi-ui/icons'
 import clsx from 'clsx'
@@ -138,40 +140,61 @@ const SourceChunkList = ({
                     {item.roleId !== 1 && (
                       <div>
                         <div className="flex flex-row ml-16 space-x-2 rounded-xl max-w-[80%]">
-                          <Tooltip
-                            className="z-[100]"
-                            arrow="bottom-center"
-                            content="User Like"
-                          >
-                            <IconButton
-                              label="positive"
-                              variant="link"
-                              className={clsx('rounded-none hover:scale-110 ', {
-                                'text-success-600': arrPositiveType.includes(
+                          <div
+                            className={clsx(
+                              'flex p-2 rounded-lg items-center',
+                              {
+                                'bg-gray-300': arrPositiveType.includes(
                                   feedback?.typeId ?? NaN,
                                 ),
-                              })}
-                            >
-                              <Like className="w-4 h-4 cursor-pointer" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip
-                            className="z-[100]"
-                            arrow="bottom-center"
-                            content="User DisLike"
+                              },
+                            )}
                           >
-                            <IconButton
-                              label="negative"
-                              variant="link"
-                              className={clsx('rounded-none hover:scale-110 ', {
-                                'text-red-600': arrNegativeType.includes(
+                            <Tooltip
+                              className="z-[100]"
+                              arrow="bottom-center"
+                              content="User Like"
+                            >
+                              <IconButton
+                                label="positive"
+                                variant="link"
+                                className="text-slate-700"
+                              >
+                                <Like className="w-4 h-4 cursor-pointer" />
+                              </IconButton>
+                            </Tooltip>
+                          </div>
+
+                          <div
+                            className={clsx(
+                              'flex p-2 rounded-lg items-center',
+                              {
+                                'bg-gray-300': arrNegativeType.includes(
                                   feedback?.typeId ?? NaN,
                                 ),
-                              })}
+                              },
+                            )}
+                          >
+                            <Tooltip
+                              className="z-[100]"
+                              arrow="bottom-center"
+                              content="User DisLike"
                             >
-                              <DisLike className="w-4 h-4 cursor-pointer" />
-                            </IconButton>
-                          </Tooltip>
+                              <IconButton
+                                label="negative"
+                                variant="link"
+                                className="text-slate-700"
+                              >
+                                <DisLike className="w-4 h-4 cursor-pointer" />
+                              </IconButton>
+                            </Tooltip>
+                          </div>
+                          <FeedbackTypeBadge
+                            typeId={feedback?.typeId ?? NaN}
+                            isPositive={arrPositiveType.includes(
+                              feedback?.typeId ?? NaN,
+                            )}
+                          />
                         </div>
                       </div>
                     )}
@@ -207,5 +230,48 @@ const ChatThread = (props: { children: React.ReactNode; isRight?: number }) => {
         </div>
       </div>
     </div>
+  )
+}
+
+interface SourceTypeBadgeProps {
+  typeId: number
+  isPositive: boolean
+}
+
+const getTypeLabel = (typeId: number) => {
+  switch (typeId) {
+    case FeedbackTypeEnum.TooLong:
+      return 'Too Long'
+    case FeedbackTypeEnum.TooShort:
+      return 'TooShort'
+    case FeedbackTypeEnum.Inaccurate:
+      return 'Inaccurate'
+    case FeedbackTypeEnum.HarmfulOrOffensive:
+      return 'Harmful or Offensive'
+    case FeedbackTypeEnum.NotHelpful:
+      return 'Not Helpful'
+    case FeedbackTypeEnum.Correct:
+      return 'Correct'
+    case FeedbackTypeEnum.EasyToUnderstand:
+      return 'Easy To Understand'
+    case FeedbackTypeEnum.Complete:
+      return 'Complete'
+    case FeedbackTypeEnum.OtherPositive:
+    case FeedbackTypeEnum.OtherNegative:
+      return 'Other'
+    default:
+      return ''
+  }
+}
+
+const FeedbackTypeBadge = ({ typeId, isPositive }: SourceTypeBadgeProps) => {
+  return (
+    <>
+      {getTypeLabel(typeId) !== '' && (
+        <Badge appearance={isPositive ? 'success' : 'danger'}>
+          {getTypeLabel(typeId)}
+        </Badge>
+      )}
+    </>
   )
 }

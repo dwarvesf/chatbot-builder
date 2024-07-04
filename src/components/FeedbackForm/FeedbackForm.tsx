@@ -58,22 +58,23 @@ export const FeedbackForm = ({
     },
   })
 
-  const { mutate: createRating } = api.feedback.createRating.useMutation({
-    onSuccess: async () => {
-      toast({
-        description: 'Create feedback successfully',
-        scheme: 'success',
-      })
-      onSuccess()
-    },
-    onError: (error) => {
-      toast({
-        description: 'Failed to create feedback',
-        scheme: 'danger',
-      })
-      console.error(error)
-    },
-  })
+  const { mutate: createRating, isPending } =
+    api.feedback.createRating.useMutation({
+      onSuccess: async () => {
+        toast({
+          description: 'Create feedback successfully',
+          scheme: 'success',
+        })
+        onSuccess()
+      },
+      onError: (error) => {
+        toast({
+          description: 'Failed to create feedback',
+          scheme: 'danger',
+        })
+        console.error(error)
+      },
+    })
 
   const { handleSubmit } = form
 
@@ -166,7 +167,9 @@ export const FeedbackForm = ({
             </FormControl>
           )}
         />
-        <Button type="submit">Submit</Button>
+        <Button type="submit" disabled={isPending}>
+          Submit
+        </Button>
       </form>
     </FormProvider>
   )
