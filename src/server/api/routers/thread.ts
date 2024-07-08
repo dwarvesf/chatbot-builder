@@ -48,7 +48,7 @@ export const threadRouter = createTRPCRouter({
           .values({
             id: chatId,
             botModelId: bot.modelId,
-            roleId: ChatRoleEnum.User,
+            roleId: ChatRoleEnum.Assistant,
             threadId,
             msg: input.firstMessage,
           })
