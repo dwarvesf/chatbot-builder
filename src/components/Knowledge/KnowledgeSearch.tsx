@@ -54,7 +54,7 @@ export const KnowledgeSearch = () => {
         botId: id as string,
         type: retrievalModels?.search_method ?? SearchTypeEnum.Vector,
         top_k: retrievalModels?.top_k ?? 2,
-        distance: retrievalModels?.similarity_threshold ?? 0.5,
+        similarity_threshold: retrievalModels?.similarity_threshold ?? 0.5,
         message: data.message,
       })
     } catch (error: any) {
