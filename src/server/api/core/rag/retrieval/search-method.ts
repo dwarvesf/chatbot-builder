@@ -1,8 +1,18 @@
-import { and, desc, eq, or, sql } from 'drizzle-orm'
+import { and, desc, eq, sql } from 'drizzle-orm'
 import { db } from '~/server/db'
 import * as schema from '~/server/db/migration/schema'
 import getEmbeddingsFromContents from '~/server/gateway/openai/embedding'
 import { SearchTypeEnum } from '~/model/search-type'
+
+interface RankedResult {
+  content: string | null
+  referLinks: string | null
+  referName: string | null
+  sourceType: number
+  vectorRank?: number
+  textRank?: number
+  rrfScore: number
+}
 
 export async function Search(
   type: SearchTypeEnum,
@@ -10,7 +20,7 @@ export async function Search(
   similarity_threshold: number,
   botId: string,
   msg: string,
-) {
+): Promise<RankedResult[]> {
   switch (type) {
     case SearchTypeEnum.Vector:
       return await VectorSearch(botId, top_k, similarity_threshold, msg)
@@ -19,7 +29,7 @@ export async function Search(
     case SearchTypeEnum.Hybrid:
       return await HybridSearch(botId, top_k, similarity_threshold, msg)
     default:
-      return
+      return []
   }
 }
 
@@ -70,9 +80,16 @@ async function VectorSearch(
     )
     .limit(top_k)
 
-  return contexts.filter(
-    (context) => context.similarity >= similarity_threshold,
-  )
+  return contexts
+    .filter((context) => context.similarity >= similarity_threshold)
+    .map((context, index) => ({
+      content: context.content,
+      referLinks: context.referLinks,
+      referName: context.referName,
+      sourceType: context.sourceType,
+      vectorRank: index + 1,
+      rrfScore: 0,
+    }))
 }
 
 async function FullTextSearch(botId: string, top_k: number, msg: string) {
@@ -110,7 +127,55 @@ async function FullTextSearch(botId: string, top_k: number, msg: string) {
     )
     .limit(top_k)
 
-  return contexts
+  return contexts.map((context, index) => ({
+    content: context.content,
+    referLinks: context.referLinks,
+    referName: context.referName,
+    sourceType: context.sourceType,
+    textRank: index + 1,
+    rrfScore: 0,
+  }))
+}
+
+function calculateRRFScore(ranks: number[], k = 60) {
+  return ranks.reduce((sum, rank) => sum + 1 / (k + rank), 0)
+}
+
+function combineSearchResults(
+  vectorResults: RankedResult[],
+  fullTextResults: RankedResult[],
+): RankedResult[] {
+  const combinedResults: RankedResult[] = []
+
+  function updateResult(result: RankedResult, rank: number, isVector: boolean) {
+    const existingResult = combinedResults.find(
+      (r) => r.content === result.content,
+    )
+
+    if (existingResult) {
+      if (isVector) {
+        existingResult.vectorRank = rank
+      } else {
+        existingResult.textRank = rank
+      }
+    } else {
+      combinedResults.push({
+        ...result,
+        vectorRank: isVector ? rank : undefined,
+        textRank: isVector ? undefined : rank,
+        rrfScore: 0,
+      })
+    }
+  }
+
+  vectorResults.forEach((result, index) =>
+    updateResult(result, index + 1, true),
+  )
+  fullTextResults.forEach((result, index) =>
+    updateResult(result, index + 1, false),
+  )
+
+  return combinedResults
 }
 
 async function HybridSearch(
@@ -119,71 +184,39 @@ async function HybridSearch(
   similarity_threshold: number,
   msg: string,
 ) {
-  const msgVectors = await getEmbeddingsFromContents([msg])
-  if (!msgVectors?.length || !msgVectors[0]?.embeddings) {
-    throw new Error('Failed to get embeddings')
-  }
-  const msgEmbeddings = msgVectors[0].embeddings
+  // Get vector search results
+  const vectorResults = await VectorSearch(
+    botId,
+    top_k * 2,
+    similarity_threshold,
+    msg,
+  )
 
-  const contexts = await db
-    .select({
-      content: schema.botSourceExtractedDataVector.content,
-      referLinks: schema.botSources.url,
-      referName: schema.botSources.name,
-      sourceType: schema.botSources.typeId,
-      vectorSimilarity: sql<number>`1 - (${schema.botSourceExtractedDataVector.vector} <=> ${sql.raw(`'[${msgEmbeddings.join(',')}]'::vector`)})`,
-      textRank: sql<number>`ts_rank(to_tsvector('english', ${schema.botSourceExtractedDataVector.content}), websearch_to_tsquery('english', ${msg}))`,
-    })
-    .from(schema.botSourceExtractedDataVector)
-    .innerJoin(
-      schema.botSourceExtractedData,
-      eq(
-        schema.botSourceExtractedData.id,
-        schema.botSourceExtractedDataVector.botSourceExtractedDataId,
-      ),
-    )
-    .innerJoin(
-      schema.botSources,
-      eq(schema.botSources.id, schema.botSourceExtractedData.botSourceId),
-    )
-    .where(
-      and(
-        eq(schema.botSources.botId, botId),
-        eq(schema.botSources.visible, true),
-        or(
-          sql`${schema.botSourceExtractedDataVector.vector} <=> ${sql.raw(`'[${msgEmbeddings.join(',')}]'::vector`)} < ${1 - similarity_threshold}`,
-          sql`to_tsvector('english', ${schema.botSourceExtractedDataVector.content}) @@ websearch_to_tsquery('english', ${msg})`,
-        ),
-      ),
-    )
-    .orderBy(
-      desc(sql`
-        CASE
-          WHEN ${schema.botSourceExtractedDataVector.vector} <=> ${sql.raw(`'[${msgEmbeddings.join(',')}]'::vector`)} < ${1 - similarity_threshold}
-            AND to_tsvector('english', ${schema.botSourceExtractedDataVector.content} ) @@ websearch_to_tsquery('english', ${msg})
-          THEN (1 - (${schema.botSourceExtractedDataVector.vector} <=> ${sql.raw(`'[${msgEmbeddings.join(',')}]'::vector`)})) * 0.5 + 
-               ts_rank(to_tsvector('english', ${schema.botSourceExtractedDataVector.content}), websearch_to_tsquery('english', ${msg})) * 0.5
-          WHEN ${schema.botSourceExtractedDataVector.vector} <=> ${sql.raw(`'[${msgEmbeddings.join(',')}]'::vector`)} < ${1 - similarity_threshold}
-          THEN 1 - (${schema.botSourceExtractedDataVector.vector} <=> ${sql.raw(`'[${msgEmbeddings.join(',')}]'::vector`)})
-          ELSE ts_rank(to_tsvector('english', ${schema.botSourceExtractedDataVector.content}), websearch_to_tsquery('english', ${msg}))
-        END
-      `),
-    )
-    .limit(top_k)
+  // Get full-text search results
+  const fullTextResults = await FullTextSearch(botId, top_k * 2, msg)
 
-  // The ORDER BY clause now uses a CASE statement to implement adaptive ranking
-  // If a result matches both vector similarity and text search, it combines both scores.
-  // If it only matches vector similarity, it uses the vector similarity score.
-  // If it only matches text search, it uses the text rank score.
+  // Combine results
+  const combinedResults = combineSearchResults(vectorResults, fullTextResults)
 
-  // Reciprocal Rank Fusion (RRF) is an algorithm that evaluates the search scores from multiple, previously ranked results to produce a unified result set.
-  // In Azure AI Search, RRF is used whenever there are two or more queries that execute in parallel.
-  // Each query produces a ranked result set, and RRF is used to merge and homogenize the rankings into a single result set, returned in the query response.
+  const totalResults = vectorResults.length + fullTextResults.length
 
-  // To understanding concept ranking by pgvector library support following here:
-  // https://learn.microsoft.com/en-us/azure/search/hybrid-search-ranking
-  // https://github.com/pgvector/pgvector-python/blob/master/examples/hybrid_search_rrf.py
-  // https://docs.pgvecto.rs/use-case/hybrid-search.html
+  // Calculate RRF scores
+  // Assume we search 20 chunk for each search ( vector search and full-text search )
+  // if vector rank is [10, 41] => An item ranked 10th in vector search but not found in full-text would have ranks
+  // if full-text rank is [41, 20] => An item ranked 20th in full-text but not found in vector search would have ranks
+  // Using totalResults + 1 for penalty rank
 
-  return contexts
+  combinedResults.forEach((result) => {
+    const ranks = [
+      result.vectorRank ?? totalResults + 1,
+      result.textRank ?? totalResults + 1,
+    ]
+
+    result.rrfScore = calculateRRFScore(ranks)
+  })
+
+  console.log(combinedResults.sort((a, b) => b.rrfScore - a.rrfScore))
+
+  // Sort by RRF score (desc) and return top_k results
+  return combinedResults.sort((a, b) => b.rrfScore - a.rrfScore).slice(0, top_k)
 }

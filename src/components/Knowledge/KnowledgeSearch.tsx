@@ -117,7 +117,7 @@ export const KnowledgeSearch = () => {
         <Typography level="h6" fontWeight="lg">
           Retrieval Paragraph
         </Typography>
-        <div className="flex-wrap space-y-4">
+        <div className="space-y-4">
           {isPending ? (
             <>
               <CardSkeleton />
@@ -129,23 +129,50 @@ export const KnowledgeSearch = () => {
               return (
                 <Card
                   key={index}
-                  className="flex flex-col space-y-4 drop-shadow-md"
+                  className="flex flex-col space-y-2 drop-shadow-md"
                 >
-                  <Typography>{props.content}</Typography>
-                  <div className="flex flex-row space-x-4">
+                  <Typography level="p4" fontWeight="md">
+                    {props.content}
+                  </Typography>
+                  <div className="flex flex-row space-x-2">
                     <div className="flex items-center">
                       <SourceTypeBadge typeId={props.sourceType} />
                     </div>
-                    <a
-                      className="text-primary-700 font-semibold text-sm text-wrap"
-                      href={props.referLinks ?? ''}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {props.sourceType !== BotSourceTypeEnum.Link
-                        ? props.referName
-                        : props.referLinks}
-                    </a>
+                    <Badge appearance="primary">
+                      <a
+                        className="text-primary-700 font-semibold text-sm text-wrap"
+                        href={props.referLinks ?? ''}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {props.sourceType !== BotSourceTypeEnum.Link
+                          ? props.referName
+                          : props.referLinks}
+                      </a>
+                    </Badge>
+                  </div>
+                  <div className="flex flex-row space-x-2 ">
+                    <div className="flex items-center">
+                      <Badge
+                        appearance={
+                          props.vectorRank === undefined ? 'danger' : 'success'
+                        }
+                      >
+                        {`Vector rank: ${props.vectorRank ?? NaN}`}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center">
+                      <Badge
+                        appearance={
+                          props.textRank === undefined ? 'danger' : 'success'
+                        }
+                      >
+                        {`Full-text rank: ${props.textRank ?? NaN}`}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center">
+                      <Badge appearance="success">{`RRF scores: ${props.rrfScore}`}</Badge>
+                    </div>
                   </div>
                 </Card>
               )
