@@ -6,10 +6,10 @@ import {
   TextFieldRoot,
 } from '@mochi-ui/core'
 import { Controller, useFormContext } from 'react-hook-form'
-import { type Profile } from './Profile'
+import { type ProfileForm } from './Profile'
 
 export const ProfileName = () => {
-  const { control } = useFormContext<Profile>()
+  const { control } = useFormContext<ProfileForm>()
 
   return (
     <div className="space-y-4">

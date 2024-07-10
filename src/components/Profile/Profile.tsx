@@ -1,18 +1,24 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Skeleton, useToast } from '@mochi-ui/core'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useToast } from '@mochi-ui/core'
+import { useCallback, useMemo } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { api } from '~/utils/api'
 import { SaveBar } from '../SaveBar'
 import { ProfileAvatar } from './ProfileAvatar'
 import { ProfileName } from './ProfileName'
+import { FormSkeleton } from '../common/FormSkeleton'
 
-export interface Profile {
+export interface ProfileForm {
   firstName: string
   lastName: string
   image: string
+}
+
+interface ProfileFormProps {
+  defaultValues: ProfileForm
+  onSuccess?: () => Promise<any>
 }
 
 const schema = z.object({
@@ -21,12 +27,8 @@ const schema = z.object({
   image: z.string(),
 })
 
-export const ProfilePage = () => {
-  const isInitialData = useRef(false)
-  const [isFetchingData, setIsFetchingData] = useState<boolean>(false)
+const ProfileForm = ({ defaultValues, onSuccess }: ProfileFormProps) => {
   const { toast } = useToast()
-
-  const { data: sources, refetch: refetchProfile } = api.user.getUser.useQuery()
 
   const {
     mutate: updateProfile,
@@ -38,7 +40,7 @@ export const ProfilePage = () => {
         description: 'Update information successfully',
         scheme: 'success',
       })
-      await refetchProfile()
+      await onSuccess?.()
     },
     onError: (error) => {
       toast({
@@ -49,9 +51,10 @@ export const ProfilePage = () => {
     },
   })
 
-  const form = useForm<Profile>({
+  const form = useForm<ProfileForm>({
     resolver: zodResolver(schema),
     mode: 'all',
+    defaultValues,
   })
 
   const {
@@ -61,7 +64,7 @@ export const ProfilePage = () => {
   } = form
 
   const resetData = useCallback(
-    (data?: Profile) => {
+    (data?: ProfileForm) => {
       if (!data) return
       reset({
         ...data,
@@ -71,23 +74,9 @@ export const ProfilePage = () => {
     [reset],
   )
 
-  useEffect(() => {
-    if (sources && !isInitialData.current) {
-      isInitialData.current = true
-      reset({
-        firstName: sources.name!,
-        lastName: sources.lastName!,
-        image: sources.image!,
-      })
-      setIsFetchingData(true)
-    }
-  }, [sources])
-
-  const onSubmit = (props: Profile) => {
-    const payload: Profile = {
-      firstName: props.firstName,
-      lastName: props.lastName,
-      image: props.image,
+  const onSubmit = (props: ProfileForm) => {
+    const payload: ProfileForm = {
+      ...props,
     }
 
     try {
@@ -102,48 +91,46 @@ export const ProfilePage = () => {
   }
 
   return (
-    <div>
-      {isFetchingData ? (
-        <FormProvider {...form}>
-          <form onSubmit={handleSubmit(onSubmit)} />
-          <div className="min-h-screen max-w-[400px] space-y-8">
-            <ProfileName />
-            <ProfileAvatar />
-          </div>
-          <SaveBar
-            open={isDirty || isPending || isError}
-            isLoading={isSubmitting || isPending}
-            onConfirm={handleSubmit(onSubmit)}
-            onCancel={() => reset()}
-          />
-        </FormProvider>
-      ) : (
-        <div className="min-h-screen max-w-[400px] space-y-8 animate-pulse">
-          <div className="flex flex-col w-full relative items-stretch overflow-hidden rounded gap-12">
-            <div className="flex flex-col w-full gap-4">
-              <Skeleton className="w-2/5 h-4 rounded-lg" />
-              <Skeleton className="w-full h-4 rounded-lg" />
-            </div>
+    <FormProvider {...form}>
+      <form onSubmit={handleSubmit(onSubmit)} />
+      <div className="min-h-screen max-w-[400px] space-y-8">
+        <ProfileName />
+        <ProfileAvatar />
+      </div>
+      <SaveBar
+        open={isDirty || isPending || isError}
+        isLoading={isSubmitting || isPending}
+        onConfirm={handleSubmit(onSubmit)}
+        onCancel={() => reset()}
+      />
+    </FormProvider>
+  )
+}
 
-            <div className="flex flex-col w-full gap-4">
-              <Skeleton className="w-2/5 h-4 rounded-lg" />
-              <Skeleton className="w-full h-4 rounded-lg" />
-            </div>
-          </div>
+export const ProfilePage = () => {
+  const {
+    data: sources,
+    refetch: refetchProfile,
+    isPending,
+  } = api.user.getUser.useQuery()
 
-          <div className="flex flex-row w-full relative items-stretch overflow-hidden rounded gap-4">
-            <div className="flex items-center gap-3 w-full">
-              <div>
-                <Skeleton className="flex w-[64px] h-[64px] rounded-full" />
-              </div>
-              <div className="flex flex-col w-full gap-2">
-                <Skeleton className="w-3/5 h-4 rounded-lg" />
-                <Skeleton className="w-4/5 h-4 rounded-lg" />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+  const formDefaultValues = useMemo<ProfileForm | null>(() => {
+    if (!sources) {
+      return null
+    }
+
+    return {
+      firstName: sources.name ?? '',
+      lastName: sources.lastName ?? '',
+      image: sources.image ?? '',
+    }
+  }, [sources])
+
+  if (isPending || formDefaultValues === null) {
+    return <FormSkeleton />
+  }
+
+  return (
+    <ProfileForm defaultValues={formDefaultValues} onSuccess={refetchProfile} />
   )
 }
