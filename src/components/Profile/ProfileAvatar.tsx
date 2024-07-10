@@ -1,10 +1,10 @@
 import { FormControl, FormErrorMessage, FormLabel } from '@mochi-ui/core'
 import { Controller, useFormContext } from 'react-hook-form'
 import { AvatarUploader } from '../AvatarUploader'
-import { type Profile } from './Profile'
+import { type ProfileForm } from './Profile'
 
 export const ProfileAvatar = () => {
-  const { control, setValue, watch } = useFormContext<Profile>()
+  const { control, setValue, watch } = useFormContext<ProfileForm>()
   const avatar = watch('image')
 
   return (
