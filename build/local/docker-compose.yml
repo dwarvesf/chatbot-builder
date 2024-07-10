@@ -15,3 +15,4 @@ volumes:
 networks:
   default:
     name: chatbot-builder-network
+    external: true

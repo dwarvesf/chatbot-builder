@@ -11,3 +11,6 @@
 
 # devbox stuff
 .devbox/*
+
+# python cache
+__pycache__

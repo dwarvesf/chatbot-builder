@@ -1,0 +1,12 @@
+services:
+  preprocessor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 80:80
+
+networks:
+  default:
+    name: chatbot-builder-network
+    external: true

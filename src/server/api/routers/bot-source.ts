@@ -4,6 +4,7 @@ import { and, eq, inArray, sql, type InferSelectModel } from 'drizzle-orm'
 import { XMLParser } from 'fast-xml-parser'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
+import { syncBotSource } from '~/app/api/sync-bot-source/route'
 import { env } from '~/env'
 import { BotSourceStatusEnum } from '~/model/bot-source-status'
 import { BotSourceTypeEnum } from '~/model/bot-source-type'
@@ -207,10 +208,10 @@ function createBotSourceHandler() {
       // Sync the bot source
       if (botSources.length) {
         for (const bs of botSources) {
-          // await syncBotSource(bs.id)
+          await syncBotSource(bs.id)
 
           // eslint-disable-next-line @typescript-eslint/no-floating-promises
-          submitSyncBotSource(bs.id)
+          //submitSyncBotSource(bs.id)
         }
       }
 

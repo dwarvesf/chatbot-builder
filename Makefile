@@ -6,6 +6,7 @@ build:
 	bun run build
 
 dev:
+	docker-compose -p preprocessor -f ./preprocessor/docker-compose.yml up -d
 	bun dev
 
 local-up: db
@@ -29,3 +30,4 @@ db-seed:
 
 lint-staged:
 	bun lint-staged
+
