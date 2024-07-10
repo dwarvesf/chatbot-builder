@@ -12,7 +12,7 @@ import { db } from '~/server/db'
 import * as schema from '~/server/db/migration/schema'
 import { type Nullable } from '~/utils/types'
 import { createTRPCRouter, integrationProcedure } from '~/server/api/trpc'
-import { Search } from '~/server/api/core/rag/retrieval/search-method'
+import { retrievalSearch } from '~/server/api/core/rag/retrieval/search-method'
 import { SearchTypeEnum } from '~/model/search-type'
 
 const openai = new OpenAI({
@@ -135,7 +135,7 @@ function createChatHandler() {
         })
         .returning()
 
-      const contexts = await Search(
+      const contexts = await retrievalSearch(
         searchMethod,
         top_k,
         similarity_threshold,

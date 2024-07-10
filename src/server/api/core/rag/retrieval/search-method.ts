@@ -14,7 +14,7 @@ interface RankedResult {
   rrfScore: number
 }
 
-export async function Search(
+export async function retrievalSearch(
   type: SearchTypeEnum,
   top_k: number,
   similarity_threshold: number,
@@ -23,17 +23,17 @@ export async function Search(
 ): Promise<RankedResult[]> {
   switch (type) {
     case SearchTypeEnum.Vector:
-      return await VectorSearch(botId, top_k, similarity_threshold, msg)
+      return await vectorSearch(botId, top_k, similarity_threshold, msg)
     case SearchTypeEnum.FullText:
-      return await FullTextSearch(botId, top_k, msg)
+      return await fullTextSearch(botId, top_k, msg)
     case SearchTypeEnum.Hybrid:
-      return await HybridSearch(botId, top_k, similarity_threshold, msg)
+      return await hybridSearch(botId, top_k, similarity_threshold, msg)
     default:
       return []
   }
 }
 
-async function VectorSearch(
+async function vectorSearch(
   botId: string,
   top_k: number,
   similarity_threshold: number,
@@ -92,7 +92,7 @@ async function VectorSearch(
     }))
 }
 
-async function FullTextSearch(botId: string, top_k: number, msg: string) {
+async function fullTextSearch(botId: string, top_k: number, msg: string) {
   const contexts = await db
     .select({
       content: schema.botSourceExtractedDataVector.content,
@@ -178,14 +178,14 @@ function combineSearchResults(
   return combinedResults
 }
 
-async function HybridSearch(
+async function hybridSearch(
   botId: string,
   top_k: number,
   similarity_threshold: number,
   msg: string,
 ) {
   // Get vector search results
-  const vectorResults = await VectorSearch(
+  const vectorResults = await vectorSearch(
     botId,
     top_k * 2,
     similarity_threshold,
@@ -193,7 +193,7 @@ async function HybridSearch(
   )
 
   // Get full-text search results
-  const fullTextResults = await FullTextSearch(botId, top_k * 2, msg)
+  const fullTextResults = await fullTextSearch(botId, top_k * 2, msg)
 
   // Combine results
   const combinedResults = combineSearchResults(vectorResults, fullTextResults)

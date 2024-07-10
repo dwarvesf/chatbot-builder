@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { SearchTypeEnum } from '~/model/search-type'
-import { Search } from '~/server/api/core/rag/retrieval/search-method'
+import { retrievalSearch } from '~/server/api/core/rag/retrieval/search-method'
 
 export const retrievalDocuments = createTRPCRouter({
   search: protectedProcedure
@@ -15,7 +15,7 @@ export const retrievalDocuments = createTRPCRouter({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      return await Search(
+      return await retrievalSearch(
         input.type,
         input.top_k,
         input.similarity_threshold,
