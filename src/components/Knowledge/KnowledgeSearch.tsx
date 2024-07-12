@@ -140,7 +140,7 @@ export const KnowledgeSearch = () => {
                     </div>
                     <Badge appearance="primary">
                       <a
-                        className="text-primary-700 font-semibold text-sm text-wrap"
+                        className="text-primary-700 font-semibold text-sm text-wrap break-all"
                         href={props.referLinks ?? ''}
                         target="_blank"
                         rel="noopener noreferrer"
