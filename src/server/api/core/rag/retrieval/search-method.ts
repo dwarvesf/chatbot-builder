@@ -16,18 +16,18 @@ interface RankedResult {
 
 export async function retrievalSearch(
   type: SearchTypeEnum,
-  top_k: number,
-  similarity_threshold: number,
+  topK: number,
+  similarityThreshold: number,
   botId: string,
   msg: string,
 ): Promise<RankedResult[]> {
   switch (type) {
     case SearchTypeEnum.Vector:
-      return await vectorSearch(botId, top_k, similarity_threshold, msg)
+      return await vectorSearch(botId, topK, similarityThreshold, msg)
     case SearchTypeEnum.FullText:
-      return await fullTextSearch(botId, top_k, msg)
+      return await fullTextSearch(botId, topK, msg)
     case SearchTypeEnum.Hybrid:
-      return await hybridSearch(botId, top_k, similarity_threshold, msg)
+      return await hybridSearch(botId, topK, similarityThreshold, msg)
     default:
       return []
   }
@@ -35,8 +35,8 @@ export async function retrievalSearch(
 
 async function vectorSearch(
   botId: string,
-  top_k: number,
-  similarity_threshold: number,
+  topK: number,
+  similarityThreshold: number,
   msg: string,
 ) {
   const msgVectors = await getEmbeddingsFromContents([msg])
@@ -78,10 +78,10 @@ async function vectorSearch(
     .orderBy(
       sql<number>`${schema.botSourceExtractedDataVector.vector} <=> ${sql.raw(`'[${msgEmbeddings.join(',')}]'::vector`)} ASC`,
     )
-    .limit(top_k)
+    .limit(topK)
 
   return contexts
-    .filter((context) => context.similarity >= similarity_threshold)
+    .filter((context) => context.similarity >= similarityThreshold)
     .map((context, index) => ({
       content: context.content,
       referLinks: context.referLinks,
@@ -92,7 +92,7 @@ async function vectorSearch(
     }))
 }
 
-async function fullTextSearch(botId: string, top_k: number, msg: string) {
+async function fullTextSearch(botId: string, topK: number, msg: string) {
   const contexts = await db
     .select({
       content: schema.botSourceExtractedDataVector.content,
@@ -125,7 +125,7 @@ async function fullTextSearch(botId: string, top_k: number, msg: string) {
         sql`ts_rank(to_tsvector('english', ${schema.botSourceExtractedDataVector.content}), websearch_to_tsquery('english', ${msg}))`,
       ),
     )
-    .limit(top_k)
+    .limit(topK)
 
   return contexts.map((context, index) => ({
     content: context.content,
@@ -180,20 +180,20 @@ function combineSearchResults(
 
 async function hybridSearch(
   botId: string,
-  top_k: number,
-  similarity_threshold: number,
+  topK: number,
+  similarityThreshold: number,
   msg: string,
 ) {
   // Get vector search results
   const vectorResults = await vectorSearch(
     botId,
-    top_k * 2,
-    similarity_threshold,
+    topK * 2,
+    similarityThreshold,
     msg,
   )
 
   // Get full-text search results
-  const fullTextResults = await fullTextSearch(botId, top_k * 2, msg)
+  const fullTextResults = await fullTextSearch(botId, topK * 2, msg)
 
   // Combine results
   const combinedResults = combineSearchResults(vectorResults, fullTextResults)
@@ -215,8 +215,6 @@ async function hybridSearch(
     result.rrfScore = calculateRRFScore(ranks)
   })
 
-  console.log(combinedResults.sort((a, b) => b.rrfScore - a.rrfScore))
-
-  // Sort by RRF score (desc) and return top_k results
-  return combinedResults.sort((a, b) => b.rrfScore - a.rrfScore).slice(0, top_k)
+  // Sort by RRF score (desc) and return topK results
+  return combinedResults.sort((a, b) => b.rrfScore - a.rrfScore).slice(0, topK)
 }

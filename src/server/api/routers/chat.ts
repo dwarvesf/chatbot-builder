@@ -97,10 +97,10 @@ function createChatHandler() {
 
       //Default config retrievalModel
       const searchMethod =
-        bsRetrievalModel?.retrievalModel?.search_method ?? SearchTypeEnum.Vector
-      const top_k = bsRetrievalModel?.retrievalModel?.top_k ?? 2
-      const similarity_threshold =
-        bsRetrievalModel?.retrievalModel?.similarity_threshold ?? 0.5
+        bsRetrievalModel?.retrievalModel?.searchMethod ?? SearchTypeEnum.Vector
+      const topK = bsRetrievalModel?.retrievalModel?.topK ?? 2
+      const similarityThreshold =
+        bsRetrievalModel?.retrievalModel?.similarityThreshold ?? 0.5
 
       const thread = await db.query.threads.findFirst({
         where: and(
@@ -137,8 +137,8 @@ function createChatHandler() {
 
       const contexts = await retrievalSearch(
         searchMethod,
-        top_k,
-        similarity_threshold,
+        topK,
+        similarityThreshold,
         bot.id,
         msg.message,
       )

@@ -24,12 +24,12 @@ export const RetrievalSearchCard = ({
 }: RetrievalSearchProps) => {
   const id = useId()
   const { control, watch, setValue } = useFormContext<RetrievalModelProps>()
-  const currentSearchMethod = watch('retrievalModel.search_method')
+  const currentSearchMethod = watch('retrievalModel.searchMethod')
 
   const isSelected = currentSearchMethod === searchMethod
 
   const handleSelectSearchMethod = () => {
-    setValue('retrievalModel.search_method', searchMethod, {
+    setValue('retrievalModel.searchMethod', searchMethod, {
       shouldDirty: true,
     })
   }
@@ -89,7 +89,7 @@ export const RetrievalSearchCard = ({
 
                   <Controller
                     control={control}
-                    name="retrievalModel.top_k"
+                    name="retrievalModel.topK"
                     render={({ field }) => (
                       <FormControl hideHelperTextOnError>
                         <div className="flex flex-row space-x-4 items-baseline">
@@ -135,7 +135,7 @@ export const RetrievalSearchCard = ({
 
                     <Controller
                       control={control}
-                      name="retrievalModel.similarity_threshold"
+                      name="retrievalModel.similarityThreshold"
                       render={({ field }) => (
                         <FormControl hideHelperTextOnError>
                           <div className="flex flex-row space-x-4 items-baseline">

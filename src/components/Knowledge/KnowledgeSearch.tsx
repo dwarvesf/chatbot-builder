@@ -52,9 +52,9 @@ export const KnowledgeSearch = () => {
     try {
       searchRelatedContext({
         botId: id as string,
-        type: retrievalModels?.search_method ?? SearchTypeEnum.Vector,
-        top_k: retrievalModels?.top_k ?? 2,
-        similarity_threshold: retrievalModels?.similarity_threshold ?? 0.5,
+        type: retrievalModels?.searchMethod ?? SearchTypeEnum.Vector,
+        topK: retrievalModels?.topK ?? 2,
+        similarityThreshold: retrievalModels?.similarityThreshold ?? 0.5,
         message: data.message,
       })
     } catch (error: any) {

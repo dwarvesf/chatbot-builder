@@ -14,9 +14,9 @@ import { useMemo } from 'react'
 export interface RetrievalModelProps {
   botId: string
   retrievalModel: {
-    search_method: SearchTypeEnum
-    top_k: number
-    similarity_threshold: number
+    searchMethod: SearchTypeEnum
+    topK: number
+    similarityThreshold: number
   }
 }
 
@@ -28,9 +28,9 @@ interface KnowledgeSettingsProps {
 const schema = z.object({
   botId: z.string(),
   retrievalModel: z.object({
-    search_method: z.nativeEnum(SearchTypeEnum),
-    top_k: z.number(),
-    similarity_threshold: z.number(),
+    searchMethod: z.nativeEnum(SearchTypeEnum),
+    topK: z.number(),
+    similarityThreshold: z.number(),
   }),
 })
 
@@ -160,9 +160,9 @@ export const KnowledgeSettingsPage = () => {
     return {
       botId: id as string,
       retrievalModel: {
-        search_method: sources?.search_method ?? SearchTypeEnum.Vector,
-        top_k: sources?.top_k ?? 2,
-        similarity_threshold: sources?.similarity_threshold ?? 0.5,
+        searchMethod: sources?.searchMethod ?? SearchTypeEnum.Vector,
+        topK: sources?.topK ?? 2,
+        similarityThreshold: sources?.similarityThreshold ?? 0.5,
       },
     }
   }, [sources])
