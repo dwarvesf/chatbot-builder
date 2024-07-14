@@ -34,18 +34,14 @@ export const KnowledgeSearch = () => {
     },
   })
 
-  const { handleSubmit, control, setError } = useForm<{
+  const { handleSubmit, control } = useForm<{
     message: string
   }>({
     defaultValues: { message: '' },
   })
 
   async function sendMessage(data: { message: string }) {
-    if (data.message.length > 200) {
-      setError('message', {
-        type: 'manual',
-        message: 'Message exceeds 200 characters limit',
-      })
+    if (data.message.length > 200 || data.message.length < 10) {
       return
     }
 
@@ -65,7 +61,7 @@ export const KnowledgeSearch = () => {
   return (
     <div className="flex flex-row min-h-screen w-full space-x-4">
       <div className="space-y-4 min-w-[50%]">
-        <div>
+        <div className="flex flex-col">
           <Typography level="h6" fontWeight="lg">
             Knowledge search
           </Typography>
