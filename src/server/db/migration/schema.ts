@@ -1,4 +1,4 @@
-import { relations } from 'drizzle-orm'
+import { relations, sql } from 'drizzle-orm'
 import {
   boolean,
   foreignKey,
@@ -16,6 +16,7 @@ import {
 import { type AdapterAccount } from 'next-auth/adapters'
 import { BotSourceStatusEnum } from '~/model/bot-source-status'
 import { vector } from '~/server/db/migration/vector'
+import { type RetrievalModel } from '~/server/api/core/types/retrieval-model'
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
@@ -222,6 +223,7 @@ export const botSources = createTable(
     statusId: integer('status_id').notNull(),
     url: text('url'),
     name: text('name'),
+    retrievalModel: jsonb('retrival_model').$type<RetrievalModel>(),
     extractedTokenLength: integer('extracted_token_length'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
@@ -300,6 +302,10 @@ export const botSourceExtractedDataVector = createTable(
     botSourceExtractedDataIdIdx: index(
       'bot_source_extracted_data_vector_bot_source_extracted_data_id_idx',
     ).on(vector.botSourceExtractedDataId),
+    contentSearchIndex: index(
+      'bot_source_extracted_data_vector_content_search_idx',
+    ).using('gin', sql`to_tsvector('english', ${vector.content})`),
+    vectorHnswIndex: sql`CREATE INDEX bot_source_extracted_data_vector_hnsw_idx ON bot_source_extracted_data_vector USING hnsw (vector vector_cosine_ops) WITH (m = 16, ef_construction = 64)`,
   }),
 )
 

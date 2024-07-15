@@ -10,6 +10,7 @@ import { chatRouter } from './routers/chat'
 import { threadRouter } from './routers/thread'
 import { userRouter } from './routers/user'
 import { createFeedback } from './routers/feedback'
+import { retrievalDocuments } from './routers/retrieval'
 
 /**
  * This is the primary router for your server.
@@ -28,6 +29,7 @@ export const appRouter = createTRPCRouter({
   thread: threadRouter,
   attachments: attachmentRouter,
   feedback: createFeedback,
+  retrieval: retrievalDocuments,
 })
 
 // export type definition of API

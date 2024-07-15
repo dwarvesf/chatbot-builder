@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, sql } from 'drizzle-orm'
+import { and, desc, eq, gte, sql } from 'drizzle-orm'
 import lodash from 'lodash'
 import OpenAI from 'openai'
 import { uuidv7 } from 'uuidv7'
@@ -10,9 +10,10 @@ import { ChatRoleEnum } from '~/model/chat'
 import { UsageLimitTypeEnum } from '~/model/usage-limit-type'
 import { db } from '~/server/db'
 import * as schema from '~/server/db/migration/schema'
-import getEmbeddingsFromContents from '~/server/gateway/openai/embedding'
 import { type Nullable } from '~/utils/types'
 import { createTRPCRouter, integrationProcedure } from '~/server/api/trpc'
+import { retrievalSearch } from '~/server/api/core/rag/retrieval/search-method'
+import { SearchTypeEnum } from '~/model/search-type'
 
 const openai = new OpenAI({
   apiKey: env.OPENAI_API_KEY, // This is the default and can be omitted
@@ -74,6 +75,7 @@ function createChatHandler() {
         })
         .from(schema.bots)
         .where(eq(schema.bots.id, ctx.session.botId))
+
       const bot = rows.length ? rows[0] : null
       if (!bot) {
         throw new Error('Bot not found')
@@ -83,6 +85,22 @@ function createChatHandler() {
         bot.noRelevantContextMsg =
           'No context is relevant to your question. Feel free to ask again.'
       }
+
+      const rowsBs = await db
+        .select({
+          retrievalModel: schema.botSources.retrievalModel,
+        })
+        .from(schema.botSources)
+        .where(eq(schema.botSources.botId, ctx.session.botId))
+
+      const bsRetrievalModel = rowsBs.length ? rowsBs[0] : null
+
+      //Default config retrievalModel
+      const searchMethod =
+        bsRetrievalModel?.retrievalModel?.searchMethod ?? SearchTypeEnum.Vector
+      const topK = bsRetrievalModel?.retrievalModel?.topK ?? 2
+      const similarityThreshold =
+        bsRetrievalModel?.retrievalModel?.similarityThreshold ?? 0.5
 
       const thread = await db.query.threads.findFirst({
         where: and(
@@ -117,7 +135,18 @@ function createChatHandler() {
         })
         .returning()
 
-      const contexts = await getRelatedContexts(bot.id, msg.message)
+      const contexts = await retrievalSearch(
+        searchMethod,
+        topK,
+        similarityThreshold,
+        bot.id,
+        msg.message,
+      )
+
+      if (!contexts) {
+        return
+      }
+
       const assistantMsgs = []
 
       if (contexts.length > 0) {
@@ -126,7 +155,7 @@ function createChatHandler() {
         console.log('Prompt:', prompt)
 
         // Ask bot
-        const res = await askAI(bot, msg.message)
+        const res = await askAI(bot, prompt)
         if (!res) {
           throw new Error('Failed to ask AI')
         }
@@ -247,55 +276,9 @@ async function askAI(
   return { completion }
 }
 
-async function getRelatedContexts(botId: string, msg: string) {
-  const msgVectors = await getEmbeddingsFromContents([msg])
-  if (!msgVectors?.length) {
-    throw new Error('Failed to get embeddings')
-  }
-
-  const msgEmbeddings = msgVectors[0]?.embeddings
-  if (!msgEmbeddings) {
-    throw new Error('Failed to get embeddings')
-  }
-
-  // Get similar sources
-  const contexts = await db
-    .select({
-      content: schema.botSourceExtractedDataVector.content,
-      referLinks: schema.botSources.url,
-      sourceType: schema.botSources.typeId,
-      // vectors: schema.botSourceExtractedDataVector.vector,
-      distance: sql`vector <=> ${'[' + msgEmbeddings.join(', ') + ']'} as distance`,
-    })
-    .from(schema.botSourceExtractedDataVector)
-    .innerJoin(
-      schema.botSourceExtractedData,
-      eq(
-        schema.botSourceExtractedData.id,
-        schema.botSourceExtractedDataVector.botSourceExtractedDataId,
-      ),
-    )
-    .innerJoin(
-      schema.botSources,
-      eq(schema.botSources.id, schema.botSourceExtractedData.botSourceId),
-    )
-    .where(
-      and(
-        eq(schema.botSources.botId, botId),
-        eq(schema.botSources.visible, true),
-        sql`vector <=> ${'[' + msgEmbeddings.join(', ') + ']'} < 0.7`, // Could adjust this threshold
-      ),
-    )
-    .orderBy(sql`distance ASC`)
-    .limit(Number(env.CLOSEST_CHUNKS_COUNT_FOR_CHAT_CONTEXT))
-
-  return contexts
-}
-
 async function buildPrompt(
   context: {
     content: string | null
-    distance: unknown
   }[],
   message: string,
 ) {
