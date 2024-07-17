@@ -1,8 +1,8 @@
 import { and, desc, eq, sql } from 'drizzle-orm'
+import { SearchTypeEnum } from '~/model/search-type'
 import { db } from '~/server/db'
 import * as schema from '~/server/db/migration/schema'
 import getEmbeddingsFromContents from '~/server/gateway/openai/embedding'
-import { SearchTypeEnum } from '~/model/search-type'
 
 interface RankedResult {
   content: string | null
@@ -198,18 +198,17 @@ async function hybridSearch(
   // Combine results
   const combinedResults = combineSearchResults(vectorResults, fullTextResults)
 
-  const totalResults = vectorResults.length + fullTextResults.length
-
   // Calculate RRF scores
-  // Assume we search 20 chunk for each search ( vector search and full-text search )
-  // if vector rank is [10, 41] => An item ranked 10th in vector search but not found in full-text would have ranks
-  // if full-text rank is [41, 20] => An item ranked 20th in full-text but not found in vector search would have ranks
-  // Using totalResults + 1 for penalty rank
+  // formula: RRF = 1 / (k + rank) for each rank
+  // Assume we have 2 search results: vector search and full-text search
+  // For each result d, we have 2 ranks: rank d in vector search and rank d in full-text
+  // If d found in both searches, then RFF score d = 1 / (k + rank d in vector search) + 1 / (k + rank d in full-text search)
+  // If d found in vector search but not in full-text search, then RFF score d = 1 / (k + rank d in vector search) + 1 / (k + (len(full-text search) + 1))
 
   combinedResults.forEach((result) => {
     const ranks = [
-      result.vectorRank ?? totalResults + 1,
-      result.textRank ?? totalResults + 1,
+      result.vectorRank ?? vectorResults.length + 1,
+      result.textRank ?? fullTextResults.length + 1,
     ]
 
     result.rrfScore = calculateRRFScore(ranks)
