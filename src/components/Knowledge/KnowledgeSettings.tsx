@@ -17,6 +17,8 @@ export interface RetrievalModelProps {
     searchMethod: SearchTypeEnum
     topK: number
     similarityThreshold: number
+    vectorRankWeight: number
+    textRankWeight: number
   }
 }
 
@@ -31,6 +33,8 @@ const schema = z.object({
     searchMethod: z.nativeEnum(SearchTypeEnum),
     topK: z.number(),
     similarityThreshold: z.number(),
+    vectorRankWeight: z.number(),
+    textRankWeight: z.number(),
   }),
 })
 
@@ -124,7 +128,7 @@ const KnowledgeSettings = ({
 
                 <RetrievalSearchCard
                   searchName="Hybrid Search"
-                  description="Execute full-text search and vector searches simultaneously, re-rank to select the best match for the user's query. Configuration of the Rerank model APIs necessary."
+                  description="Execute full-text search and vector searches simultaneously, re-rank to select the best match for the user's query."
                   searchMethod={SearchTypeEnum.Hybrid}
                   recommended={true}
                   Icon={GiftSolid}
@@ -163,6 +167,8 @@ export const KnowledgeSettingsPage = () => {
         searchMethod: sources?.searchMethod ?? SearchTypeEnum.Vector,
         topK: sources?.topK ?? 2,
         similarityThreshold: sources?.similarityThreshold ?? 0.5,
+        vectorRankWeight: sources?.vectorRankWeight ?? 0.5,
+        textRankWeight: sources?.textRankWeight ?? 0.5,
       },
     }
   }, [sources])

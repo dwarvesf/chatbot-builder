@@ -12,6 +12,8 @@ export const retrievalDocuments = createTRPCRouter({
         type: z.nativeEnum(SearchTypeEnum),
         topK: z.number(),
         similarityThreshold: z.number(),
+        vectorRankWeight: z.number(),
+        textRankWeight: z.number(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -21,6 +23,8 @@ export const retrievalDocuments = createTRPCRouter({
         input.similarityThreshold,
         input.botId,
         input.message,
+        input.vectorRankWeight,
+        input.textRankWeight,
       )
     }),
 })

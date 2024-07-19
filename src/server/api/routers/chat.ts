@@ -102,6 +102,11 @@ function createChatHandler() {
       const similarityThreshold =
         bsRetrievalModel?.retrievalModel?.similarityThreshold ?? 0.5
 
+      const vectorRankWeight =
+        bsRetrievalModel?.retrievalModel?.vectorRankWeight ?? 0.5
+      const textRankWeight =
+        bsRetrievalModel?.retrievalModel?.textRankWeight ?? 0.5
+
       const thread = await db.query.threads.findFirst({
         where: and(
           eq(schema.threads.id, msg.threadId),
@@ -141,6 +146,8 @@ function createChatHandler() {
         similarityThreshold,
         bot.id,
         msg.message,
+        vectorRankWeight,
+        textRankWeight,
       )
 
       if (!contexts) {
