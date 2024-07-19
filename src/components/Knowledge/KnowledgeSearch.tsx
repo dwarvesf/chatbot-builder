@@ -51,6 +51,8 @@ export const KnowledgeSearch = () => {
         type: retrievalModels?.searchMethod ?? SearchTypeEnum.Vector,
         topK: retrievalModels?.topK ?? 2,
         similarityThreshold: retrievalModels?.similarityThreshold ?? 0.5,
+        vectorRankWeight: retrievalModels?.vectorRankWeight ?? 0.5,
+        textRankWeight: retrievalModels?.textRankWeight ?? 0.5,
         message: data.message,
       })
     } catch (error: any) {
@@ -147,8 +149,8 @@ export const KnowledgeSearch = () => {
                       </a>
                     </Badge>
                   </div>
-                  <div className="flex flex-row space-x-2 ">
-                    <div className="flex items-center">
+                  <div className="flex flex-wrap">
+                    <div className="flex items-center mr-2">
                       <Badge
                         appearance={
                           props.vectorRank === undefined ? 'danger' : 'success'
@@ -157,7 +159,7 @@ export const KnowledgeSearch = () => {
                         {`Vector rank: ${props.vectorRank ?? NaN}`}
                       </Badge>
                     </div>
-                    <div className="flex items-center">
+                    <div className="flex items-center mr-2">
                       <Badge
                         appearance={
                           props.textRank === undefined ? 'danger' : 'success'
@@ -166,8 +168,12 @@ export const KnowledgeSearch = () => {
                         {`Full-text rank: ${props.textRank ?? NaN}`}
                       </Badge>
                     </div>
-                    <div className="flex items-center">
-                      <Badge appearance="success">{`RRF scores: ${props.rrfScore}`}</Badge>
+                    <div className="flex items-center mr-2">
+                      <Badge
+                        appearance={
+                          props.rrfScore === undefined ? 'danger' : 'success'
+                        }
+                      >{`RRF scores: ${props.rrfScore.toFixed(10)}`}</Badge>
                     </div>
                   </div>
                 </Card>

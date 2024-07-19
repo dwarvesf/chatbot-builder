@@ -20,6 +20,8 @@ export async function retrievalSearch(
   similarityThreshold: number,
   botId: string,
   msg: string,
+  vectorRankWeight: number,
+  textRankWeight: number,
 ): Promise<RankedResult[]> {
   switch (type) {
     case SearchTypeEnum.Vector:
@@ -27,7 +29,14 @@ export async function retrievalSearch(
     case SearchTypeEnum.FullText:
       return await fullTextSearch(botId, topK, msg)
     case SearchTypeEnum.Hybrid:
-      return await hybridSearch(botId, topK, similarityThreshold, msg)
+      return await hybridSearch(
+        botId,
+        topK,
+        similarityThreshold,
+        msg,
+        vectorRankWeight,
+        textRankWeight,
+      )
     default:
       return []
   }
@@ -137,8 +146,21 @@ async function fullTextSearch(botId: string, topK: number, msg: string) {
   }))
 }
 
-function calculateRRFScore(ranks: number[], k = 60) {
-  return ranks.reduce((sum, rank) => sum + 1 / (k + rank), 0)
+function calculateRRFScore(
+  vectorRank: number | undefined,
+  fullTextRank: number | undefined,
+  vectorWeight: number,
+  fullTextWeight: number,
+  k = 60,
+) {
+  if (vectorRank === undefined && fullTextRank === undefined) {
+    throw new Error('Both ranks cannot be undefined')
+  }
+
+  const vectorScore = vectorRank ? 1 / (k + vectorRank) : 0
+  const fullTextScore = fullTextRank ? 1 / (k + fullTextRank) : 0
+
+  return vectorWeight * vectorScore + fullTextWeight * fullTextScore
 }
 
 function combineSearchResults(
@@ -183,8 +205,9 @@ async function hybridSearch(
   topK: number,
   similarityThreshold: number,
   msg: string,
+  vectorRankWeight: number,
+  textRankWeight: number,
 ) {
-  // Get vector search results
   const vectorResults = await vectorSearch(
     botId,
     topK * 2,
@@ -192,27 +215,47 @@ async function hybridSearch(
     msg,
   )
 
-  // Get full-text search results
   const fullTextResults = await fullTextSearch(botId, topK * 2, msg)
 
-  // Combine results
   const combinedResults = combineSearchResults(vectorResults, fullTextResults)
 
-  const totalResults = vectorResults.length + fullTextResults.length
+  /**
+   * RRF (Reciprocal Rank Fusion) scoring is used to combine results from multiple
+   * search methods (in this case, vector search and full-text search).
+   *
+   * The formula for each rank is: 1 / (k + rank)
+   * where k is a constant (default 60) that mitigates the impact of high rankings.
+   *
+   * The final score is a weighted sum of the vector and full-text scores:
+   * RRF_score = (vectorWeight * vectorScore) + (fullTextWeight * fullTextScore)
+   */
 
-  // Calculate RRF scores
-  // Assume we search 20 chunk for each search ( vector search and full-text search )
-  // if vector rank is [10, 41] => An item ranked 10th in vector search but not found in full-text would have ranks
-  // if full-text rank is [41, 20] => An item ranked 20th in full-text but not found in vector search would have ranks
-  // Using totalResults + 1 for penalty rank
-
+  /**
+   * Example:
+   * Let's say we have a result with:
+   * - vectorRank = 2
+   * - fullTextRank = 5
+   * - vectorRankWeight = 0.3
+   * - textRankWeight = 0.7
+   * - k = 60 (default)
+   *
+   * Calculation:
+   * vectorScore = 1 / (60 + 2) = 0.0161
+   * fullTextScore = 1 / (60 + 5) = 0.0154
+   *
+   * RRF_score = (0.3 * 0.0161) + (0.7 * 0.0154)
+   *           = 0.00483 + 0.01078
+   *           = 0.01561
+   *
+   * This result would have an RRF score of approximately 0.01561.
+   */
   combinedResults.forEach((result) => {
-    const ranks = [
-      result.vectorRank ?? totalResults + 1,
-      result.textRank ?? totalResults + 1,
-    ]
-
-    result.rrfScore = calculateRRFScore(ranks)
+    result.rrfScore = calculateRRFScore(
+      result.vectorRank,
+      result.textRank,
+      vectorRankWeight,
+      textRankWeight,
+    )
   })
 
   // Sort by RRF score (desc) and return topK results

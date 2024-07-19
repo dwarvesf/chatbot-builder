@@ -72,62 +72,17 @@ export const RetrievalSearchCard = ({
             </div>
 
             {isSelected && (
-              <div className="mb-4 gap-4 grid grid-cols-2">
-                <div className="grid grid-col-1">
-                  <div className="flex flex-row space-x-2">
-                    <Typography level="h6" fontWeight="lg">
-                      Top K
-                    </Typography>
-                    <Tooltip
-                      arrow="top-center"
-                      className="w-60 h-auto text-pretty"
-                      content="Used to filter chunks that are most similar to user questions. The system will also dynamically adjust the value of Top K, according to max_tokens of the selected model."
-                    >
-                      <AlertCircleLine className="h-4 w-4" />
-                    </Tooltip>
-                  </div>
-
-                  <Controller
-                    control={control}
-                    name="retrievalModel.topK"
-                    render={({ field }) => (
-                      <FormControl hideHelperTextOnError>
-                        <div className="flex flex-row space-x-4 items-baseline">
-                          <Typography
-                            level="p5"
-                            fontWeight="lg"
-                            className="px-2"
-                          >
-                            {field.value ?? 1}
-                          </Typography>
-                          <input
-                            type="range"
-                            defaultValue={1}
-                            min={1}
-                            max={20}
-                            step={1}
-                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                            value={field.value}
-                            onChange={(e) =>
-                              field.onChange(Number(e.target.value))
-                            }
-                          />
-                        </div>
-                      </FormControl>
-                    )}
-                  />
-                </div>
-
-                {searchMethod === SearchTypeEnum.FullText ? null : (
+              <div className="flex flex-wrap">
+                <div className="w-full mb-4 gap-4 grid grid-cols-2">
                   <div className="grid grid-col-1">
                     <div className="flex flex-row space-x-2">
                       <Typography level="h6" fontWeight="lg">
-                        Score Threshold
+                        Top K
                       </Typography>
                       <Tooltip
                         arrow="top-center"
-                        className="w-40 h-auto text-pretty"
-                        content="Used to set the similarity threshold for chunks filtering."
+                        className="w-60 h-auto text-pretty"
+                        content="Used to filter chunks that are most similar to user questions. The system will also dynamically adjust the value of Top K, according to max_tokens of the selected model."
                       >
                         <AlertCircleLine className="h-4 w-4" />
                       </Tooltip>
@@ -135,7 +90,7 @@ export const RetrievalSearchCard = ({
 
                     <Controller
                       control={control}
-                      name="retrievalModel.similarityThreshold"
+                      name="retrievalModel.topK"
                       render={({ field }) => (
                         <FormControl hideHelperTextOnError>
                           <div className="flex flex-row space-x-4 items-baseline">
@@ -144,14 +99,14 @@ export const RetrievalSearchCard = ({
                               fontWeight="lg"
                               className="px-2"
                             >
-                              {field.value ?? 0}
+                              {field.value ?? 1}
                             </Typography>
                             <input
                               type="range"
-                              defaultValue={0}
-                              min={0}
-                              max={1}
-                              step={0.01}
+                              defaultValue={1}
+                              min={1}
+                              max={20}
+                              step={1}
                               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                               value={field.value}
                               onChange={(e) =>
@@ -163,7 +118,148 @@ export const RetrievalSearchCard = ({
                       )}
                     />
                   </div>
-                )}
+
+                  {searchMethod === SearchTypeEnum.FullText ? null : (
+                    <div className="grid grid-col-1">
+                      <div className="flex flex-row space-x-2">
+                        <Typography level="h6" fontWeight="lg">
+                          Score Threshold
+                        </Typography>
+                        <Tooltip
+                          arrow="top-center"
+                          className="w-40 h-auto text-pretty"
+                          content="Used to set the similarity threshold for chunks filtering."
+                        >
+                          <AlertCircleLine className="h-4 w-4" />
+                        </Tooltip>
+                      </div>
+
+                      <Controller
+                        control={control}
+                        name="retrievalModel.similarityThreshold"
+                        render={({ field }) => (
+                          <FormControl hideHelperTextOnError>
+                            <div className="flex flex-row space-x-4 items-baseline">
+                              <Typography
+                                level="p5"
+                                fontWeight="lg"
+                                className="px-2"
+                              >
+                                {field.value ?? 0}
+                              </Typography>
+                              <input
+                                type="range"
+                                defaultValue={0}
+                                min={0}
+                                max={1}
+                                step={0.01}
+                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                value={field.value}
+                                onChange={(e) =>
+                                  field.onChange(Number(e.target.value))
+                                }
+                              />
+                            </div>
+                          </FormControl>
+                        )}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {searchMethod === SearchTypeEnum.Hybrid ? (
+                  <div className="w-full mb-4 gap-4 grid grid-cols-2">
+                    <div className="grid grid-col-1">
+                      <div className="flex flex-row space-x-2">
+                        <Typography level="h6" fontWeight="lg">
+                          Vector weight
+                        </Typography>
+                        <Tooltip
+                          arrow="top-center"
+                          className="w-60 h-auto text-pretty"
+                          content="This determines the importance of semantic similarity in your search results. A higher value gives more prominence to results that are conceptually related to the query, even if they don't contain exact keyword matches."
+                        >
+                          <AlertCircleLine className="h-4 w-4" />
+                        </Tooltip>
+                      </div>
+
+                      <Controller
+                        control={control}
+                        name="retrievalModel.vectorRankWeight"
+                        render={({ field }) => (
+                          <FormControl hideHelperTextOnError>
+                            <div className="flex flex-row space-x-4 items-baseline">
+                              <Typography
+                                level="p5"
+                                fontWeight="lg"
+                                className="px-2"
+                              >
+                                {field.value ?? 1}
+                              </Typography>
+                              <input
+                                type="range"
+                                defaultValue={0}
+                                min={0}
+                                max={1}
+                                step={0.01}
+                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                value={field.value}
+                                onChange={(e) =>
+                                  field.onChange(Number(e.target.value))
+                                }
+                              />
+                            </div>
+                          </FormControl>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-col-1">
+                      <div className="flex flex-row space-x-2">
+                        <Typography level="h6" fontWeight="lg">
+                          Full-text weight
+                        </Typography>
+                        <Tooltip
+                          arrow="top-center"
+                          className="w-40 h-auto text-pretty"
+                          content="This controls the significance of keyword matching in your search results. A higher value prioritizes results that contain exact or close matches to the query terms."
+                        >
+                          <AlertCircleLine className="h-4 w-4" />
+                        </Tooltip>
+                      </div>
+
+                      <Controller
+                        control={control}
+                        name="retrievalModel.textRankWeight"
+                        render={({ field }) => (
+                          <FormControl hideHelperTextOnError>
+                            <div className="flex flex-row space-x-4 items-baseline">
+                              <Typography
+                                level="p5"
+                                fontWeight="lg"
+                                className="px-2"
+                              >
+                                {field.value ?? 0}
+                              </Typography>
+                              <input
+                                type="range"
+                                defaultValue={0}
+                                min={0}
+                                max={1}
+                                step={0.01}
+                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                value={field.value}
+                                onChange={(e) =>
+                                  field.onChange(Number(e.target.value))
+                                }
+                              />
+                            </div>
+                          </FormControl>
+                        )}
+                      />
+                    </div>
+                  </div>
+                ) : null}
               </div>
             )}
           </div>
