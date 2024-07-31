@@ -7,13 +7,13 @@ import { env } from '~/env'
 import { BotModelEnum } from '~/model/bot-model'
 import { BotSourceTypeEnum } from '~/model/bot-source-type'
 import { ChatRoleEnum } from '~/model/chat'
+import { SearchTypeEnum } from '~/model/search-type'
 import { UsageLimitTypeEnum } from '~/model/usage-limit-type'
+import { retrievalSearch } from '~/server/api/core/rag/retrieval/search-method'
+import { createTRPCRouter, integrationProcedure } from '~/server/api/trpc'
 import { db } from '~/server/db'
 import * as schema from '~/server/db/migration/schema'
 import { type Nullable } from '~/utils/types'
-import { createTRPCRouter, integrationProcedure } from '~/server/api/trpc'
-import { retrievalSearch } from '~/server/api/core/rag/retrieval/search-method'
-import { SearchTypeEnum } from '~/model/search-type'
 
 const openai = new OpenAI({
   apiKey: env.OPENAI_API_KEY, // This is the default and can be omitted
@@ -299,6 +299,8 @@ function getAIModel(modelID: BotModelEnum): string {
   switch (modelID) {
     case BotModelEnum.GPT3:
       return 'gpt-3.5-turbo'
+    case BotModelEnum.GPT4oMini:
+      return 'gpt-4o-mini'
     default:
       throw new Error('Invalid model')
   }

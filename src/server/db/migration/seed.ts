@@ -40,7 +40,10 @@ await db
 
 await db
   .insert(schema.botModels)
-  .values([{ id: 1, name: 'GPT-3.5 turbo', createdAt: new Date() }])
+  .values([
+    { id: 1, name: 'GPT-3.5 turbo', createdAt: new Date() },
+    { id: 2, name: 'GPT-4o Mini', createdAt: new Date() },
+  ])
   .onConflictDoNothing()
 
 await db

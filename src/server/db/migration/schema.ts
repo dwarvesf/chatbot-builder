@@ -15,8 +15,8 @@ import {
 } from 'drizzle-orm/pg-core'
 import { type AdapterAccount } from 'next-auth/adapters'
 import { BotSourceStatusEnum } from '~/model/bot-source-status'
-import { vector } from '~/server/db/migration/vector'
 import { type RetrievalModel } from '~/server/api/core/types/retrieval-model'
+import { vector } from '~/server/db/migration/vector'
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
