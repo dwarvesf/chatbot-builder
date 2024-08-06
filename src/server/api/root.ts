@@ -7,10 +7,11 @@ import { botIntegrationRouter } from './routers/bot-integration'
 import { botSourceRouter } from './routers/bot-source'
 import { botSourceExtractedDataRouter } from './routers/bot-source-extracted-data'
 import { chatRouter } from './routers/chat'
+import { feedbackRouter } from './routers/feedback'
+import { kvRouter } from './routers/kv-cache'
+import { retrievalDocuments } from './routers/retrieval'
 import { threadRouter } from './routers/thread'
 import { userRouter } from './routers/user'
-import { createFeedback } from './routers/feedback'
-import { retrievalDocuments } from './routers/retrieval'
 
 /**
  * This is the primary router for your server.
@@ -18,18 +19,19 @@ import { retrievalDocuments } from './routers/retrieval'
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
-  user: userRouter,
+  attachments: attachmentRouter,
   bot: botRouter,
   botAIModelRouter: botAIModelRouter,
   botIntegrationRouter: botIntegrationRouter,
   botSource: botSourceRouter,
   botSourceExtractedDataRouter: botSourceExtractedDataRouter,
   chatRouter: chatRouter,
+  feedback: feedbackRouter,
+  kvRouter: kvRouter,
   post: postRouter,
-  thread: threadRouter,
-  attachments: attachmentRouter,
-  feedback: createFeedback,
   retrieval: retrievalDocuments,
+  thread: threadRouter,
+  user: userRouter,
 })
 
 // export type definition of API

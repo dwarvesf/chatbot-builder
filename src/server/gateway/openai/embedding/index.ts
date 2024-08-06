@@ -35,8 +35,10 @@ export default async function getEmbeddingsFromContents(contents: string[]) {
       data?: EmbeddingData[]
     }
     const resBody = (await response.json()) as JSONResponse
+    console.log('getEmbeddingsFromContents resBody:', resBody)
     data = resBody?.data ?? []
   }
+  console.log('getEmbeddingsFromContents data:', data)
 
   const results: {
     content: string
