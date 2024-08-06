@@ -7,11 +7,11 @@ import { z } from 'zod'
 import { env } from '~/env'
 import { BotSourceStatusEnum } from '~/model/bot-source-status'
 import { BotSourceTypeEnum } from '~/model/bot-source-type'
+import { SearchTypeEnum } from '~/model/search-type'
+import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { db } from '~/server/db'
 import * as schema from '~/server/db/migration/schema'
 import { submitSyncBotSource } from '~/server/gateway/cronjob/sync-bot-source'
-import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
-import { SearchTypeEnum } from '~/model/search-type'
 
 export const botSourceRouter = createTRPCRouter({
   create: createBotSourceHandler(),
