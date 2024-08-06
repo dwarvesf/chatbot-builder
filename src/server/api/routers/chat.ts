@@ -1,4 +1,5 @@
-import { and, desc, eq, gte, sql } from 'drizzle-orm'
+import { TRPCError } from '@trpc/server'
+import { and, desc, eq, gt, gte, type InferSelectModel, sql } from 'drizzle-orm'
 import lodash from 'lodash'
 import OpenAI from 'openai'
 import { uuidv7 } from 'uuidv7'
@@ -9,20 +10,42 @@ import { BotSourceTypeEnum } from '~/model/bot-source-type'
 import { ChatRoleEnum } from '~/model/chat'
 import { SearchTypeEnum } from '~/model/search-type'
 import { UsageLimitTypeEnum } from '~/model/usage-limit-type'
-import { retrievalSearch } from '~/server/api/core/rag/retrieval/search-method'
+import {
+  type RankedResult,
+  retrievalSearch,
+} from '~/server/api/core/rag/retrieval/search-method'
 import { createTRPCRouter, integrationProcedure } from '~/server/api/trpc'
 import { db } from '~/server/db'
 import * as schema from '~/server/db/migration/schema'
+import getEmbeddingsFromContents from '~/server/gateway/openai/embedding'
 import { type Nullable } from '~/utils/types'
+import { createCaller } from '../root'
 
 const openai = new OpenAI({
   apiKey: env.OPENAI_API_KEY, // This is the default and can be omitted
 })
 
+const CACHE_SIMILARITY_THRESHOLD = 0.8
+
 export const chatRouter = createTRPCRouter({
   create: createChatHandler(),
   getList: getListHandler(),
 })
+
+interface CachedAIResponseData {
+  chatId: string
+  chatIdAssistants: string
+  referSourceLinks: string[]
+  res: OpenAI.ChatCompletion | null
+}
+
+interface createChatResponse {
+  chats: InferSelectModel<typeof schema.chats>[]
+  chatIdAssistants: string
+  assistants: InferSelectModel<typeof schema.chats>[] | null
+  referSourceLinks: string[]
+  res: OpenAI.ChatCompletion | null
+}
 
 function getListHandler() {
   return integrationProcedure
@@ -72,6 +95,7 @@ function createChatHandler() {
           noRelevantContextMsg: schema.bots.noRelevantContextMsg,
           usageLimitPerUserType: schema.bots.usageLimitPerUserType,
           usageLimitPerUser: schema.bots.usageLimitPerUser,
+          cacheResponseSecs: schema.bots.cacheResponseSecs,
         })
         .from(schema.bots)
         .where(eq(schema.bots.id, ctx.session.botId))
@@ -86,14 +110,14 @@ function createChatHandler() {
           'No context is relevant to your question. Feel free to ask again.'
       }
 
-      const rowsBs = await db
+      const bsRows = await db
         .select({
           retrievalModel: schema.botSources.retrievalModel,
         })
         .from(schema.botSources)
         .where(eq(schema.botSources.botId, ctx.session.botId))
 
-      const bsRetrievalModel = rowsBs.length ? rowsBs[0] : null
+      const bsRetrievalModel = bsRows.length ? bsRows[0] : null
 
       //Default config retrievalModel
       const searchMethod =
@@ -129,7 +153,7 @@ function createChatHandler() {
 
       // create new message
       const chatId = uuidv7()
-      const c = await db
+      const userQuestions = await db
         .insert(schema.chats)
         .values({
           id: chatId,
@@ -139,6 +163,19 @@ function createChatHandler() {
           msg: msg.message,
         })
         .returning()
+
+      if (bot.cacheResponseSecs > 0) {
+        // Check cache
+        const cachedAIResponse = await getCachedAIResponse(bot.id, msg.message)
+        if (cachedAIResponse) {
+          return createChatForCacheAndResponse({
+            userQuestions,
+            v: cachedAIResponse,
+            botModelId: bot.modelId,
+            threadId,
+          })
+        }
+      }
 
       const contexts = await retrievalSearch(
         searchMethod,
@@ -154,11 +191,14 @@ function createChatHandler() {
         return
       }
 
-      const assistantMsgs = []
+      let aiResponseCompletion: OpenAI.ChatCompletion | null = null
+      let replyMsg: string | null = null
+      let prompt: string | null = null
+      let referSourceLinks: string[] = []
 
       if (contexts.length > 0) {
         // Build prompt
-        const prompt = await buildPrompt(contexts, msg.message)
+        prompt = await buildPrompt(contexts, msg.message)
         console.log('Prompt:', prompt)
 
         // Ask bot
@@ -167,98 +207,101 @@ function createChatHandler() {
           throw new Error('Failed to ask AI')
         }
 
+        // Get source links
         console.log(
           'Refer Links:',
           contexts.map((row) => row.referLinks),
         )
+        referSourceLinks = extractReferSourceLinks(contexts) // filter duplicate link
 
-        const sourceLinks: string[] = []
-
-        contexts.forEach((context) => {
-          if (context.sourceType === Number(BotSourceTypeEnum.File)) {
-            return
-          }
-
-          if (!context.referLinks) {
-            return
-          }
-
-          sourceLinks.push(context.referLinks)
-        })
-
-        const formatSourceLinks = lodash.uniq(sourceLinks) // filter duplicate link
-
-        const { completion } = res
-
-        const resChoices = completion?.choices?.filter(
+        aiResponseCompletion = res.completion
+        const resChoices = aiResponseCompletion?.choices?.filter(
           (c) => c?.message?.role === 'assistant',
         )
 
         // Save bot response
         if (resChoices?.length) {
-          for (const res of resChoices) {
-            const isLastMsg = res === resChoices[resChoices.length - 1]
-
-            const resId = uuidv7()
-            const m = await db
-              .insert(schema.chats)
-              .values({
-                id: resId,
-                botModelId: bot.modelId,
-                roleId: ChatRoleEnum.Assistant,
-                parentChatId: chatId,
-                threadId,
-                msg: res.message.content,
-                prompt,
-                promptTokens: isLastMsg ? completion?.usage?.prompt_tokens : 0,
-                completionTokens: isLastMsg
-                  ? completion?.usage?.completion_tokens
-                  : 0,
-                totalTokens: isLastMsg ? completion?.usage?.total_tokens : 0,
-              })
-              .returning()
-
-            assistantMsgs.push(m)
-
-            return {
-              chat: c,
-              chatIdAssistants: resId,
-              assistants: assistantMsgs,
-              referSourceLinks: formatSourceLinks,
-              res: completion,
-            }
+          const lastChoice = resChoices[resChoices.length - 1]
+          if (!lastChoice) {
+            console.error('OpenAI response is empty', resChoices)
+            throw new TRPCError({
+              message: 'OpenAI response is empty',
+              code: 'INTERNAL_SERVER_ERROR',
+            })
           }
+          replyMsg = lastChoice.message.content
         }
       } else {
         console.log('Context: No relevant context')
-
-        const resId = uuidv7()
-        const m = await db
-          .insert(schema.chats)
-          .values({
-            id: resId,
-            botModelId: bot.modelId,
-            roleId: ChatRoleEnum.Assistant,
-            parentChatId: chatId,
-            threadId,
-            msg: bot.noRelevantContextMsg,
-            prompt: null,
-            promptTokens: 0,
-            completionTokens: 0,
-            totalTokens: 0,
-          })
-          .returning()
-        assistantMsgs.push(m)
-
-        return {
-          chat: c,
-          chatIdAssistants: resId,
-          assistants: assistantMsgs,
-          referSourceLinks: null,
-          res: null,
-        }
+        replyMsg = bot.noRelevantContextMsg
       }
+
+      const resId = uuidv7()
+      const resChat = await db
+        .insert(schema.chats)
+        .values({
+          id: resId,
+          botModelId: bot.modelId,
+          roleId: ChatRoleEnum.Assistant,
+          parentChatId: chatId,
+          threadId,
+          msg: replyMsg,
+          prompt,
+          promptTokens: aiResponseCompletion?.usage?.prompt_tokens ?? 0,
+          completionTokens: aiResponseCompletion?.usage?.completion_tokens ?? 0,
+          totalTokens: aiResponseCompletion?.usage?.total_tokens ?? 0,
+        })
+        .returning()
+
+      // Cache response
+      console.log('Cache cacheResponseSecs:', bot.cacheResponseSecs)
+      if (bot.cacheResponseSecs > 0) {
+        const v: CachedAIResponseData = {
+          chatId: chatId,
+          chatIdAssistants: resId,
+          referSourceLinks,
+          res: aiResponseCompletion,
+        }
+        createCaller({
+          session: null,
+          apiToken: undefined,
+        })
+          .kvRouter.create({
+            secret_key: env.INTERNAL_JOB_SECRET,
+            botId: bot.id,
+            key: msg.message,
+            value: v,
+            durationSecs: bot.cacheResponseSecs,
+          })
+          .catch((err) => {
+            console.error('Failed to cache response', err)
+          })
+      }
+
+      return {
+        chats: userQuestions,
+        chatIdAssistants: resId,
+        assistants: resChat,
+        referSourceLinks,
+        res: aiResponseCompletion,
+      } as createChatResponse
     })
+}
+
+function extractReferSourceLinks(contexts: RankedResult[]) {
+  const sourceLinks: string[] = []
+  contexts.forEach((context) => {
+    if (context.sourceType === Number(BotSourceTypeEnum.File)) {
+      return
+    }
+
+    if (!context.referLinks) {
+      return
+    }
+
+    sourceLinks.push(context.referLinks)
+  })
+  return lodash.uniq(sourceLinks) // filter duplicate link
 }
 
 async function askAI(
@@ -358,4 +401,87 @@ async function isUserUsageLimitValid(
     return false
   }
   return true
+}
+
+async function getCachedAIResponse(
+  botId: string,
+  msg: string,
+): Promise<Nullable<CachedAIResponseData>> {
+  const msgVectors = await getEmbeddingsFromContents([msg])
+  if (!msgVectors?.length) {
+    throw new Error('Failed to get embeddings')
+  }
+
+  const msgEmbeddings = msgVectors[0]?.embeddings
+  if (!msgEmbeddings) {
+    throw new Error('Failed to get embeddings')
+  }
+
+  const rows = await db
+    .select({
+      content: schema.kvCache.value,
+      similarity: sql<number>`1 - (${schema.kvCache.vector} <=> ${sql.raw(`'[${msgEmbeddings.join(',')}]'::vector`)})`,
+    })
+    .from(schema.kvCache)
+    .where(
+      and(
+        eq(schema.kvCache.botId, botId),
+        gt(schema.kvCache.expiredAt, new Date()),
+        sql<boolean>`(1 - (${schema.kvCache.vector} <=> ${sql.raw(`'[${msgEmbeddings.join(',')}]'::vector`)})) > ${CACHE_SIMILARITY_THRESHOLD}`,
+      ),
+    )
+    .orderBy(
+      sql<number>`(1 - (${schema.kvCache.vector} <=> ${sql.raw(`'[${msgEmbeddings.join(',')}]'::vector`)})) DESC`,
+    )
+    .limit(1)
+
+  if (rows.length === 0) {
+    return null
+  }
+
+  return JSON.parse(rows[0]?.content as string) as CachedAIResponseData
+}
+
+async function createChatForCacheAndResponse({
+  userQuestions,
+  v,
+  botModelId,
+  threadId,
+}: {
+  botModelId: BotModelEnum
+  threadId: string
+  userQuestions: InferSelectModel<typeof schema.chats>[]
+  v: CachedAIResponseData
+}): Promise<createChatResponse> {
+  if (userQuestions.length === 0 || !userQuestions[0]?.id) {
+    throw new Error('User question is empty')
+  }
+  const parentChatId = userQuestions[0]?.id
+
+  const resId = uuidv7()
+  const resChatRows = await db
+    .insert(schema.chats)
+    .values({
+      id: resId,
+      botModelId: botModelId,
+      roleId: ChatRoleEnum.Assistant,
+      parentChatId,
+      threadId,
+      msg: v.res?.choices?.[0]?.message?.content,
+      prompt: null,
+      promptTokens: 0,
+      completionTokens: 0,
+      totalTokens: 0,
+      cachedFromChatId: v.chatId,
+    })
+    .returning()
+
+  const res: createChatResponse = {
+    chats: userQuestions,
+    assistants: resChatRows,
+    chatIdAssistants: v.chatIdAssistants,
+    referSourceLinks: v.referSourceLinks,
+    res: v.res,
+  }
+  return res
 }

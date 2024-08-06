@@ -1,10 +1,10 @@
 import { and, desc, eq, sql } from 'drizzle-orm'
+import { SearchTypeEnum } from '~/model/search-type'
 import { db } from '~/server/db'
 import * as schema from '~/server/db/migration/schema'
 import getEmbeddingsFromContents from '~/server/gateway/openai/embedding'
-import { SearchTypeEnum } from '~/model/search-type'
 
-interface RankedResult {
+export interface RankedResult {
   content: string | null
   referLinks: string | null
   referName: string | null
