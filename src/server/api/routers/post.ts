@@ -5,6 +5,7 @@ import {
   protectedProcedure,
   publicProcedure,
 } from '~/server/api/trpc'
+import { createCaller } from '../root'
 
 let post = {
   id: 1,
@@ -22,11 +23,26 @@ export const postRouter = createTRPCRouter({
 
   protectedHello: protectedProcedure
     .input(z.object({ text: z.string() }))
+    .query(async ({ ctx, input }) => {
+      console.log('ctx', ctx)
+      const p2 = await createCaller(ctx).post.protectedHello2({
+        text: 'world2',
+      })
+      // const hello2 = api.post.protectedHello2
+      console.log('p2', p2)
+
+      return {
+        greeting: `Hello ${input.text}`,
+      }
+    }),
+
+  protectedHello2: protectedProcedure
+    .input(z.object({ text: z.string() }))
     .query(({ ctx, input }) => {
       console.log('ctx', ctx)
 
       return {
-        greeting: `Hello ${input.text}`,
+        greeting: `Hello2 ${input.text}`,
       }
     }),
 

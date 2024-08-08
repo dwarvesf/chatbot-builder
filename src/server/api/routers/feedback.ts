@@ -1,17 +1,17 @@
 import { z } from 'zod'
 import * as schema from '~/server/db/migration/schema'
 
+import { desc, eq, sql } from 'drizzle-orm'
+import { uuidv7 } from 'uuidv7'
+import { FeedbackTypeEnum } from '~/model/feedback'
 import {
   createTRPCRouter,
   integrationProcedure,
   protectedProcedure,
 } from '~/server/api/trpc'
 import { db } from '~/server/db'
-import { FeedbackTypeEnum } from '~/model/feedback'
-import { uuidv7 } from 'uuidv7'
-import { desc, eq, sql } from 'drizzle-orm'
 
-export const createFeedback = createTRPCRouter({
+export const feedbackRouter = createTRPCRouter({
   createRating: integrationProcedure
     .input(
       z.object({
@@ -24,7 +24,7 @@ export const createFeedback = createTRPCRouter({
     .mutation(async ({ input, ctx }) => {
       const feedbackId = uuidv7()
       await db
-        .insert(schema.chat_feedback)
+        .insert(schema.chatFeedbacks)
         .values({
           id: feedbackId,
           threadId: input.threadId,
@@ -49,13 +49,13 @@ export const createFeedback = createTRPCRouter({
         .select({
           count: sql<number>`COUNT(*)`,
         })
-        .from(schema.chat_feedback)
-        .where(eq(schema.chat_feedback.threadId, input.threadId))
+        .from(schema.chatFeedbacks)
+        .where(eq(schema.chatFeedbacks.threadId, input.threadId))
       const count = Number(countRow[0]?.count) ?? 0
 
-      const chat_feedback = await db.query.chat_feedback.findMany({
-        where: eq(schema.chat_feedback.threadId, input.threadId),
-        orderBy: [desc(schema.chat_feedback.id)],
+      const chat_feedback = await db.query.chatFeedbacks.findMany({
+        where: eq(schema.chatFeedbacks.threadId, input.threadId),
+        orderBy: [desc(schema.chatFeedbacks.id)],
         limit: input.limit,
         offset: input.offset,
       })

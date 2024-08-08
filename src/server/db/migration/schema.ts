@@ -200,6 +200,7 @@ export const bots = createTable(
     userLimitWarningMsg: text('user_limit_warning_msg'),
     whileListIpsOnly: text('while_list_ips_only'),
     status: integer('status').notNull().default(BotSourceStatusEnum.Pending),
+    cacheResponseSecs: integer('cache_response_secs').notNull().default(0),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
     updatedAt: timestamp('updated_at'),
@@ -369,6 +370,7 @@ export const chats = createTable(
     promptTokens: integer('promt_tokens'),
     completionTokens: integer('completion_tokens'),
     totalTokens: integer('total_tokens'),
+    cachedFromChatId: uuid('cached_from_chat_id'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
     updatedAt: timestamp('updated_at'),
@@ -385,7 +387,7 @@ export const chats = createTable(
   }),
 )
 
-export const chat_feedback = createTable(
+export const chatFeedbacks = createTable(
   'chat_feedback',
   {
     id: uuid('id').notNull().primaryKey(),
@@ -411,7 +413,7 @@ export const chat_feedback = createTable(
   }),
 )
 
-export const feedback_type = createTable(
+export const feedbackTypes = createTable(
   'feedback_type',
   {
     id: integer('id').notNull().primaryKey(),
@@ -440,4 +442,18 @@ export const invoices = createTable(
     planIdIdx: index('invoice_plan_id_idx').on(invoice.planId),
     userIdIdx: index('invoice_user_id_idx').on(invoice.userId),
   }),
+)
+
+export const kvCache = createTable(
+  'kv_cache',
+  {
+    id: uuid('id').notNull().primaryKey(),
+    botId: uuid('bot_id').references(() => bots.id),
+    key: text('key').notNull(),
+    value: jsonb('value'),
+    vector: vector('vector', { dimensions: 1024 }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    expiredAt: timestamp('expired_at'),
+  },
+  (self) => ({}),
 )

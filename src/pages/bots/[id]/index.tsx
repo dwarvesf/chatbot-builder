@@ -283,7 +283,7 @@ const BotDetail: NextPage = () => {
       addNewMessage(
         data.chatIdAssistants ?? '',
         data.referSourceLinks ?? null,
-        data.assistants?.[0]?.[0]?.msg ?? '',
+        data.assistants?.[0]?.msg ?? '',
         false,
       )
     },

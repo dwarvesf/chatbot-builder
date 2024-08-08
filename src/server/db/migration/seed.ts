@@ -47,7 +47,7 @@ await db
   .onConflictDoNothing()
 
 await db
-  .insert(schema.feedback_type)
+  .insert(schema.feedbackTypes)
   .values([
     { id: 1, name: 'Too long', createdAt: new Date() },
     { id: 2, name: 'Too short', createdAt: new Date() },

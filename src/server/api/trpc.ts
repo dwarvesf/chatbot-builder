@@ -184,3 +184,19 @@ export const integrationProcedure = t.procedure
       })
     }),
   )
+
+export const internalProcedure = t.procedure
+  .input(
+    z.object({
+      secret_key: z.string(),
+    }),
+  )
+  .use(
+    t.middleware(async ({ ctx, next }) => {
+      return next({
+        ctx: {
+          session: { ...ctx.session, user: null },
+        },
+      })
+    }),
+  )
