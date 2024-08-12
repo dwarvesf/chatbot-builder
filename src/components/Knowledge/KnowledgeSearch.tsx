@@ -2,13 +2,13 @@
 /* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
 import { Badge, Button, Card, Typography, useToast } from '@mochi-ui/core'
 import { useParams } from 'next/navigation'
+import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { BotSourceTypeEnum } from '~/model/bot-source-type'
+import { SearchTypeEnum } from '~/model/search-type'
 import { api } from '~/utils/api'
 import { SourceTypeBadge } from '../BotSource/SourceTypeBadge'
-import { useState } from 'react'
 import { CardSkeleton } from '../common/FormSkeleton'
-import { SearchTypeEnum } from '~/model/search-type'
 
 export const KnowledgeSearch = () => {
   const { toast } = useToast()
@@ -51,8 +51,7 @@ export const KnowledgeSearch = () => {
         type: retrievalModels?.searchMethod ?? SearchTypeEnum.Vector,
         topK: retrievalModels?.topK ?? 2,
         similarityThreshold: retrievalModels?.similarityThreshold ?? 0.5,
-        vectorRankWeight: retrievalModels?.vectorRankWeight ?? 0.5,
-        textRankWeight: retrievalModels?.textRankWeight ?? 0.5,
+        alpha: retrievalModels?.alpha ?? 0.5,
         message: data.message,
       })
     } catch (error: any) {
@@ -87,6 +86,7 @@ export const KnowledgeSearch = () => {
                   <textarea
                     className="p-4 appearance-none outline-none bg-transparent rounded shrink-0 py-2.5 caret-primary-outline-fg placeholder:text-text-disabled min-h-[200px] text-sm w-full resize-none"
                     {...field}
+                    minLength={10}
                     maxLength={200}
                     onChange={(e) => {
                       field.onChange(e)
@@ -127,12 +127,12 @@ export const KnowledgeSearch = () => {
               return (
                 <Card
                   key={index}
-                  className="flex flex-col space-y-2 drop-shadow-md"
+                  className="flex flex-col space-y-2 drop-shadow-md text-wrap break-all"
                 >
                   <Typography level="p4" fontWeight="md">
                     {props.content}
                   </Typography>
-                  <div className="flex flex-row space-x-2">
+                  <div className="flex flex-row space-x-2 max-w-[400px]">
                     <div className="flex items-center">
                       <SourceTypeBadge typeId={props.sourceType} />
                     </div>
@@ -143,9 +143,9 @@ export const KnowledgeSearch = () => {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        {props.sourceType !== BotSourceTypeEnum.Link
-                          ? props.referName
-                          : props.referLinks}
+                        {props.sourceType !== BotSourceTypeEnum.File
+                          ? props.referLinks
+                          : props.referName}
                       </a>
                     </Badge>
                   </div>

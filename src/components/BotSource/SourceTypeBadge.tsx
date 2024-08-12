@@ -9,6 +9,7 @@ interface SourceTypeBadgeProps {
 const getTypeLabel = (typeId: number) => {
   switch (typeId) {
     case BotSourceTypeEnum.Link:
+    case BotSourceTypeEnum.SitemapChildUrl:
       return 'Link'
     case BotSourceTypeEnum.Sitemap:
       return 'Sitemap'
@@ -23,6 +24,7 @@ const getTypeLabel = (typeId: number) => {
 const getColor = (typeId: number): BadgeProps['appearance'] => {
   switch (typeId) {
     case BotSourceTypeEnum.Link:
+    case BotSourceTypeEnum.SitemapChildUrl:
       return 'primary'
     case BotSourceTypeEnum.Sitemap:
       return 'warning'

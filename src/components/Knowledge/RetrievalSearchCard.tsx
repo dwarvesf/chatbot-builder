@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Card, Typography, Badge, FormControl, Tooltip } from '@mochi-ui/core'
+import { Badge, Card, FormControl, Tooltip, Typography } from '@mochi-ui/core'
 import { AlertCircleLine } from '@mochi-ui/icons'
 import clsx from 'clsx'
+import { useId } from 'react'
 import { Controller, useFormContext } from 'react-hook-form'
 import { SearchTypeEnum } from '~/model/search-type'
 import { type RetrievalModelProps } from './KnowledgeSettings'
-import { useId } from 'react'
 
 interface RetrievalSearchProps {
   searchName: string
@@ -168,16 +168,16 @@ export const RetrievalSearchCard = ({
                 </div>
 
                 {searchMethod === SearchTypeEnum.Hybrid ? (
-                  <div className="w-full mb-4 gap-4 grid grid-cols-2">
+                  <div className="w-full mb-4 gap-4 grid grid-cols-1">
                     <div className="grid grid-col-1">
                       <div className="flex flex-row space-x-2">
                         <Typography level="h6" fontWeight="lg">
-                          Vector weight
+                          Alpha
                         </Typography>
                         <Tooltip
                           arrow="top-center"
                           className="w-60 h-auto text-pretty"
-                          content="This determines the importance of semantic similarity in your search results. A higher value gives more prominence to results that are conceptually related to the query, even if they don't contain exact keyword matches."
+                          content="By adjusting the weights assigned, this rerank strategy determines whether to prioritize semantic or keyword matching."
                         >
                           <AlertCircleLine className="h-4 w-4" />
                         </Tooltip>
@@ -185,16 +185,19 @@ export const RetrievalSearchCard = ({
 
                       <Controller
                         control={control}
-                        name="retrievalModel.vectorRankWeight"
+                        name="retrievalModel.alpha"
                         render={({ field }) => (
                           <FormControl hideHelperTextOnError>
-                            <div className="flex flex-row space-x-4 items-baseline">
+                            <div className="flex flex-row w-full space-x-2 items-baseline">
+                              <Typography level="p4" fontWeight="lg">
+                                Keyword
+                              </Typography>
                               <Typography
                                 level="p5"
                                 fontWeight="lg"
                                 className="px-2"
                               >
-                                {field.value ?? 1}
+                                {(1 - field.value).toFixed(2)}
                               </Typography>
                               <input
                                 type="range"
@@ -202,57 +205,23 @@ export const RetrievalSearchCard = ({
                                 min={0}
                                 max={1}
                                 step={0.01}
-                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                className="w-[200px] h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                                 value={field.value}
                                 onChange={(e) =>
                                   field.onChange(Number(e.target.value))
                                 }
                               />
-                            </div>
-                          </FormControl>
-                        )}
-                      />
-                    </div>
 
-                    <div className="grid grid-col-1">
-                      <div className="flex flex-row space-x-2">
-                        <Typography level="h6" fontWeight="lg">
-                          Full-text weight
-                        </Typography>
-                        <Tooltip
-                          arrow="top-center"
-                          className="w-40 h-auto text-pretty"
-                          content="This controls the significance of keyword matching in your search results. A higher value prioritizes results that contain exact or close matches to the query terms."
-                        >
-                          <AlertCircleLine className="h-4 w-4" />
-                        </Tooltip>
-                      </div>
-
-                      <Controller
-                        control={control}
-                        name="retrievalModel.textRankWeight"
-                        render={({ field }) => (
-                          <FormControl hideHelperTextOnError>
-                            <div className="flex flex-row space-x-4 items-baseline">
                               <Typography
                                 level="p5"
                                 fontWeight="lg"
                                 className="px-2"
                               >
-                                {field.value ?? 0}
+                                {field.value.toFixed(2)}
                               </Typography>
-                              <input
-                                type="range"
-                                defaultValue={0}
-                                min={0}
-                                max={1}
-                                step={0.01}
-                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                value={field.value}
-                                onChange={(e) =>
-                                  field.onChange(Number(e.target.value))
-                                }
-                              />
+                              <Typography level="p4" fontWeight="lg">
+                                Semantic
+                              </Typography>
                             </div>
                           </FormControl>
                         )}

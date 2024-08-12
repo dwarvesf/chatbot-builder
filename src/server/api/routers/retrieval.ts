@@ -1,7 +1,7 @@
 import { z } from 'zod'
-import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { SearchTypeEnum } from '~/model/search-type'
 import { retrievalSearch } from '~/server/api/core/rag/retrieval/search-method'
+import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 
 export const retrievalDocuments = createTRPCRouter({
   search: protectedProcedure
@@ -12,8 +12,7 @@ export const retrievalDocuments = createTRPCRouter({
         type: z.nativeEnum(SearchTypeEnum),
         topK: z.number(),
         similarityThreshold: z.number(),
-        vectorRankWeight: z.number(),
-        textRankWeight: z.number(),
+        alpha: z.number(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -23,8 +22,7 @@ export const retrievalDocuments = createTRPCRouter({
         input.similarityThreshold,
         input.botId,
         input.message,
-        input.vectorRankWeight,
-        input.textRankWeight,
+        input.alpha,
       )
     }),
 })

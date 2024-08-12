@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, sql } from 'drizzle-orm'
 import { SearchTypeEnum } from '~/model/search-type'
 import { db } from '~/server/db'
 import * as schema from '~/server/db/migration/schema'
@@ -20,8 +20,7 @@ export async function retrievalSearch(
   similarityThreshold: number,
   botId: string,
   msg: string,
-  vectorRankWeight: number,
-  textRankWeight: number,
+  alpha: number,
 ): Promise<RankedResult[]> {
   switch (type) {
     case SearchTypeEnum.Vector:
@@ -29,14 +28,7 @@ export async function retrievalSearch(
     case SearchTypeEnum.FullText:
       return await fullTextSearch(botId, topK, msg)
     case SearchTypeEnum.Hybrid:
-      return await hybridSearch(
-        botId,
-        topK,
-        similarityThreshold,
-        msg,
-        vectorRankWeight,
-        textRankWeight,
-      )
+      return await hybridSearch(botId, topK, similarityThreshold, msg, alpha)
     default:
       return []
   }
@@ -64,7 +56,7 @@ async function vectorSearch(
       referLinks: schema.botSources.url,
       referName: schema.botSources.name,
       sourceType: schema.botSources.typeId,
-      similarity: sql<number>`1 - (${schema.botSourceExtractedDataVector.vector} <=> ${sql.raw(`'[${msgEmbeddings.join(',')}]'::vector`)})`,
+      similarity: sql<number>`1 - (${schema.botSourceExtractedDataVector.vector} <=> ${sql.raw(`'[${msgEmbeddings.join(',')}]'`)})`,
     })
     .from(schema.botSourceExtractedDataVector)
     .innerJoin(
@@ -85,7 +77,9 @@ async function vectorSearch(
       ),
     )
     .orderBy(
-      sql<number>`${schema.botSourceExtractedDataVector.vector} <=> ${sql.raw(`'[${msgEmbeddings.join(',')}]'::vector`)} ASC`,
+      asc(
+        sql<number>`${schema.botSourceExtractedDataVector.vector} <=> ${sql.raw(`'[${msgEmbeddings.join(',')}]'`)}`,
+      ),
     )
     .limit(topK)
 
@@ -149,8 +143,7 @@ async function fullTextSearch(botId: string, topK: number, msg: string) {
 function calculateRRFScore(
   vectorRank: number | undefined,
   fullTextRank: number | undefined,
-  vectorWeight: number,
-  fullTextWeight: number,
+  alpha: number,
   k = 60,
 ) {
   if (vectorRank === undefined && fullTextRank === undefined) {
@@ -160,7 +153,7 @@ function calculateRRFScore(
   const vectorScore = vectorRank ? 1 / (k + vectorRank) : 0
   const fullTextScore = fullTextRank ? 1 / (k + fullTextRank) : 0
 
-  return vectorWeight * vectorScore + fullTextWeight * fullTextScore
+  return (1 - alpha) * vectorScore + alpha * fullTextScore
 }
 
 function combineSearchResults(
@@ -205,8 +198,7 @@ async function hybridSearch(
   topK: number,
   similarityThreshold: number,
   msg: string,
-  vectorRankWeight: number,
-  textRankWeight: number,
+  alpha: number,
 ) {
   const vectorResults = await vectorSearch(
     botId,
@@ -253,8 +245,7 @@ async function hybridSearch(
     result.rrfScore = calculateRRFScore(
       result.vectorRank,
       result.textRank,
-      vectorRankWeight,
-      textRankWeight,
+      alpha,
     )
   })
 
