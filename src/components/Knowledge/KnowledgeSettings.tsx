@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Typography, useToast } from '@mochi-ui/core'
-import { WebSolid, TwinkleSolid, GiftSolid } from '@mochi-ui/icons'
+import { GiftSolid, TwinkleSolid, WebSolid } from '@mochi-ui/icons'
 import { useParams } from 'next/navigation'
+import { useMemo } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { SearchTypeEnum } from '~/model/search-type'
 import { api } from '~/utils/api'
-import { RetrievalSearchCard } from './RetrievalSearchCard'
 import { SaveBar } from '../SaveBar'
-import { useMemo } from 'react'
+import { RetrievalSearchCard } from './RetrievalSearchCard'
 
 export interface RetrievalModelProps {
   botId: string
@@ -17,8 +17,7 @@ export interface RetrievalModelProps {
     searchMethod: SearchTypeEnum
     topK: number
     similarityThreshold: number
-    vectorRankWeight: number
-    textRankWeight: number
+    alpha: number
   }
 }
 
@@ -33,8 +32,7 @@ const schema = z.object({
     searchMethod: z.nativeEnum(SearchTypeEnum),
     topK: z.number(),
     similarityThreshold: z.number(),
-    vectorRankWeight: z.number(),
-    textRankWeight: z.number(),
+    alpha: z.number(),
   }),
 })
 
@@ -167,8 +165,7 @@ export const KnowledgeSettingsPage = () => {
         searchMethod: sources?.searchMethod ?? SearchTypeEnum.Vector,
         topK: sources?.topK ?? 2,
         similarityThreshold: sources?.similarityThreshold ?? 0.5,
-        vectorRankWeight: sources?.vectorRankWeight ?? 0.5,
-        textRankWeight: sources?.textRankWeight ?? 0.5,
+        alpha: sources?.alpha ?? 0.5,
       },
     }
   }, [sources])
