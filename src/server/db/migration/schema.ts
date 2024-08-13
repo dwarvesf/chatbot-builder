@@ -201,6 +201,7 @@ export const bots = createTable(
     whileListIpsOnly: text('while_list_ips_only'),
     status: integer('status').notNull().default(BotSourceStatusEnum.Pending),
     cacheResponseSecs: integer('cache_response_secs').notNull().default(0),
+    cacheEmbeddingSecs: integer('cache_embedding_secs').notNull().default(0),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
     updatedAt: timestamp('updated_at'),
@@ -451,6 +452,7 @@ export const kvCache = createTable(
   'kv_cache',
   {
     id: uuid('id').notNull().primaryKey(),
+    typeId: integer('type_id'),
     botId: uuid('bot_id').references(() => bots.id),
     key: text('key').notNull(),
     value: jsonb('value'),
@@ -458,5 +460,7 @@ export const kvCache = createTable(
     createdAt: timestamp('created_at').notNull().defaultNow(),
     expiredAt: timestamp('expired_at'),
   },
-  (self) => ({}),
+  (self) => ({
+    vectorHnswIndex: sql`CREATE INDEX kv_cache_vector_hnsw_idx ON kv_cache USING hnsw (vector vector_cosine_ops) WITH (m = 16, ef_construction = 64)`,
+  }),
 )

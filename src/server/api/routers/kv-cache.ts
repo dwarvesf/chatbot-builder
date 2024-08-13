@@ -2,6 +2,7 @@ import { TRPCError } from '@trpc/server'
 import dayjs from 'dayjs'
 import { uuidv7 } from 'uuidv7'
 import { z } from 'zod'
+import { KvCacheTypeEnum } from '~/model/kv-cache'
 import { db } from '~/server/db'
 import * as schema from '~/server/db/migration/schema'
 import getEmbeddingsFromContents from '~/server/gateway/openai/embedding'
@@ -11,6 +12,7 @@ export const kvRouter = createTRPCRouter({
   create: internalProcedure
     .input(
       z.object({
+        type: z.nativeEnum(KvCacheTypeEnum),
         botId: z.string(),
         key: z.string(),
         value: z.any(),
@@ -18,7 +20,7 @@ export const kvRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input }) => {
-      console.log('kvRouter.create input:', input)
+      // console.log('kvRouter.create input:', input)
       // Embed the content
       const res = await getEmbeddingsFromContents([input.key])
       if (res.length === 0) {
@@ -35,13 +37,14 @@ export const kvRouter = createTRPCRouter({
       }
       // console.log(res)
 
-      console.log('kvRouter.create res:', res)
+      // console.log('kvRouter.create res:', res)
       const rs = res[0]
       // Store cache
       const rows = await db
         .insert(schema.kvCache)
         .values({
           id: uuidv7(),
+          typeId: input.type,
           botId: input.botId,
           key: input.key,
           value: JSON.stringify(input.value),

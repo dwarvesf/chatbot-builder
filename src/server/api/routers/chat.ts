@@ -8,6 +8,7 @@ import { env } from '~/env'
 import { BotModelEnum } from '~/model/bot-model'
 import { BotSourceTypeEnum } from '~/model/bot-source-type'
 import { ChatRoleEnum } from '~/model/chat'
+import { KvCacheTypeEnum } from '~/model/kv-cache'
 import { SearchTypeEnum } from '~/model/search-type'
 import { UsageLimitTypeEnum } from '~/model/usage-limit-type'
 import {
@@ -25,7 +26,9 @@ const openai = new OpenAI({
   apiKey: env.OPENAI_API_KEY, // This is the default and can be omitted
 })
 
+// TODO: Move this to bot config
 const CACHE_SIMILARITY_THRESHOLD = 0.8
+const CACHE_EMBEDDING_SIMILARITY_THRESHOLD = 0.9
 
 export const chatRouter = createTRPCRouter({
   create: createChatHandler(),
@@ -96,6 +99,7 @@ function createChatHandler() {
           usageLimitPerUserType: schema.bots.usageLimitPerUserType,
           usageLimitPerUser: schema.bots.usageLimitPerUser,
           cacheResponseSecs: schema.bots.cacheResponseSecs,
+          cacheEmbeddingSecs: schema.bots.cacheEmbeddingSecs,
         })
         .from(schema.bots)
         .where(eq(schema.bots.id, ctx.session.botId))
@@ -173,14 +177,46 @@ function createChatHandler() {
         }
       }
 
-      const contexts = await retrievalSearch(
-        searchMethod,
-        topK,
-        similarityThreshold,
-        bot.id,
-        msg.message,
-        alpha,
-      )
+      let contexts: RankedResult[] = []
+      if (bot.cacheEmbeddingSecs > 0) {
+        console.log('Checking cached embeddings')
+        const cValue = await getCachedEmbeddings({
+          botId: bot.id,
+          msg: msg.message,
+        })
+        if (cValue?.existed) {
+          contexts = cValue.contexts
+        } else {
+          contexts = await retrievalSearch(
+            searchMethod,
+            topK,
+            similarityThreshold,
+            bot.id,
+            msg.message,
+            alpha,
+          )
+
+          console.log('Caching embeddings')
+          // store Cache embeddings without blocking
+          storeEmbeddingsToCache({
+            botId: bot.id,
+            msg: msg.message,
+            contexts,
+            expireSecs: bot.cacheEmbeddingSecs,
+          }).catch((err) => {
+            console.error('Failed to store embeddings', err)
+          })
+        }
+      } else {
+        contexts = await retrievalSearch(
+          searchMethod,
+          topK,
+          similarityThreshold,
+          bot.id,
+          msg.message,
+          alpha,
+        )
+      }
 
       if (!contexts) {
         return
@@ -249,20 +285,18 @@ function createChatHandler() {
         .returning()
 
       // Cache response
-      console.log('Cache cacheResponseSecs:', bot.cacheResponseSecs)
       if (bot.cacheResponseSecs > 0) {
+        console.log('Caching response')
         const v: CachedAIResponseData = {
           chatId: chatId,
           chatIdAssistants: resId,
           referSourceLinks,
           res: aiResponseCompletion,
         }
-        createCaller({
-          session: null,
-          apiToken: undefined,
-        })
+        createCaller({ session: null, apiToken: undefined })
           .kvRouter.create({
             secret_key: env.INTERNAL_JOB_SECRET,
+            type: KvCacheTypeEnum.UserQueryResponse,
             botId: bot.id,
             key: msg.message,
             value: v,
@@ -421,6 +455,7 @@ async function getCachedAIResponse(
     .where(
       and(
         eq(schema.kvCache.botId, botId),
+        eq(schema.kvCache.typeId, KvCacheTypeEnum.UserQueryResponse),
         gt(schema.kvCache.expiredAt, new Date()),
         sql<boolean>`(1 - (${schema.kvCache.vector} <=> ${sql.raw(`'[${msgEmbeddings.join(',')}]'::vector`)})) > ${CACHE_SIMILARITY_THRESHOLD}`,
       ),
@@ -479,4 +514,60 @@ async function createChatForCacheAndResponse({
     res: v.res,
   }
   return res
+}
+
+async function getCachedEmbeddings(params: {
+  botId: string
+  msg: string
+}): Promise<{ contexts: RankedResult[]; existed: boolean } | null> {
+  const msgVectors = await getEmbeddingsFromContents([params.msg])
+  if (!msgVectors?.length) {
+    throw new Error('Failed to get embeddings')
+  }
+
+  const msgEmbeddings = msgVectors[0]?.embeddings
+  if (!msgEmbeddings) {
+    throw new Error('Failed to get embeddings')
+  }
+
+  const rows = await db
+    .select({
+      contexts: schema.kvCache.value,
+      similarity: sql<number>`1 - (${schema.kvCache.vector} <=> ${sql.raw(`'[${msgEmbeddings.join(',')}]'::vector`)})`,
+    })
+    .from(schema.kvCache)
+    .where(
+      and(
+        eq(schema.kvCache.typeId, KvCacheTypeEnum.UserQueryEmbedding),
+        eq(schema.kvCache.botId, params.botId),
+        gt(schema.kvCache.expiredAt, new Date()),
+        sql<boolean>`(1 - (${schema.kvCache.vector} <=> ${sql.raw(`'[${msgEmbeddings.join(',')}]'::vector`)})) > ${CACHE_EMBEDDING_SIMILARITY_THRESHOLD}`,
+      ),
+    )
+    .orderBy(
+      sql<number>`(1 - (${schema.kvCache.vector} <=> ${sql.raw(`'[${msgEmbeddings.join(',')}]'::vector`)})) DESC`,
+    )
+    .limit(1)
+
+  if (rows.length === 0) {
+    return null
+  }
+
+  return { contexts: JSON.parse(rows[0]?.contexts as string), existed: true }
+}
+
+async function storeEmbeddingsToCache(params: {
+  botId: string
+  msg: string
+  contexts: RankedResult[]
+  expireSecs: number
+}) {
+  return createCaller({ session: null, apiToken: undefined }).kvRouter.create({
+    secret_key: env.INTERNAL_JOB_SECRET,
+    type: KvCacheTypeEnum.UserQueryEmbedding,
+    botId: params.botId,
+    key: params.msg,
+    value: params.contexts,
+    durationSecs: params.expireSecs,
+  })
 }
