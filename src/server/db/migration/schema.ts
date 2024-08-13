@@ -224,7 +224,7 @@ export const botSources = createTable(
     statusId: integer('status_id').notNull(),
     url: text('url'),
     name: text('name'),
-    retrievalModel: jsonb('retrival_model').$type<RetrievalModel>(),
+    retrievalModel: jsonb('retrieval_model').$type<RetrievalModel>(),
     extractedTokenLength: integer('extracted_token_length'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
@@ -317,7 +317,7 @@ export const botIntegrations = createTable(
     botId: uuid('bot_id')
       .notNull()
       .references(() => bots.id),
-    embededToken: text('embeded_token'),
+    embeddedToken: text('embedded_token'),
     apiToken: text('api_token'),
     whiteListIps: text('white_list_ips'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -367,7 +367,7 @@ export const chats = createTable(
     chatUserId: uuid('chat_user_id').references(() => users.id),
     parentChatId: uuid('parent_chat_id'),
     prompt: text('prompt'),
-    promptTokens: integer('promt_tokens'),
+    promptTokens: integer('prompt_tokens'),
     completionTokens: integer('completion_tokens'),
     totalTokens: integer('total_tokens'),
     cachedFromChatId: uuid('cached_from_chat_id'),
