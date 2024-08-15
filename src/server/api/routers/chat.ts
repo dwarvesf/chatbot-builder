@@ -184,6 +184,8 @@ function createChatHandler() {
           botId: bot.id,
           msg: msg.message,
         })
+        // console.log('[getCachedEmbeddings] cValue:', cValue)
+
         if (cValue?.existed) {
           contexts = cValue.contexts
         } else {
@@ -469,7 +471,7 @@ async function getCachedAIResponse(
     return null
   }
 
-  return JSON.parse(rows[0]?.content as string) as CachedAIResponseData
+  return rows[0]?.content as CachedAIResponseData
 }
 
 async function createChatForCacheAndResponse({
@@ -553,7 +555,7 @@ async function getCachedEmbeddings(params: {
     return null
   }
 
-  return { contexts: JSON.parse(rows[0]?.contexts as string), existed: true }
+  return { contexts: rows[0]?.contexts as RankedResult[], existed: true }
 }
 
 async function storeEmbeddingsToCache(params: {
