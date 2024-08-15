@@ -84,11 +84,11 @@ export const accounts = createTable(
     id_token: text('id_token'),
     session_state: varchar('session_state', { length: 255 }),
   },
-  (account) => ({
+  (self) => ({
     compoundKey: primaryKey({
-      columns: [account.provider, account.providerAccountId],
+      columns: [self.provider, self.providerAccountId],
     }),
-    userIdIdx: index('account_userId_idx').on(account.userId),
+    // userIdIdx: index('account_userId_idx').on(self.userId),
   }),
 )
 
@@ -108,7 +108,7 @@ export const sessions = createTable(
     expires: timestamp('expires', { mode: 'date' }).notNull(),
   },
   (session) => ({
-    userIdIdx: index('session_user_id_idx').on(session.userId),
+    // userIdIdx: index('session_user_id_idx').on(session.userId),
   }),
 )
 
@@ -237,13 +237,13 @@ export const botSources = createTable(
     parentReference: foreignKey({
       columns: [source.parentId],
       foreignColumns: [source.id],
-      name: 'bot_sources_parent_id_fk',
+      name: 'bs_parent_id_fk',
     }),
 
-    botIdIdx: index('bot_source_bot_id_idx').on(source.botId),
-    parentIdIdx: index('bot_source_parent_id_idx').on(source.parentId),
-    typeIdIdx: index('bot_source_type_id_idx').on(source.typeId),
-    statusIdIdx: index('bot_source_status_id_idx').on(source.statusId),
+    botIdIdx: index('bs_bot_id_idx').on(source.botId),
+    parentIdIdx: index('bs_parent_id_idx').on(source.parentId),
+    typeIdIdx: index('bs_type_id_idx').on(source.typeId),
+    statusIdIdx: index('bs_status_id_idx').on(source.statusId),
   }),
 )
 
