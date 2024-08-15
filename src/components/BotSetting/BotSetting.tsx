@@ -10,6 +10,7 @@ import { UsageLimitTypeEnum } from '~/model/usage-limit-type'
 import { api } from '~/utils/api'
 import { SaveBar } from '../SaveBar'
 import { FormSkeleton } from '../common/FormSkeleton'
+import { BotCaching } from './BotCaching'
 import { BotDescription } from './BotDescription'
 import { BotLimit } from './BotLimit'
 import { BotMessages } from './BotMessages'
@@ -26,6 +27,7 @@ export interface BotSettingData {
   usageLimitPerUser: number
   modelId: BotModelEnum
   usageLimitPerUserType: UsageLimitTypeEnum
+  cacheEmbeddingSecs: number
 }
 
 const schema = z.object({
@@ -39,6 +41,7 @@ const schema = z.object({
   modelId: z.nativeEnum(BotModelEnum),
   usageLimitPerUser: z.coerce.number(),
   usageLimitPerUserType: z.nativeEnum(UsageLimitTypeEnum),
+  cacheEmbeddingSecs: z.coerce.number().default(0),
 })
 
 interface BotSettingFormProps {
@@ -137,6 +140,11 @@ const BotSettingForm = ({ defaultValues, onSuccess }: BotSettingFormProps) => {
           Usage Limit
         </Typography>
         <BotLimit />
+
+        <Typography level="h6" fontWeight="lg">
+          Caching
+        </Typography>
+        <BotCaching />
       </div>
       <SaveBar
         open={isDirty || isPending || isError}
@@ -180,6 +188,7 @@ export const BotSetting = () => {
       usageLimitPerUser: sources.usageLimitPerUser ?? 50,
       usageLimitPerUserType:
         sources.usageLimitPerUserType ?? UsageLimitTypeEnum.PerDay,
+      cacheEmbeddingSecs: sources.cacheEmbeddingSecs ?? 0,
     }
   }, [id, sources])
 

@@ -105,6 +105,7 @@ export const botRouter = createTRPCRouter({
         usageLimitPerUser: z.number(),
         usageLimitPerUserType: z.nativeEnum(UsageLimitTypeEnum),
         modelId: z.nativeEnum(BotModelEnum),
+        cacheEmbeddingSecs: z.number().default(0),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -120,6 +121,7 @@ export const botRouter = createTRPCRouter({
           noRelevantContextMsg: input.noRelevantContextMsg,
           usageLimitPerUser: input.usageLimitPerUser,
           usageLimitPerUserType: input.usageLimitPerUserType,
+          cacheEmbeddingSecs: input.cacheEmbeddingSecs,
           updatedAt: new Date(),
           updatedBy: ctx.session.user.id,
         })
